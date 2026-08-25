@@ -16,6 +16,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
+  const [getInvolvedTab, setGetInvolvedTab] = useState('volunteer');
   const [isPledgeOpen, setIsPledgeOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -60,6 +61,12 @@ export default function App() {
     showToast(msg);
   };
 
+  const navigateToGetInvolved = (tabId = 'volunteer') => {
+    setGetInvolvedTab(tabId);
+    setActivePage('get-involved');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-taruvar-bg text-taruvar-dark selection:bg-taruvar-primary selection:text-white">
       {/* Sticky Navigation */}
@@ -70,6 +77,7 @@ export default function App() {
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={handleLogout}
+        onNavigateGetInvolved={navigateToGetInvolved}
       />
 
       {/* Main Content Area */}
@@ -79,6 +87,7 @@ export default function App() {
             setActivePage={setActivePage} 
             onOpenPledge={() => setIsPledgeOpen(true)}
             showToast={showToast} 
+            onNavigateGetInvolved={navigateToGetInvolved}
           />
         )}
 
@@ -99,13 +108,15 @@ export default function App() {
         {activePage === 'initiatives' && (
           <InitiativesPage 
             setActivePage={setActivePage} 
-            onOpenPledge={() => setIsPledgeOpen(true)} 
+            onOpenPledge={() => setIsPledgeOpen(true)}
+            onNavigateGetInvolved={navigateToGetInvolved}
           />
         )}
 
         {activePage === 'get-involved' && (
           <GetInvolvedPage 
-            showToast={showToast} 
+            showToast={showToast}
+            initialTab={getInvolvedTab}
           />
         )}
 
@@ -129,6 +140,7 @@ export default function App() {
       <Footer 
         setActivePage={setActivePage} 
         onOpenPledge={() => setIsPledgeOpen(true)} 
+        onNavigateGetInvolved={navigateToGetInvolved}
       />
 
       {/* Interactive Tree Adoption Modal */}

@@ -3,8 +3,14 @@ import { Send, CheckCircle2, ShieldCheck, Heart, Sparkles, Users, GraduationCap,
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
 
-export default function GetInvolvedPage({ showToast }) {
-  const [activeTab, setActiveTab] = useState('volunteer'); // 'volunteer' | 'student' | 'leader' | 'green-shakti' | 'partner'
+export default function GetInvolvedPage({ showToast, initialTab = 'volunteer' }) {
+  const [activeTab, setActiveTab] = useState(initialTab); // 'volunteer' | 'student' | 'leader' | 'green-shakti' | 'partner'
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const [formData, setFormData] = useState({
     name: '',

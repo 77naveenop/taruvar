@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import TreeJourneySandbox from '../components/TreeJourneySandbox';
 
-export default function HomePage({ setActivePage, onOpenPledge, showToast }) {
+export default function HomePage({ setActivePage, onOpenPledge, showToast, onNavigateGetInvolved }) {
   const [selectedStory, setSelectedStory] = useState(null);
   const [activeStoryFilter, setActiveStoryFilter] = useState('all');
 
@@ -518,21 +518,21 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast }) {
               title: 'VOLUNTEER',
               desc: 'Contribute your time, skills, and weekend hours to local environmental drives.',
               cta: 'Join as Volunteer',
-              action: () => { setActivePage('get-involved'); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+              action: () => onNavigateGetInvolved ? onNavigateGetInvolved('volunteer') : setActivePage('get-involved'),
               icon: '🤝'
             },
             {
               title: 'JOIN AS A STUDENT',
               desc: 'Work on meaningful projects, lead campus drives, and build real leadership skills.',
               cta: 'Student Portal',
-              action: () => { setActivePage('get-involved'); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+              action: () => onNavigateGetInvolved ? onNavigateGetInvolved('student') : setActivePage('get-involved'),
               icon: '🎓'
             },
             {
               title: 'LEAD IN COMMUNITY',
               desc: 'Bring tree plantation & Paalna care to your school, college, or local neighborhood.',
               cta: 'Become a Leader',
-              action: () => { setActivePage('get-involved'); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+              action: () => onNavigateGetInvolved ? onNavigateGetInvolved('leader') : setActivePage('get-involved'),
               icon: '📢'
             }
           ].map((card) => (
