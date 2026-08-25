@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Sprout, ArrowRight, User, LogOut, LogIn, Download, Smartphone } from 'lucide-react';
+import { Menu, X, Sprout, ArrowRight, User, LogOut, LogIn, Download, Smartphone, Check } from 'lucide-react';
 
 export default function Navbar({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isAppInstalled, setIsAppInstalled] = useState(false);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   // Capture PWA beforeinstallprompt event
   useEffect(() => {
@@ -16,13 +17,14 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
     const handleAppInstalled = () => {
       setIsAppInstalled(true);
       setDeferredPrompt(null);
+      setShowInstallGuide(false);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Check if app is already running in standalone mode
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    // Check standalone state
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
       setIsAppInstalled(true);
     }
 
@@ -35,13 +37,14 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
   const handleInstallPWA = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
+      const choiceResult = await deferredPrompt.userChoice;
+      if (choiceResult.outcome === 'accepted') {
         setIsAppInstalled(true);
       }
       setDeferredPrompt(null);
     } else {
-      alert('To install Taruvar on your device:\n\n• iOS (Safari): Tap Share button -> "Add to Home Screen"\n• Android (Chrome): Tap 3 dots menu -> "Install App" or "Add to Home Screen"\n• Desktop: Click the install icon in your address bar!');
+      // Show dedicated modal guide instead of browser alert
+      setShowInstallGuide(true);
     }
   };
 
@@ -116,10 +119,10 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             {!isAppInstalled && (
               <button
                 onClick={handleInstallPWA}
-                className="px-3 py-2 bg-taruvar-light hover:bg-taruvar-primary/20 text-taruvar-secondary text-xs font-bold rounded-xl border border-taruvar-primary/30 transition-all flex items-center gap-1.5 shadow-sm"
-                title="Install Taruvar App on your phone/desktop"
+                className="px-3.5 py-2 bg-taruvar-secondary hover:bg-taruvar-hover text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 animate-pulse hover:animate-none"
+                title="Install Taruvar PWA App"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-3.5 h-3.5 text-taruvar-accent" />
                 <span>Install App</span>
               </button>
             )}
@@ -162,17 +165,17 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             {!isAppInstalled && (
               <button
                 onClick={handleInstallPWA}
-                className="px-2.5 py-1.5 bg-taruvar-light text-taruvar-secondary text-xs font-bold rounded-xl border border-taruvar-primary/30 flex items-center gap-1"
+                className="px-2.5 py-1.5 bg-taruvar-secondary text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-sm"
                 title="Install App"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>App</span>
+                <Download className="w-3.5 h-3.5 text-taruvar-accent" />
+                <span>Install</span>
               </button>
             )}
 
             <button
               onClick={onOpenPledge}
-              className="px-3 py-1.5 bg-taruvar-secondary text-white text-xs font-bold rounded-xl"
+              className="px-3 py-1.5 bg-taruvar-light text-taruvar-secondary text-xs font-bold rounded-xl border border-taruvar-primary/30"
             >
               Adopt
             </button>
@@ -189,6 +192,44 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
         </div>
       </div>
 
+      {/* PWA Install Guide Modal (If native prompt not triggered) */}
+      {showInstallGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white max-w-sm w-full p-6 rounded-3xl shadow-2xl border border-taruvar-border space-y-4 text-center relative">
+            <button 
+              onClick={() => setShowInstallGuide(false)}
+              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center absolute top-4 right-4 text-gray-500 hover:text-dark"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-16 h-16 bg-taruvar-light rounded-2xl flex items-center justify-center mx-auto text-3xl">
+              🌱
+            </div>
+
+            <h3 className="text-xl font-bold text-taruvar-dark">Install Taruvar App</h3>
+            <p className="text-xs text-taruvar-muted leading-relaxed">
+              To install Taruvar directly onto your home screen for fast 1-tap access:
+            </p>
+
+            <div className="bg-taruvar-bg p-4 rounded-2xl text-left space-y-2 text-xs text-taruvar-dark">
+              <p className="font-bold text-taruvar-secondary">📱 Android (Chrome):</p>
+              <p>Tap the <strong>⋮ (3 dots)</strong> menu in browser top-right → select <strong>"Install App"</strong> or <strong>"Add to Home Screen"</strong>.</p>
+              
+              <p className="font-bold text-taruvar-secondary pt-2">🍎 iPhone (Safari):</p>
+              <p>Tap the <strong>Share button (⎋)</strong> at bottom → scroll & select <strong>"Add to Home Screen"</strong>.</p>
+            </div>
+
+            <button
+              onClick={() => setShowInstallGuide(false)}
+              className="w-full py-3 bg-taruvar-secondary text-white font-bold rounded-xl text-xs"
+            >
+              Got It
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur border-b border-taruvar-border px-4 pt-3 pb-6 space-y-2 animate-fade-in">
@@ -196,9 +237,9 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
           {!isAppInstalled && (
             <button
               onClick={() => { setMobileMenuOpen(false); handleInstallPWA(); }}
-              className="w-full py-2.5 bg-taruvar-light text-taruvar-secondary font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 mb-2 border border-taruvar-primary/30"
+              className="w-full py-3 bg-taruvar-secondary text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 mb-2 shadow"
             >
-              <Download className="w-4 h-4" /> Install Taruvar App on Phone
+              <Download className="w-4 h-4 text-taruvar-accent" /> Install Taruvar App on Phone
             </button>
           )}
 
