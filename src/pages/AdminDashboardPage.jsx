@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Check, X, Eye, Camera, Clock, Award, Filter } from 'lucide-react';
+import { ShieldCheck, Check, X, Eye, Camera, Clock, Award, KeyRound, Lock, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { supabase } from '../lib/supabase';
 
-export default function AdminDashboardPage({ showToast }) {
-  const [activeTab, setActiveTab] = useState('pending-trees'); // 'pending-trees' | 'pending-reports' | 'all-verified'
+export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth }) {
+  const [activeTab, setActiveTab] = useState('pending-trees');
+  const [passkeyInput, setPasskeyInput] = useState('');
+  const [passkeyError, setPasskeyError] = useState('');
+  const [localIsAdmin, setLocalIsAdmin] = useState(currentUser?.user_metadata?.role === 'admin');
 
   // Pending tree adoptions awaiting admin confirmation
   const [pendingTrees, setPendingTrees] = useState([
@@ -42,12 +46,28 @@ export default function AdminDashboardPage({ showToast }) {
     }
   ]);
 
-  const [approvedCount, setApprovedCount] = useState(14);
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
+
+  const handleUnlockAdmin = async (e) => {
+    e.preventDefault();
+    setPasskeyError('');
+
+    if (passkeyInput === 'TARUVAR_ADMIN_2026' || passkeyInput === 'taruvar2026') {
+      setLocalIsAdmin(true);
+      if (supabase && currentUser) {
+        await supabase.auth.updateUser({
+          data: { role: 'admin' }
+        });
+      }
+      confetti({ particleCount: 60, spread: 60 });
+      if (showToast) showToast('Admin Access Unlocked!');
+    } else {
+      setPasskeyError('Invalid Admin Secret Passkey. Only the Taruvar founder can approve requests.');
+    }
+  };
 
   const handleApproveTree = (treeId, adopterName) => {
     setPendingTrees(prev => prev.filter(t => t.id !== treeId));
-    setApprovedCount(prev => prev + 1);
     confetti({ particleCount: 50, spread: 50 });
     if (showToast) {
       showToast(`Adoption approved for ${adopterName}! Notification email sent.`);
@@ -69,14 +89,70 @@ export default function AdminDashboardPage({ showToast }) {
     }
   };
 
+  // ADMIN AUTHORIZATION GATE
+  const isAdminAuthorized = localIsAdmin || currentUser?.user_metadata?.role === 'admin';
+
+  if (!isAdminAuthorized) {
+    return (
+      <div className="py-16 max-w-md mx-auto px-4 text-center space-y-6">
+        <div className="w-16 h-16 bg-amber-100 text-amber-800 rounded-3xl flex items-center justify-center mx-auto text-3xl shadow">
+          <Lock className="w-8 h-8 text-amber-700" />
+        </div>
+
+        <div className="space-y-2">
+          <span className="px-3 py-1 bg-amber-100 text-amber-900 text-xs font-bold rounded-full border border-amber-300">
+            RESTRICTED ADMIN AREA
+          </span>
+          <h2 className="text-2xl font-extrabold text-taruvar-dark">Admin Verification Desk</h2>
+          <p className="text-xs text-taruvar-muted leading-relaxed">
+            Only Taruvar team admins can approve tree adoptions and verify 5-month growth reports. Normal users cannot access approval controls.
+          </p>
+        </div>
+
+        {passkeyError && (
+          <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{passkeyError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleUnlockAdmin} className="space-y-4 bg-white p-6 rounded-3xl border border-taruvar-border shadow-card text-left">
+          <div>
+            <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1">
+              Enter Admin Secret Passkey *
+            </label>
+            <div className="relative">
+              <KeyRound className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
+              <input
+                type="password"
+                required
+                value={passkeyInput}
+                onChange={(e) => setPasskeyInput(e.target.value)}
+                placeholder="Admin Passkey"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold rounded-xl text-xs shadow transition-all flex items-center justify-center gap-2"
+          >
+            <KeyRound className="w-4 h-4" /> Unlock Admin Approval Controls
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10 pb-16 pt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-taruvar-dark via-[#1F5435] to-taruvar-secondary text-white p-6 sm:p-10 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 text-center md:text-left">
-          <span className="px-3 py-1 bg-white/10 backdrop-blur text-taruvar-accent text-xs font-bold rounded-full border border-white/10">
-            INTERNAL TEAM DASHBOARD • taruvar.org
+          <span className="px-3 py-1 bg-emerald-800 text-taruvar-accent text-xs font-bold rounded-full border border-emerald-600 inline-flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5" /> VERIFIED ADMIN ROLE • taruvar.org
           </span>
           <h1 className="text-3xl font-extrabold">Taruvar Admin Verification Desk</h1>
           <p className="text-xs text-white/80 max-w-xl">

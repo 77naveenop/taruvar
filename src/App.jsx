@@ -131,7 +131,9 @@ export default function App() {
 
         {activePage === 'admin' && (
           <AdminDashboardPage 
+            currentUser={currentUser}
             showToast={showToast}
+            onOpenAuth={() => setIsAuthOpen(true)}
           />
         )}
       </main>
