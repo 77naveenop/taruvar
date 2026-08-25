@@ -11,6 +11,8 @@ import AboutPage from './pages/AboutPage';
 import TreeJourneyPage from './pages/TreeJourneyPage';
 import InitiativesPage from './pages/InitiativesPage';
 import GetInvolvedPage from './pages/GetInvolvedPage';
+import ProfilePage from './pages/ProfilePage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
@@ -23,14 +25,12 @@ export default function App() {
   useEffect(() => {
     if (!supabase) return;
 
-    // Fetch initial user session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setCurrentUser(session.user);
       }
     });
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user || null);
     });
@@ -106,6 +106,21 @@ export default function App() {
         {activePage === 'get-involved' && (
           <GetInvolvedPage 
             showToast={showToast} 
+          />
+        )}
+
+        {activePage === 'profile' && (
+          <ProfilePage 
+            currentUser={currentUser}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onOpenAdopt={() => setIsPledgeOpen(true)}
+            showToast={showToast}
+          />
+        )}
+
+        {activePage === 'admin' && (
+          <AdminDashboardPage 
+            showToast={showToast}
           />
         )}
       </main>

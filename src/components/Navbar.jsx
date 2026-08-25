@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight, User, LogOut, LogIn, Download, Sparkles } from 'lucide-react';
+import { Menu, X, ArrowRight, User, LogOut, LogIn, Download, Sparkles, ShieldCheck } from 'lucide-react';
 
 export default function Navbar({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -50,9 +50,10 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
     { id: 'home', label: 'Home' },
     { id: 'about', label: 'Our Mission' },
     { id: 'tree-journey', label: 'Tree Journey' },
+    { id: 'profile', label: 'My Journey & Feed' },
     { id: 'initiatives', label: 'Initiatives' },
     { id: 'get-involved', label: 'Get Involved' },
-    { id: 'about-us', label: 'About Us' }
+    { id: 'admin', label: 'Admin Desk' }
   ];
 
   const handleNavClick = (id) => {
@@ -72,7 +73,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
           
-          {/* 1. LEFT: Logo Icon Only (Strictly bounded) */}
+          {/* 1. LEFT: Logo Icon Only */}
           <div className="flex items-center shrink-0">
             <button 
               onClick={() => handleNavClick('home')}
@@ -105,7 +106,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
           {/* 3. RIGHT: Sleek Compact Install Button & Menu Icon */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             
-            {/* Interesting, Very Small, Compact Install Pill Button with Text */}
+            {/* PWA Install Button */}
             {!isAppInstalled && (
               <button
                 onClick={handleInstallPWA}
@@ -133,7 +134,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
         </div>
       </div>
 
-      {/* PWA Install Guide Modal (If native prompt not triggered) */}
+      {/* PWA Install Guide Modal */}
       {showInstallGuide && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white max-w-sm w-full p-6 rounded-3xl shadow-2xl border border-taruvar-border space-y-4 text-center relative">
@@ -177,9 +178,9 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
           <div className="p-4 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-center justify-between">
             {currentUser ? (
               <div className="flex items-center justify-between w-full">
-                <span className="text-xs font-bold text-taruvar-dark flex items-center gap-2">
-                  <User className="w-4 h-4 text-taruvar-secondary" /> {displayName}
-                </span>
+                <button onClick={() => handleNavClick('profile')} className="text-xs font-bold text-taruvar-dark flex items-center gap-2 hover:underline">
+                  <User className="w-4 h-4 text-taruvar-secondary" /> {displayName} (My Profile)
+                </button>
                 <button 
                   onClick={onLogout} 
                   className="text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-xl border border-red-200 flex items-center gap-1 transition-colors"
