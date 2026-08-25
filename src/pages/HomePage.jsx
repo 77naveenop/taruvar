@@ -138,7 +138,7 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast }) {
                   onClick={onOpenPledge}
                   className="px-8 py-4 bg-taruvar-secondary hover:bg-taruvar-hover text-white text-base font-bold rounded-2xl shadow-lg shadow-taruvar-secondary/25 hover:shadow-xl transition-all flex items-center justify-center gap-2 group"
                 >
-                  <span>Start Your Tree Journey</span>
+                  <span>Adopt & Care for a Tree</span>
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
 

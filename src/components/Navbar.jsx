@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Menu, X, Sprout, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Menu, X, Sprout, ArrowRight, User, LogOut, LogIn } from 'lucide-react';
 
-export default function Navbar({ activePage, setActivePage, onOpenPledge }) {
+export default function Navbar({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -22,6 +22,8 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge }) {
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0];
 
   return (
     <header className="sticky top-0 z-40 glass-header border-b border-taruvar-border/70 transition-all">
@@ -66,13 +68,36 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge }) {
             })}
           </nav>
 
-          {/* Primary CTA */}
+          {/* User Status & Primary CTA */}
           <div className="hidden lg:flex items-center gap-3">
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-taruvar-dark bg-taruvar-light px-3 py-2 rounded-xl flex items-center gap-1.5 border border-taruvar-primary/20">
+                  <User className="w-3.5 h-3.5 text-taruvar-secondary" /> {displayName}
+                </span>
+                <button
+                  onClick={onLogout}
+                  className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                className="px-4 py-2 text-xs font-bold text-taruvar-dark hover:text-taruvar-secondary hover:bg-taruvar-light rounded-xl transition-all flex items-center gap-1 border border-taruvar-border"
+              >
+                <LogIn className="w-3.5 h-3.5 text-taruvar-secondary" />
+                <span>Log In / Register</span>
+              </button>
+            )}
+
             <button
               onClick={onOpenPledge}
               className="px-5 py-2.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white text-sm font-bold rounded-2xl shadow-md shadow-taruvar-secondary/20 hover:shadow-lg transition-all flex items-center gap-2"
             >
-              <span>Start Your Tree Journey</span>
+              <span>Adopt a Tree</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -81,9 +106,9 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge }) {
           <div className="flex md:hidden items-center gap-2">
             <button
               onClick={onOpenPledge}
-              className="px-3.5 py-1.5 bg-taruvar-secondary text-white text-xs font-bold rounded-xl"
+              className="px-3 py-1.5 bg-taruvar-secondary text-white text-xs font-bold rounded-xl"
             >
-              Pledge
+              Adopt Tree
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -100,6 +125,20 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge }) {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur border-b border-taruvar-border px-4 pt-3 pb-6 space-y-2 animate-fade-in">
+          {currentUser ? (
+            <div className="p-3 bg-taruvar-light rounded-xl flex items-center justify-between text-xs font-bold text-taruvar-dark mb-2">
+              <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-taruvar-secondary" /> {displayName}</span>
+              <button onClick={onLogout} className="text-red-600 font-bold flex items-center gap-1"><LogOut className="w-3.5 h-3.5" /> Sign Out</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => { setMobileMenuOpen(false); onOpenAuth(); }}
+              className="w-full py-2.5 bg-taruvar-light text-taruvar-dark font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 mb-2"
+            >
+              <LogIn className="w-4 h-4 text-taruvar-secondary" /> Log In / Register
+            </button>
+          )}
+
           {navLinks.map((link) => (
             <button
               key={link.id}
@@ -117,7 +156,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge }) {
               }}
               className="w-full py-3.5 bg-taruvar-secondary text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm"
             >
-              <span>Start Your Tree Journey</span>
+              <span>Adopt & Care for a Tree</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

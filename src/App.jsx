@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import PledgeModal from './components/PledgeModal';
+import AuthModal from './components/AuthModal';
 import Toast from './components/Toast';
+import { supabase } from './lib/supabase';
 
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
@@ -13,10 +15,45 @@ import GetInvolvedPage from './pages/GetInvolvedPage';
 export default function App() {
   const [activePage, setActivePage] = useState('home');
   const [isPledgeOpen, setIsPledgeOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Check Supabase Auth state on mount & set up listener
+  useEffect(() => {
+    if (!supabase) return;
+
+    // Fetch initial user session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
+      }
+    });
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user || null);
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
 
   const showToast = (msg) => {
     setToastMessage(msg);
+  };
+
+  const handleAuthSuccess = (user, msg) => {
+    setCurrentUser(user);
+    showToast(msg);
+    setIsAuthOpen(false);
+  };
+
+  const handleLogout = async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    setCurrentUser(null);
+    showToast('Signed out successfully.');
   };
 
   const handlePledgeComplete = (msg) => {
@@ -29,7 +66,10 @@ export default function App() {
       <Navbar 
         activePage={activePage} 
         setActivePage={setActivePage} 
-        onOpenPledge={() => setIsPledgeOpen(true)} 
+        onOpenPledge={() => setIsPledgeOpen(true)}
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
@@ -76,11 +116,23 @@ export default function App() {
         onOpenPledge={() => setIsPledgeOpen(true)} 
       />
 
-      {/* Interactive Pledge Modal */}
+      {/* Interactive Tree Adoption Modal */}
       <PledgeModal 
         isOpen={isPledgeOpen} 
-        onClose={() => setIsPledgeOpen(false)} 
+        onClose={() => setIsPledgeOpen(false)}
+        currentUser={currentUser}
+        onOpenAuth={() => {
+          setIsPledgeOpen(false);
+          setIsAuthOpen(true);
+        }}
         onPledgeComplete={handlePledgeComplete} 
+      />
+
+      {/* Interactive Auth Modal (Register / Login) */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
       />
 
       {/* Toast Feedback */}
