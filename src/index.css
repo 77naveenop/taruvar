@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F5F8F4;
+    color: #1D1D1D;
+  }
+}
+
+/* Custom subtle glassmorphism & gradients */
+.glass-header {
+  background: rgba(245, 248, 244, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 235, 224, 0.8);
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at 50% 20%, rgba(107, 191, 89, 0.15) 0%, rgba(245, 248, 244, 0) 70%);
+}
+
+.green-gradient-bg {
+  background: linear-gradient(135deg, #2D7A4E 0%, #1B4E31 100%);
+}
+
+.accent-glow {
+  box-shadow: 0 0 40px rgba(107, 191, 89, 0.2);
+}
