@@ -69,63 +69,63 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
 
   return (
     <header className="sticky top-0 z-40 glass-header border-b border-taruvar-border/70 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 relative">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
           
-          {/* 1. LEFT: Logo Icon Only */}
-          <div className="flex items-center">
+          {/* 1. LEFT: Logo Icon Only (Strictly bounded) */}
+          <div className="flex items-center shrink-0">
             <button 
               onClick={() => handleNavClick('home')}
-              className="group focus:outline-none p-1 rounded-2xl hover:bg-taruvar-light/50 transition-all"
+              className="group focus:outline-none p-1 rounded-xl hover:bg-taruvar-light/50 transition-all"
               title="Taruvar Homepage"
             >
               <img 
                 src="/logo.jpg" 
                 alt="Taruvar Logo Icon" 
-                className="h-12 w-12 object-contain rounded-xl mix-blend-multiply group-hover:scale-105 transition-transform"
+                className="h-9 w-9 sm:h-11 sm:w-11 object-contain rounded-lg mix-blend-multiply group-hover:scale-105 transition-transform"
               />
             </button>
           </div>
 
-          {/* 2. MIDDLE: TARUVAR (Takes to Homepage) */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 text-center">
+          {/* 2. MIDDLE: TARUVAR (Flex centered, Never Overlaps) */}
+          <div className="flex-1 text-center min-w-0 px-1 overflow-hidden">
             <button
               onClick={() => handleNavClick('home')}
-              className="group focus:outline-none flex flex-col items-center"
+              className="group focus:outline-none inline-block max-w-full"
             >
-              <span className="text-2xl sm:text-3xl font-black tracking-wider text-taruvar-dark group-hover:text-taruvar-secondary transition-colors font-sans">
+              <span className="text-base sm:text-2xl font-extrabold tracking-wider text-taruvar-dark group-hover:text-taruvar-secondary transition-colors font-sans truncate block leading-none">
                 TARUVAR
               </span>
-              <span className="text-[9px] sm:text-[10px] font-bold text-taruvar-secondary tracking-widest uppercase -mt-0.5">
+              <span className="text-[8px] sm:text-[10px] font-bold text-taruvar-secondary tracking-widest uppercase truncate block mt-0.5">
                 One Person. One Tree.
               </span>
             </button>
           </div>
 
-          {/* 3. RIGHT: Two Icons (Install & Menu) */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* 3. RIGHT: Sleek Compact Install Button & Menu Icon */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             
-            {/* Icon 1: Install App Icon */}
+            {/* Interesting, Very Small, Compact Install Pill Button with Text */}
             {!isAppInstalled && (
               <button
                 onClick={handleInstallPWA}
-                className="p-2.5 sm:px-3.5 sm:py-2 bg-taruvar-secondary hover:bg-taruvar-hover text-white rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 focus:outline-none animate-pulse hover:animate-none"
-                title="Install Taruvar App"
+                className="px-2.5 py-1 sm:px-3.5 sm:py-1.5 bg-gradient-to-r from-taruvar-secondary via-[#1F5435] to-taruvar-secondary hover:brightness-110 text-white text-[10px] sm:text-xs font-extrabold rounded-full shadow-sm hover:shadow-md transition-all flex items-center gap-1 border border-taruvar-accent/40 tracking-tight shrink-0"
+                title="Install Taruvar PWA App"
                 aria-label="Install App"
               >
-                <Download className="w-5 h-5 text-taruvar-accent shrink-0" />
-                <span className="text-xs font-bold hidden sm:inline">Install</span>
+                <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-taruvar-accent animate-bounce shrink-0" />
+                <span className="font-sans">Install</span>
               </button>
             )}
 
-            {/* Icon 2: Menu Icon (Opens Navigation & User Drawer) */}
+            {/* Menu Icon */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2.5 bg-white text-taruvar-dark hover:bg-taruvar-light border border-taruvar-border rounded-2xl shadow-sm focus:outline-none transition-colors"
+              className="p-2 sm:p-2.5 bg-white text-taruvar-dark hover:bg-taruvar-light border border-taruvar-border rounded-xl shadow-sm focus:outline-none transition-colors shrink-0"
               aria-label="Toggle Menu"
               title="Menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6 text-taruvar-secondary" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5 text-taruvar-secondary" /> : <Menu className="w-4 h-4 sm:w-5 sm:h-5" />}
             </button>
 
           </div>
