@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sprout, Instagram, Mail, Globe, ArrowUpRight, Heart } from 'lucide-react';
+import { Instagram, Mail, Globe, ArrowUpRight, Heart } from 'lucide-react';
 
 export default function Footer({ setActivePage, onOpenPledge }) {
   const navigateTo = (page) => {
@@ -17,17 +17,13 @@ export default function Footer({ setActivePage, onOpenPledge }) {
           
           {/* Col 1 & 2: Brand Info */}
           <div className="lg:col-span-2 space-y-5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-taruvar-secondary flex items-center justify-center text-white shadow-md">
-                <Sprout className="w-6 h-6 text-taruvar-accent" />
-              </div>
-              <div>
-                <span className="text-2xl font-extrabold tracking-tight block leading-none text-white">
-                  TARUVAR
-                </span>
-                <span className="text-xs font-bold text-taruvar-accent uppercase tracking-widest">
-                  One Person. One Tree.
-                </span>
+            <div className="flex items-center gap-3">
+              <div className="bg-white p-2 rounded-2xl inline-block">
+                <img 
+                  src="/logo.jpg" 
+                  alt="TARUVAR — One Person. One Tree." 
+                  className="h-12 w-auto object-contain"
+                />
               </div>
             </div>
 
@@ -111,7 +107,7 @@ export default function Footer({ setActivePage, onOpenPledge }) {
               onClick={onOpenPledge}
               className="w-full py-3 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5"
             >
-              <span>Take The Pledge</span>
+              <span>Adopt a Tree</span>
               <ArrowUpRight className="w-4 h-4" />
             </button>
           </div>

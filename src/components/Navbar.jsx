@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Sprout, ArrowRight, User, LogOut, LogIn, Download, Smartphone, Check } from 'lucide-react';
+import { Menu, X, ArrowRight, User, LogOut, LogIn, Download, Check } from 'lucide-react';
 
 export default function Navbar({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,7 +43,6 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
       }
       setDeferredPrompt(null);
     } else {
-      // Show dedicated modal guide instead of browser alert
       setShowInstallGuide(true);
     }
   };
@@ -74,22 +73,16 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
-          {/* Logo */}
+          {/* Logo with official Taruvar graphic */}
           <button 
             onClick={() => handleNavClick('home')}
-            className="flex items-center gap-2.5 group focus:outline-none"
+            className="flex items-center gap-3 group focus:outline-none"
           >
-            <div className="w-10 h-10 rounded-2xl bg-taruvar-secondary flex items-center justify-center text-white shadow-md shadow-taruvar-secondary/20 group-hover:scale-105 transition-transform">
-              <Sprout className="w-6 h-6 text-taruvar-accent" />
-            </div>
-            <div className="text-left">
-              <span className="text-2xl font-extrabold tracking-tight text-taruvar-dark block leading-none">
-                TARUVAR
-              </span>
-              <span className="text-[10px] font-semibold tracking-wider text-taruvar-muted uppercase">
-                taruvar.org
-              </span>
-            </div>
+            <img 
+              src="/logo.jpg" 
+              alt="TARUVAR — One Person. One Tree." 
+              className="h-12 sm:h-14 w-auto object-contain group-hover:scale-105 transition-transform mix-blend-multiply"
+            />
           </button>
 
           {/* Desktop Navigation Links */}
@@ -203,9 +196,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
               <X className="w-4 h-4" />
             </button>
 
-            <div className="w-16 h-16 bg-taruvar-light rounded-2xl flex items-center justify-center mx-auto text-3xl">
-              🌱
-            </div>
+            <img src="/logo.jpg" alt="Taruvar Logo" className="w-20 h-auto mx-auto mix-blend-multiply" />
 
             <h3 className="text-xl font-bold text-taruvar-dark">Install Taruvar App</h3>
             <p className="text-xs text-taruvar-muted leading-relaxed">
