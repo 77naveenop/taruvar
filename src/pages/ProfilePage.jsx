@@ -482,21 +482,32 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
                 <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1">
                   Upload Growth Progress Photo *
                 </label>
-                <div className="border-2 border-dashed border-taruvar-border rounded-2xl p-4 text-center cursor-pointer hover:border-taruvar-secondary transition-all bg-taruvar-bg">
+
+                <label 
+                  htmlFor="report-photo-input"
+                  className="block border-2 border-dashed border-taruvar-secondary/60 rounded-2xl p-4 text-center cursor-pointer hover:border-taruvar-secondary hover:bg-taruvar-light/40 transition-all bg-taruvar-bg relative z-10"
+                >
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handlePhotoSelect} 
+                    className="hidden" 
+                    id="report-photo-input" 
+                  />
+
                   {reportPhotoPreview ? (
-                    <img src={reportPhotoPreview} alt="Preview" className="h-32 mx-auto object-cover rounded-xl" />
+                    <div className="relative pointer-events-none">
+                      <img src={reportPhotoPreview} alt="Preview" className="h-32 mx-auto object-cover rounded-xl border border-taruvar-border" />
+                      <span className="block text-[10px] text-taruvar-secondary font-bold mt-1">✓ Photo attached! Click anywhere to change.</span>
+                    </div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-1.5 py-2 pointer-events-none">
                       <Camera className="w-8 h-8 text-taruvar-secondary mx-auto" />
-                      <p className="text-xs font-bold text-taruvar-dark">Click to Upload Photo</p>
+                      <p className="text-xs font-bold text-taruvar-dark">Tap / Click here to select photo file</p>
                       <p className="text-[10px] text-taruvar-muted">Shows sapling height & new growth</p>
                     </div>
                   )}
-                  <input type="file" accept="image/*" required onChange={handlePhotoSelect} className="hidden" id="report-photo-input" />
-                  <label htmlFor="report-photo-input" className="block text-[11px] font-bold text-taruvar-secondary cursor-pointer mt-2">
-                    {reportPhotoPreview ? 'Change Photo' : 'Select Photo File'}
-                  </label>
-                </div>
+                </label>
               </div>
 
               <div>
