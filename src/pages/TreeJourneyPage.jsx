@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
 import { Sparkles, QrCode, Camera, ShieldCheck, Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
 import TreeJourneySandbox from '../components/TreeJourneySandbox';
+import { supabase } from '../lib/supabase';
 
 export default function TreeJourneyPage({ showToast, onOpenPledge }) {
   const [notifyEmail, setNotifyEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
-  const handleNotifySubmit = (e) => {
+  const handleNotifySubmit = async (e) => {
     e.preventDefault();
     if (!notifyEmail.trim()) return;
+
+    if (supabase) {
+      try {
+        await supabase.from('early_access').insert([
+          { email: notifyEmail }
+        ]);
+      } catch (err) {
+        console.error('Supabase early_access error:', err);
+      }
+    }
 
     setSubscribed(true);
     if (showToast) {

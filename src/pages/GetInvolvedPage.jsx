@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Send, CheckCircle2, ShieldCheck, Heart, Sparkles, Users, GraduationCap, Building2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { supabase } from '../lib/supabase';
 
 export default function GetInvolvedPage({ showToast }) {
   const [activeTab, setActiveTab] = useState('volunteer'); // 'volunteer' | 'student' | 'leader' | 'green-shakti' | 'partner'
@@ -17,6 +18,7 @@ export default function GetInvolvedPage({ showToast }) {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const tabs = [
     { id: 'volunteer', label: 'Become a Volunteer', icon: '🤝' },
@@ -34,13 +36,39 @@ export default function GetInvolvedPage({ showToast }) {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.consent) {
       alert('Please complete all required fields and accept communication consent.');
       return;
     }
 
+    setLoading(true);
+
+    // If Supabase credentials exist, save record directly to database
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('applications').insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            city: formData.city,
+            state: formData.state,
+            pathway: activeTab,
+            area_of_interest: formData.areaOfInterest,
+            message: formData.message
+          }
+        ]);
+        if (error) {
+          console.error('Supabase application submission error:', error);
+        }
+      } catch (err) {
+        console.error('Supabase error:', err);
+      }
+    }
+
+    setLoading(false);
     setSubmitted(true);
     confetti({ particleCount: 60, spread: 60 });
     if (showToast) {

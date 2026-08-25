@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Sprout, Heart, ShieldCheck, Share2, Sparkles, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { supabase } from '../lib/supabase';
 
 export default function PledgeModal({ isOpen, onClose, onPledgeComplete }) {
   const [step, setStep] = useState(1);
@@ -8,6 +9,7 @@ export default function PledgeModal({ isOpen, onClose, onPledgeComplete }) {
   const [treeType, setTreeType] = useState('Neem');
   const [email, setEmail] = useState('');
   const [pledged, setPledged] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
@@ -19,9 +21,21 @@ export default function PledgeModal({ isOpen, onClose, onPledgeComplete }) {
     { name: 'Gulmohar', desc: 'Vibrant shade & summer bloom', emoji: '🌺' }
   ];
 
-  const handlePledge = (e) => {
+  const handlePledge = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
+
+    setLoading(true);
+    if (supabase) {
+      try {
+        await supabase.from('pledges').insert([
+          { name, email, tree_type: treeType }
+        ]);
+      } catch (err) {
+        console.error('Supabase pledge error:', err);
+      }
+    }
+    setLoading(false);
 
     setPledged(true);
     confetti({
