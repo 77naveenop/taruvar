@@ -1,8 +1,49 @@
-import React, { useState } from 'react';
-import { Menu, X, Sprout, ArrowRight, User, LogOut, LogIn } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, X, Sprout, ArrowRight, User, LogOut, LogIn, Download, Smartphone } from 'lucide-react';
 
 export default function Navbar({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+
+  // Capture PWA beforeinstallprompt event
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Check if app is already running in standalone mode
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsAppInstalled(true);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallPWA = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsAppInstalled(true);
+      }
+      setDeferredPrompt(null);
+    } else {
+      alert('To install Taruvar on your device:\n\n• iOS (Safari): Tap Share button -> "Add to Home Screen"\n• Android (Chrome): Tap 3 dots menu -> "Install App" or "Add to Home Screen"\n• Desktop: Click the install icon in your address bar!');
+    }
+  };
 
   const navLinks = [
     { id: 'home', label: 'Home' },
@@ -68,8 +109,22 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             })}
           </nav>
 
-          {/* User Status & Primary CTA */}
-          <div className="hidden lg:flex items-center gap-3">
+          {/* Action Area: PWA Install Button + User Status + Primary CTA */}
+          <div className="hidden lg:flex items-center gap-2.5">
+            
+            {/* PWA Install Button right in header menu bar */}
+            {!isAppInstalled && (
+              <button
+                onClick={handleInstallPWA}
+                className="px-3 py-2 bg-taruvar-light hover:bg-taruvar-primary/20 text-taruvar-secondary text-xs font-bold rounded-xl border border-taruvar-primary/30 transition-all flex items-center gap-1.5 shadow-sm"
+                title="Install Taruvar App on your phone/desktop"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Install App</span>
+              </button>
+            )}
+
+            {/* User Auth Status */}
             {currentUser ? (
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-taruvar-dark bg-taruvar-light px-3 py-2 rounded-xl flex items-center gap-1.5 border border-taruvar-primary/20">
@@ -102,14 +157,26 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button & Mobile Install Button */}
           <div className="flex md:hidden items-center gap-2">
+            {!isAppInstalled && (
+              <button
+                onClick={handleInstallPWA}
+                className="px-2.5 py-1.5 bg-taruvar-light text-taruvar-secondary text-xs font-bold rounded-xl border border-taruvar-primary/30 flex items-center gap-1"
+                title="Install App"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>App</span>
+              </button>
+            )}
+
             <button
               onClick={onOpenPledge}
               className="px-3 py-1.5 bg-taruvar-secondary text-white text-xs font-bold rounded-xl"
             >
-              Adopt Tree
+              Adopt
             </button>
+            
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-xl text-taruvar-dark hover:bg-white border border-taruvar-border focus:outline-none"
@@ -125,6 +192,16 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur border-b border-taruvar-border px-4 pt-3 pb-6 space-y-2 animate-fade-in">
+          
+          {!isAppInstalled && (
+            <button
+              onClick={() => { setMobileMenuOpen(false); handleInstallPWA(); }}
+              className="w-full py-2.5 bg-taruvar-light text-taruvar-secondary font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 mb-2 border border-taruvar-primary/30"
+            >
+              <Download className="w-4 h-4" /> Install Taruvar App on Phone
+            </button>
+          )}
+
           {currentUser ? (
             <div className="p-3 bg-taruvar-light rounded-xl flex items-center justify-between text-xs font-bold text-taruvar-dark mb-2">
               <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-taruvar-secondary" /> {displayName}</span>

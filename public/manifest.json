@@ -1,0 +1,26 @@
+{
+  "short_name": "Taruvar",
+  "name": "Taruvar — One Person. One Tree.",
+  "description": "Taruvar environmental movement for tree care, public participation, and technology-enabled environmental action.",
+  "icons": [
+    {
+      "src": "pwa-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "pwa-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "/",
+  "start_url": "/",
+  "background_color": "#F5F8F4",
+  "theme_color": "#2D7A4E",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/"
+}
