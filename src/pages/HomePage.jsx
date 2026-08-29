@@ -67,18 +67,13 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
           loop 
           muted 
           playsInline 
+          preload="auto"
           poster="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2000&q=80"
-          className="absolute inset-0 w-full h-full object-cover object-center transform scale-105 opacity-65"
+          className="absolute inset-0 w-full h-full object-cover object-center transform scale-105 opacity-70"
         >
-          {/* High quality royalty-free nature & plant growth time-lapse videos */}
-          <source 
-            src="https://cdn.pixabay.com/video/2020/04/18/36423-412217622_large.mp4" 
-            type="video/mp4" 
-          />
-          <source 
-            src="https://assets.mixkit.co/videos/preview/mixkit-young-plant-growing-in-the-soil-time-lapse-42984-large.mp4" 
-            type="video/mp4" 
-          />
+          {/* Local self-hosted video + reliable CDN fallbacks */}
+          <source src="/hero-tree.mp4" type="video/mp4" />
+          <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4" />
         </video>
 
         {/* Rich Multi-layer Gradient Overlay for Optimal Text Contrast */}
