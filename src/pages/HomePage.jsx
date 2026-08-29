@@ -5,6 +5,7 @@ import {
   Globe, Compass, Check, UserPlus, Play
 } from 'lucide-react';
 import TreeJourneySandbox from '../components/TreeJourneySandbox';
+import TreeGrowthHeroBackground from '../components/TreeGrowthHeroBackground';
 
 export default function HomePage({ setActivePage, onOpenPledge, showToast, onNavigateGetInvolved, onOpenAuth, currentUser }) {
 
@@ -58,26 +59,11 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
   return (
     <div className="space-y-20 md:space-y-28 pb-16">
       
-      {/* SECTION 1 — HERO WITH CINEMATIC GROWING TREE TIME-LAPSE VIDEO BACKGROUND */}
-      <section className="relative min-h-[620px] sm:min-h-[700px] flex items-center justify-center text-white overflow-hidden bg-black">
+      {/* SECTION 1 — HERO WITH DYNAMIC GROWING TREE FROM BEGINNING TO BIG */}
+      <section className="relative min-h-[620px] sm:min-h-[700px] flex items-center justify-center text-white overflow-hidden bg-taruvar-dark">
         
-        {/* Background Video: Sprouting & Growing Tree Time-lapse */}
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          playsInline 
-          preload="auto"
-          poster="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2000&q=80"
-          className="absolute inset-0 w-full h-full object-cover object-center transform scale-105 opacity-70"
-        >
-          {/* Local self-hosted video + reliable CDN fallbacks */}
-          <source src="/hero-tree.mp4" type="video/mp4" />
-          <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4" />
-        </video>
-
-        {/* Rich Multi-layer Gradient Overlay for Optimal Text Contrast */}
-        <div className="absolute inset-0 bg-gradient-to-t from-taruvar-dark via-taruvar-dark/75 to-black/60 backdrop-blur-[0.5px]"></div>
+        {/* Dynamic Tree Growth Animation & Nature Background Engine */}
+        <TreeGrowthHeroBackground />
 
         {/* Hero Content Container */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 py-16 sm:py-24">
