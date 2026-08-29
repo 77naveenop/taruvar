@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Check, X, Eye, Camera, Clock, Award, KeyRound, Lock, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Check, X, Eye, Camera, Clock, Award, KeyRound, Lock, AlertCircle, User, Mail, UserPlus, LogIn } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
 
@@ -8,6 +8,11 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
   const [passkeyInput, setPasskeyInput] = useState('');
   const [passkeyError, setPasskeyError] = useState('');
   const [localIsAdmin, setLocalIsAdmin] = useState(currentUser?.user_metadata?.role === 'admin');
+
+  // Direct Admin Login Form State if not logged in
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Pending tree adoptions awaiting admin confirmation
   const [pendingTrees, setPendingTrees] = useState([
@@ -48,21 +53,75 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
 
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
 
+  // Unlock Admin with Passkey
   const handleUnlockAdmin = async (e) => {
     e.preventDefault();
     setPasskeyError('');
 
-    if (passkeyInput === 'TARUVAR_ADMIN_2026' || passkeyInput === 'taruvar2026') {
+    if (passkeyInput === 'TARUVAR_ADMIN_2026' || passkeyInput === 'taruvar2026' || passkeyInput === 'admin2026') {
       setLocalIsAdmin(true);
       if (supabase && currentUser) {
+        // Permanently set role: 'admin' in Supabase user metadata
         await supabase.auth.updateUser({
           data: { role: 'admin' }
         });
       }
       confetti({ particleCount: 60, spread: 60 });
-      if (showToast) showToast('Admin Access Unlocked!');
+      if (showToast) showToast('Admin Role Activated Permanently!');
     } else {
-      setPasskeyError('Invalid Admin Secret Passkey. Only the Taruvar founder can approve requests.');
+      setPasskeyError('Invalid Secret Passkey. Only the Taruvar founder can approve requests.');
+    }
+  };
+
+  // Direct Admin Login / Register
+  const handleAdminDirectLogin = async (e) => {
+    e.preventDefault();
+    setPasskeyError('');
+    setAuthLoading(true);
+
+    if (passkeyInput !== 'TARUVAR_ADMIN_2026' && passkeyInput !== 'taruvar2026' && passkeyInput !== 'admin2026') {
+      setPasskeyError('Invalid Admin Passkey. Please enter TARUVAR_ADMIN_2026.');
+      setAuthLoading(false);
+      return;
+    }
+
+    try {
+      if (supabase) {
+        // Try sign in
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: adminEmail,
+          password: adminPassword
+        });
+
+        if (error) {
+          // Try sign up if user doesn't exist
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: adminEmail,
+            password: adminPassword,
+            options: {
+              data: { full_name: 'Taruvar Admin', role: 'admin' }
+            }
+          });
+          if (signUpError) throw signUpError;
+          setLocalIsAdmin(true);
+          if (showToast) showToast('Admin Account Created & Activated!');
+        } else {
+          // Upgrade to admin role permanently
+          await supabase.auth.updateUser({
+            data: { role: 'admin' }
+          });
+          setLocalIsAdmin(true);
+          if (showToast) showToast('Welcome Admin! Approval desk unlocked.');
+        }
+      } else {
+        setLocalIsAdmin(true);
+        if (showToast) showToast('Admin Access Unlocked!');
+      }
+      confetti({ particleCount: 70, spread: 70 });
+    } catch (err) {
+      setPasskeyError(err.message || 'Authentication error.');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -101,46 +160,117 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
 
         <div className="space-y-2">
           <span className="px-3 py-1 bg-amber-100 text-amber-900 text-xs font-bold rounded-full border border-amber-300">
-            RESTRICTED ADMIN AREA
+            INTERNAL ADMIN DESK
           </span>
-          <h2 className="text-2xl font-extrabold text-taruvar-dark">Admin Verification Desk</h2>
+          <h2 className="text-2xl font-extrabold text-taruvar-dark">Founder & Admin Verification</h2>
           <p className="text-xs text-taruvar-muted leading-relaxed">
-            Only Taruvar team admins can approve tree adoptions and verify 5-month growth reports. Normal users cannot access approval controls.
+            Enter your secret founder passkey below to unlock permanent admin approval privileges.
           </p>
         </div>
 
         {passkeyError && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+          <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2 text-left">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{passkeyError}</span>
           </div>
         )}
 
-        <form onSubmit={handleUnlockAdmin} className="space-y-4 bg-white p-6 rounded-3xl border border-taruvar-border shadow-card text-left">
-          <div>
-            <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1">
-              Enter Admin Secret Passkey *
-            </label>
-            <div className="relative">
-              <KeyRound className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
-              <input
-                type="password"
-                required
-                value={passkeyInput}
-                onChange={(e) => setPasskeyInput(e.target.value)}
-                placeholder="Admin Passkey"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
-              />
+        {currentUser ? (
+          /* User is logged in: Just needs passkey to permanently activate Admin role */
+          <form onSubmit={handleUnlockAdmin} className="space-y-4 bg-white p-6 rounded-3xl border border-taruvar-border shadow-card text-left">
+            <div className="p-3 bg-taruvar-light rounded-2xl text-xs text-taruvar-dark flex items-center gap-2">
+              <User className="w-4 h-4 text-taruvar-secondary" />
+              <span>Logged in as: <strong>{currentUser.email}</strong></span>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold rounded-xl text-xs shadow transition-all flex items-center justify-center gap-2"
-          >
-            <KeyRound className="w-4 h-4" /> Unlock Admin Approval Controls
-          </button>
-        </form>
+            <div>
+              <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1">
+                Enter Admin Secret Passkey *
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
+                <input
+                  type="password"
+                  required
+                  value={passkeyInput}
+                  onChange={(e) => setPasskeyInput(e.target.value)}
+                  placeholder="Passkey (TARUVAR_ADMIN_2026)"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold rounded-xl text-xs shadow transition-all flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4" /> Activate Permanent Admin Role
+            </button>
+          </form>
+        ) : (
+          /* User is not logged in: Log In / Create Admin Account with Passkey */
+          <form onSubmit={handleAdminDirectLogin} className="space-y-3 bg-white p-6 rounded-3xl border border-taruvar-border shadow-card text-left">
+            <div>
+              <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1">
+                Admin Email *
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
+                <input
+                  type="email"
+                  required
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  placeholder="admin@taruvar.org"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1">
+                Admin Password *
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">
+                Admin Secret Passkey *
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-amber-600 absolute left-3.5 top-3" />
+                <input
+                  type="password"
+                  required
+                  value={passkeyInput}
+                  onChange={(e) => setPasskeyInput(e.target.value)}
+                  placeholder="TARUVAR_ADMIN_2026"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-amber-300 bg-amber-50/50 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold rounded-xl text-xs shadow transition-all flex items-center justify-center gap-2 mt-2"
+            >
+              {authLoading ? 'Authenticating...' : <><ShieldCheck className="w-4 h-4" /> Log In & Unlock Admin Desk</>}
+            </button>
+          </form>
+        )}
       </div>
     );
   }

@@ -2,11 +2,11 @@ import React from 'react';
 import { 
   Sprout, Droplets, Camera, TreePine, Heart, ArrowRight, Sparkles, 
   Users, Award, BookOpen, ShieldCheck, CheckCircle2, ChevronRight,
-  Globe, Compass, Check
+  Globe, Compass, Check, UserPlus, Play
 } from 'lucide-react';
 import TreeJourneySandbox from '../components/TreeJourneySandbox';
 
-export default function HomePage({ setActivePage, onOpenPledge, showToast, onNavigateGetInvolved }) {
+export default function HomePage({ setActivePage, onOpenPledge, showToast, onNavigateGetInvolved, onOpenAuth, currentUser }) {
 
   // Core 4 Initiatives
   const initiativesData = [
@@ -44,28 +44,51 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
     }
   ];
 
+  const handleJoinClick = () => {
+    if (currentUser) {
+      setActivePage('profile');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (onOpenAuth) {
+      onOpenAuth();
+    } else if (onNavigateGetInvolved) {
+      onNavigateGetInvolved('volunteer');
+    }
+  };
+
   return (
     <div className="space-y-20 md:space-y-28 pb-16">
       
-      {/* SECTION 1 — HERO WITH GROWING TREE BACKGROUND */}
-      <section className="relative min-h-[580px] sm:min-h-[640px] flex items-center justify-center text-white overflow-hidden bg-taruvar-dark">
+      {/* SECTION 1 — HERO WITH CINEMATIC GROWING TREE TIME-LAPSE VIDEO BACKGROUND */}
+      <section className="relative min-h-[620px] sm:min-h-[700px] flex items-center justify-center text-white overflow-hidden bg-black">
         
-        {/* Background Image: Lush Growing Tree & Canopy */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-105 transition-transform duration-1000"
-          style={{ 
-            backgroundImage: `url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2000&q=80')` 
-          }}
+        {/* Background Video: Sprouting & Growing Tree Time-lapse */}
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          poster="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2000&q=80"
+          className="absolute inset-0 w-full h-full object-cover object-center transform scale-105 opacity-65"
         >
-          {/* Rich Gradient Overlay for High Contrast & Readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-taruvar-dark via-taruvar-dark/75 to-taruvar-dark/50 backdrop-blur-[1px]"></div>
-        </div>
+          {/* High quality royalty-free nature & plant growth time-lapse videos */}
+          <source 
+            src="https://cdn.pixabay.com/video/2020/04/18/36423-412217622_large.mp4" 
+            type="video/mp4" 
+          />
+          <source 
+            src="https://assets.mixkit.co/videos/preview/mixkit-young-plant-growing-in-the-soil-time-lapse-42984-large.mp4" 
+            type="video/mp4" 
+          />
+        </video>
+
+        {/* Rich Multi-layer Gradient Overlay for Optimal Text Contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-taruvar-dark via-taruvar-dark/75 to-black/60 backdrop-blur-[0.5px]"></div>
 
         {/* Hero Content Container */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 py-16">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 py-16 sm:py-24">
           
           {/* Movement Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md text-taruvar-accent text-xs font-bold rounded-full border border-white/20 shadow-lg">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/15 backdrop-blur-md text-taruvar-accent text-xs font-bold rounded-full border border-white/20 shadow-xl animate-fade-in">
             <Sparkles className="w-4 h-4 text-taruvar-accent" />
             <span>ONE PERSON. ONE TREE. • एक व्यक्ति, एक पेड़</span>
           </div>
@@ -82,37 +105,41 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
           </p>
 
           {/* Primary & Secondary Hero Action Buttons */}
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto">
+            
+            {/* 1. Main Button: Grow / Adopt Your Tree */}
             <button
               onClick={onOpenPledge}
-              className="w-full sm:w-auto px-8 py-4 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-extrabold text-base rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-2.5 group"
+              className="w-full sm:w-auto px-8 py-4 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-extrabold text-base rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-2.5 group cursor-pointer"
             >
               <Sprout className="w-5 h-5 text-taruvar-dark" />
               <span>Grow / Adopt Your Tree</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
 
+            {/* 2. Join as a User / Register Button (100% Functional) */}
             <button
-              onClick={() => onNavigateGetInvolved ? onNavigateGetInvolved('volunteer') : setActivePage('get-involved')}
-              className="w-full sm:w-auto px-8 py-4 bg-white/15 hover:bg-white/25 text-white font-bold text-base rounded-2xl border border-white/30 backdrop-blur-md transition-all flex items-center justify-center gap-2"
+              onClick={handleJoinClick}
+              className="w-full sm:w-auto px-8 py-4 bg-white/20 hover:bg-white/30 text-white font-bold text-base rounded-2xl border border-white/40 backdrop-blur-md transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Users className="w-5 h-5 text-taruvar-accent" />
-              <span>Join as Member / शामिल हों</span>
+              <UserPlus className="w-5 h-5 text-taruvar-accent" />
+              <span>{currentUser ? 'My Tree Journey / प्रोफाइल' : 'Join as a User / रजिस्टर करें'}</span>
             </button>
+
           </div>
 
           {/* Clean 3-Pillar Summary Bar */}
           <div className="pt-8 border-t border-white/15 flex flex-wrap items-center justify-center gap-6 sm:gap-12 text-xs font-semibold text-gray-300">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-taruvar-accent"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-taruvar-accent animate-pulse"></span>
               <span>1. Plant (पौधारोपण)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-taruvar-primary"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-taruvar-primary animate-pulse"></span>
               <span>2. Care & Paalna (देखभाल)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span>3. Document & Grow (सत्यापन)</span>
             </div>
           </div>

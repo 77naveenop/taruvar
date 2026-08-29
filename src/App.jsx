@@ -88,6 +88,8 @@ export default function App() {
             onOpenPledge={() => setIsPledgeOpen(true)}
             showToast={showToast} 
             onNavigateGetInvolved={navigateToGetInvolved}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            currentUser={currentUser}
           />
         )}
 
