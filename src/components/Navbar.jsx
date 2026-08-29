@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight, User, LogOut, LogIn, Download, Sparkles, ShieldCheck } from 'lucide-react';
+import { Menu, X, ArrowRight, User, LogOut, LogIn, Download, ShieldCheck } from 'lucide-react';
 
 export default function Navbar({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,6 +46,9 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
     }
   };
 
+  const isAdmin = currentUser?.user_metadata?.role === 'admin';
+
+  // Base public links (Admin Desk is hidden from regular visitors)
   const navLinks = [
     { id: 'home', label: 'Home' },
     { id: 'about', label: 'Our Mission' },
@@ -53,7 +56,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
     { id: 'profile', label: 'My Journey & Feed' },
     { id: 'initiatives', label: 'Initiatives' },
     { id: 'get-involved', label: 'Get Involved' },
-    { id: 'admin', label: 'Admin Desk' }
+    ...(isAdmin ? [{ id: 'admin', label: 'Admin Desk 🔒' }] : [])
   ];
 
   const handleNavClick = (id) => {
@@ -179,7 +182,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             {currentUser ? (
               <div className="flex items-center justify-between w-full">
                 <button onClick={() => handleNavClick('profile')} className="text-xs font-bold text-taruvar-dark flex items-center gap-2 hover:underline">
-                  <User className="w-4 h-4 text-taruvar-secondary" /> {displayName} (My Profile)
+                  <User className="w-4 h-4 text-taruvar-secondary" /> {displayName} {isAdmin && <span className="px-2 py-0.5 bg-taruvar-secondary text-white rounded-full text-[10px]">Admin</span>}
                 </button>
                 <button 
                   onClick={onLogout} 
@@ -227,7 +230,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
               }}
               className="w-full py-4 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-extrabold rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base transition-all"
             >
-              <span>Adopt & Care for a Tree</span>
+              <span>Grow / Adopt Your Tree</span>
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

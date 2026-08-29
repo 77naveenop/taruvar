@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Lock, LogIn, UserPlus, AlertCircle, KeyRound } from 'lucide-react';
+import { X, User, Mail, Lock, LogIn, UserPlus, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
-  const [mode, setMode] = useState('register'); // 'register' | 'login' | 'admin-login'
+  const [mode, setMode] = useState('register'); // 'register' | 'login'
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [adminPasskey, setAdminPasskey] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +25,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           return;
         }
 
-        // Standard signup always creates role: 'user'
+        // Standard signup creates role: 'user'
         if (supabase) {
           const { data, error } = await supabase.auth.signUp({
             email,
@@ -34,7 +33,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             options: {
               data: { 
                 full_name: fullName,
-                role: 'user' // Default normal user role
+                role: 'user'
               }
             }
           });
@@ -48,7 +47,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           onAuthSuccess(userObj, `Welcome to Taruvar, ${fullName}!`);
         }
       } else if (mode === 'login') {
-        // Standard User Login
+        // Standard User / Admin Login (role detected automatically from backend)
         if (supabase) {
           const { data, error } = await supabase.auth.signInWithPassword({
             email,
@@ -64,33 +63,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           const displayName = fullName || email.split('@')[0];
           const userObj = { id: 'demo-' + Date.now(), email, user_metadata: { full_name: displayName, role: 'user' } };
           onAuthSuccess(userObj, `Welcome back, ${displayName}!`);
-        }
-      } else if (mode === 'admin-login') {
-        // Owner Admin Login with Passkey
-        if (adminPasskey !== 'TARUVAR_ADMIN_2026' && adminPasskey !== 'taruvar2026') {
-          setErrorMsg('Invalid Admin Secret Passkey. Only the Taruvar founder can log in as Admin.');
-          setLoading(false);
-          return;
-        }
-
-        if (supabase) {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-
-          if (error) throw error;
-
-          // Upgrade user metadata to role: 'admin'
-          await supabase.auth.updateUser({
-            data: { role: 'admin' }
-          });
-
-          const userObj = { ...data.user, user_metadata: { ...data.user.user_metadata, role: 'admin' } };
-          onAuthSuccess(userObj, `Admin Portal unlocked! Welcome Admin.`);
-        } else {
-          const userObj = { id: 'admin-owner', email, user_metadata: { full_name: 'Taruvar Admin', role: 'admin' } };
-          onAuthSuccess(userObj, `Welcome Admin!`);
         }
       }
       onClose();
@@ -112,9 +84,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             <span className="p-1.5 bg-taruvar-primary/20 rounded-xl text-taruvar-secondary font-bold text-base">🌱</span>
             <div>
               <h3 className="font-bold text-taruvar-dark text-base leading-tight">
-                {mode === 'register' ? 'Join Taruvar Movement' : mode === 'login' ? 'User Login' : 'Admin Portal Access'}
+                {mode === 'register' ? 'Join Taruvar Movement' : 'Log In to Taruvar'}
               </h3>
-              <p className="text-[11px] text-taruvar-muted">taruvar.org • Simple & Secure</p>
+              <p className="text-[11px] text-taruvar-muted">taruvar.org • One Person. One Tree.</p>
             </div>
           </div>
           <button 
@@ -126,7 +98,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </button>
         </div>
 
-        {/* Tab Switcher */}
+        {/* Tab Switcher (Only Register & Login) */}
         <div className="flex border-b border-taruvar-border bg-gray-50/50 p-1 shrink-0 text-xs">
           <button
             type="button"
@@ -135,7 +107,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               mode === 'register' ? 'bg-white text-taruvar-secondary shadow-sm' : 'text-taruvar-muted hover:text-taruvar-dark'
             }`}
           >
-            <UserPlus className="w-3.5 h-3.5 inline mr-1" /> Register
+            <UserPlus className="w-3.5 h-3.5 inline mr-1" /> Register / नया खाता
           </button>
           <button
             type="button"
@@ -144,17 +116,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               mode === 'login' ? 'bg-white text-taruvar-secondary shadow-sm' : 'text-taruvar-muted hover:text-taruvar-dark'
             }`}
           >
-            <LogIn className="w-3.5 h-3.5 inline mr-1" /> User Login
-          </button>
-          <button
-            type="button"
-            onClick={() => { setMode('admin-login'); setErrorMsg(''); }}
-            className={`px-3 py-2 font-bold rounded-xl transition-all ${
-              mode === 'admin-login' ? 'bg-taruvar-dark text-white shadow-sm' : 'text-taruvar-muted hover:text-taruvar-dark'
-            }`}
-            title="Owner Admin Access"
-          >
-            <KeyRound className="w-3.5 h-3.5 inline" /> Admin
+            <LogIn className="w-3.5 h-3.5 inline mr-1" /> Log In / प्रवेश
           </button>
         </div>
 
@@ -222,26 +184,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               </div>
             </div>
 
-            {mode === 'admin-login' && (
-              <div>
-                <label className="block text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">
-                  Admin Secret Passkey *
-                </label>
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 text-amber-600 absolute left-3.5 top-3" />
-                  <input
-                    type="password"
-                    required
-                    value={adminPasskey}
-                    onChange={(e) => setAdminPasskey(e.target.value)}
-                    placeholder="Enter Admin Secret Passkey"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-amber-300 bg-amber-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-                <p className="text-[10px] text-amber-700 mt-1">Default Admin Passkey: TARUVAR_ADMIN_2026</p>
-              </div>
-            )}
-
             <button
               type="submit"
               disabled={loading}
@@ -251,15 +193,11 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 <span className="text-xs">Processing...</span>
               ) : mode === 'register' ? (
                 <>
-                  <UserPlus className="w-4 h-4" /> Create Account (User Role)
-                </>
-              ) : mode === 'login' ? (
-                <>
-                  <LogIn className="w-4 h-4" /> Log In to Account
+                  <UserPlus className="w-4 h-4" /> Create Account / खाता बनाएं
                 </>
               ) : (
                 <>
-                  <KeyRound className="w-4 h-4" /> Unlock Admin Access
+                  <LogIn className="w-4 h-4" /> Log In / लॉगिन करें
                 </>
               )}
             </button>
@@ -268,7 +206,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
         {/* Footer Note */}
         <div className="bg-taruvar-bg px-6 py-3 border-t border-taruvar-border text-center text-[11px] text-taruvar-muted shrink-0">
-          Normal signups get standard User role. Only founders can unlock Admin mode.
+          Plant • Care • Document • Grow | taruvar.org
         </div>
 
       </div>

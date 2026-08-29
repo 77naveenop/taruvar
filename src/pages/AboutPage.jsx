@@ -132,7 +132,7 @@ export default function AboutPage({ onOpenPledge, setActivePage }) {
             onClick={onOpenPledge}
             className="px-6 py-3 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-bold text-xs rounded-xl transition-all"
           >
-            Pledge Your Tree
+            Grow / Adopt Your Tree
           </button>
         </div>
       </section>

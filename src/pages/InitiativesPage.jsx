@@ -19,7 +19,7 @@ export default function InitiativesPage({ setActivePage, onOpenPledge }) {
         'Simple 5-step framework: Plant → Care → Document → Grow → Inspire.'
       ],
       target: 'Individuals, Families, Neighborhood Residents',
-      cta: 'Start Your Tree Pledge',
+      cta: 'Grow / Adopt Your Tree',
       action: onOpenPledge
     },
     {
