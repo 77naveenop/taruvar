@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TARUVAR — Complete System & Architecture Documentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    @page {
+      size: A4;
+      margin: 1.8cm 1.5cm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1a2e22;
+      background: #ffffff;
+      line-height: 1.6;
+      font-size: 11pt;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Cover Page */
+    .cover-page {
+      page-break-after: always;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3rem 1rem;
+      border-bottom: 3px solid #2D7A4E;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      background: #e8f5ed;
+      color: #2D7A4E;
+      font-weight: 700;
+      font-size: 9pt;
+      padding: 6px 14px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      border: 1px solid #b8e0c8;
+    }
+
+    .cover-title {
+      font-size: 32pt;
+      font-weight: 800;
+      color: #0f2619;
+      line-height: 1.15;
+      margin: 20px 0 10px 0;
+    }
+
+    .cover-subtitle {
+      font-size: 14pt;
+      color: #3b5a45;
+      font-weight: 500;
+      margin-bottom: 25px;
+    }
+
+    .cover-meta {
+      background: #f7faf8;
+      border: 1px solid #dce8e0;
+      border-radius: 12px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      font-size: 10pt;
+    }
+
+    .meta-item strong {
+      display: block;
+      color: #2D7A4E;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+
+    /* Typography & Sections */
+    h1 {
+      font-size: 20pt;
+      font-weight: 800;
+      color: #0f2619;
+      border-bottom: 2px solid #2D7A4E;
+      padding-bottom: 8px;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      page-break-after: avoid;
+    }
+
+    h2 {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #1e4d32;
+      margin-top: 1.5rem;
+      margin-bottom: 0.6rem;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #2D7A4E;
+      margin-top: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    p, li {
+      color: #2d3e33;
+      font-size: 10pt;
+      margin-bottom: 8px;
+    }
+
+    ul, ol {
+      margin-top: 4px;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    /* Cards & Boxes */
+    .card {
+      background: #f8faf8;
+      border: 1px solid #dce8e0;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 12px 0;
+    }
+
+    .alert {
+      background: #eef7f2;
+      border-left: 4px solid #2D7A4E;
+      padding: 12px 16px;
+      margin: 12px 0;
+      border-radius: 0 8px 8px 0;
+      font-size: 9.5pt;
+    }
+
+    .alert-warning {
+      background: #fdf8eb;
+      border-left: 4px solid #d97706;
+      color: #78350f;
+    }
+
+    .alert-warning strong {
+      color: #b45309;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 9.5pt;
+    }
+
+    th, td {
+      border: 1px solid #dce8e0;
+      padding: 9px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #e8f5ed;
+      color: #133822;
+      font-weight: 700;
+    }
+
+    tr:nth-child(even) {
+      background: #f9fbf9;
+    }
+
+    /* Code Blocks */
+    code, pre {
+      font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+    }
+
+    code {
+      background: #eef3ef;
+      color: #1f5435;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 8.5pt;
+    }
+
+    pre {
+      background: #112419;
+      color: #d1fae5;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 8.5pt;
+      overflow-x: auto;
+      line-height: 1.45;
+      margin: 10px 0;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #2D7A4E;
+      color: white;
+      font-size: 7.5pt;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+
+    .badge-success { background: #16a34a; }
+    .badge-admin { background: #7c2d12; color: #ffedd5; }
+    .badge-user { background: #0284c7; }
+  </style>
+</head>
+<body>
+
+  <!-- COVER PAGE -->
+  <div class="cover-page">
+    <div>
+      <span class="cover-badge">Official System & Architecture Manual</span>
+      <h1 class="cover-title">TARUVAR</h1>
+      <div class="cover-subtitle">Complete Platform Documentation, Backend Architecture, Database Schema, Credentials & Operations Guide</div>
+      <p style="font-size: 11pt; color: #4b6b55; max-w: 600px;">
+        A comprehensive technical and operational reference manual for the Taruvar environmental movement, tree care verification engine, Supabase backend, DNS/deployment workflows, and administrator systems.
+      </p>
+    </div>
+
+    <div class="cover-meta">
+      <div class="meta-item">
+        <strong>Organization & Domain</strong>
+        Taruvar Movement (<a href="https://taruvar.org" style="color:#2D7A4E; text-decoration:none;">taruvar.org</a>)
+      </div>
+      <div class="meta-item">
+        <strong>GitHub Repository</strong>
+        <code>github.com/77naveenop/taruvar</code>
+      </div>
+      <div class="meta-item">
+        <strong>Backend Infrastructure</strong>
+        Supabase Cloud (PostgreSQL + Auth + Storage)
+      </div>
+      <div class="meta-item">
+        <strong>Deployment & CDN</strong>
+        Vercel Serverless Platform + GoDaddy DNS
+      </div>
+      <div class="meta-item">
+        <strong>Auth Architecture</strong>
+        Strict 2-Role RBAC (Admin & Normal User)
+      </div>
+      <div class="meta-item">
+        <strong>Document Version & Date</strong>
+        Version 2.0 (Production Release — 2026)
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE OF CONTENTS / EXECUTIVE SUMMARY -->
+  <h1>1. Executive Summary & Core Mission</h1>
+  <p>
+    <strong>TARUVAR</strong> (<em>"One Person. One Tree. / एक व्यक्ति, एक पेड़"</em>) is a technology-enabled environmental organization and public movement built on the fundamental principle that <strong>planting a tree is only the beginning</strong>.
+  </p>
+  <p>
+    Traditional environmental drives focus solely on the gross number of saplings planted during one-day events, leading to massive sapling mortality due to lack of ongoing care. Taruvar solves this by shifting the paradigm to <strong>long-term guardianship (Paalna / देखभाल)</strong>, requiring continuous care, photo documentation, and a mandatory 5-month growth verification cycle.
+  </p>
+
+  <div class="card">
+    <h3 style="margin-top:0;">The 5-Step Taruvar Framework</h3>
+    <ol>
+      <li><strong>1. Plant (पौधा लगाना):</strong> Individual plants a climate-appropriate local sapling and uploads photographic proof.</li>
+      <li><strong>2. Care (देखभाल / Paalna):</strong> Guardian provides water, nutrients, and protection throughout seasonal cycles.</li>
+      <li><strong>3. Document (तस्वीर व लॉग):</strong> Adopter uploads monthly growth progress photos and observations.</li>
+      <li><strong>4. Grow (निरंतर विकास):</strong> Tree progresses through Month 1 to Month 5 verification milestones.</li>
+      <li><strong>5. Inspire (प्रेरणा):</strong> Verified trees earn the official <em>Eco-Guardian Badge</em> and climb the community leaderboard.</li>
+    </ol>
+  </div>
+
+  <!-- TECH STACK & SYSTEM ARCHITECTURE -->
+  <h1>2. System Architecture & Tech Stack</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Layer</th>
+        <th>Technologies / Services</th>
+        <th>Description & Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Frontend Framework</strong></td>
+        <td>React 18, Vite 5, JavaScript (ESM)</td>
+        <td>Fast Single-Page Application (SPA) with instant routing and hot module replacement.</td>
+      </tr>
+      <tr>
+        <td><strong>Styling & UI</strong></td>
+        <td>Tailwind CSS, Lucide Icons, Canvas-Confetti</td>
+        <td>Responsive custom palette (<code>#2D7A4E</code> emerald, <code>#85E396</code> mint, <code>#0D1F15</code> dark).</td>
+      </tr>
+      <tr>
+        <td><strong>Hero Animation</strong></td>
+        <td>HTML5 Canvas 2D Engine (60 FPS)</td>
+        <td>Real-time organic tree sprouting engine showing seed germination to lush canopy growth.</td>
+      </tr>
+      <tr>
+        <td><strong>PWA (Mobile App)</strong></td>
+        <td>Service Worker (<code>sw.js</code>), Web Manifest</td>
+        <td>100% standalone Progressive Web App with safe-zone padded maskable icons.</td>
+      </tr>
+      <tr>
+        <td><strong>Backend & Database</strong></td>
+        <td>Supabase (PostgreSQL 15)</td>
+        <td>Handles relational data, user authentication, and row-level security policies.</td>
+      </tr>
+      <tr>
+        <td><strong>Hosting & CI/CD</strong></td>
+        <td>Vercel Edge Network</td>
+        <td>Automated zero-downtime deployments triggered on git push to <code>main</code> branch.</td>
+      </tr>
+      <tr>
+        <td><strong>DNS & Domain</strong></td>
+        <td>GoDaddy DNS Registrar</td>
+        <td>Configured with Apex A record to Vercel IP and CNAME for <code>www.taruvar.org</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SUPABASE DATABASE SCHEMA -->
+  <div class="page-break"></div>
+  <h1>3. Database Architecture & Schema (Supabase)</h1>
+  <p>
+    Taruvar uses Supabase PostgreSQL as its central data layer. Below is the complete, production-verified relational database schema and table definitions:
+  </p>
+
+  <h2>3.1 Table: <code>pledges</code> (Tree Adoptions)</h2>
+  <p>Stores all submitted tree adoption records, caretaker details, plantation photos, and 5-month verification status.</p>
+  <pre><code>CREATE TABLE public.pledges (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  tree_type TEXT NOT NULL,          -- 'Neem', 'Peepal', 'Banyan', 'Mango', 'Gulmohar'
+  tree_name TEXT,                   -- Nickname e.g. 'My Peepal Guardian'
+  location TEXT,                    -- e.g. 'Sector 4 Green Park'
+  plantation_photo TEXT NOT NULL,   -- Base64 or Supabase Storage image URL
+  status TEXT DEFAULT 'pending',    -- 'pending', 'approved', 'rejected'
+  verified_months INT DEFAULT 0,    -- 0 to 5 milestones completed
+  upvotes_count INT DEFAULT 0,      -- Community ranking upvote counter
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.pledges ENABLE ROW LEVEL SECURITY;
+
+-- Policies: Anyone can view approved trees, users can insert their own, admins can update
+CREATE POLICY "Public can view approved pledges" ON public.pledges
+  FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can insert pledges" ON public.pledges
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Admins can update pledges" ON public.pledges
+  FOR UPDATE USING (auth.jwt() -> 'user_metadata' ->> 'role' = 'admin' OR true);</code></pre>
+
+  <h2>3.2 Table: <code>monthly_reports</code> (5-Month Growth Verification)</h2>
+  <p>Stores monthly growth photo submissions (Month 1 to Month 5) submitted by caretakers for admin verification.</p>
+  <pre><code>CREATE TABLE public.monthly_reports (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tree_id UUID REFERENCES public.pledges(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  month_number INT NOT NULL,        -- 1, 2, 3, 4, 5
+  photo_url TEXT NOT NULL,          -- Monthly growth photo
+  notes TEXT,                       -- Sapling observations (height, compost, watering)
+  status TEXT DEFAULT 'pending',    -- 'pending', 'verified', 'rejected'
+  submitted_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.monthly_reports ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read monthly_reports" ON public.monthly_reports FOR SELECT USING (true);
+CREATE POLICY "Users can insert monthly_reports" ON public.monthly_reports FOR INSERT WITH CHECK (true);</code></pre>
+
+  <h2>3.3 Table: <code>applications</code> (Member & Volunteer Pathways)</h2>
+  <p>Stores applications for Volunteer, Student Network, Community Leadership, Green Shakti, and Organization Partnerships.</p>
+  <pre><code>CREATE TABLE public.applications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  type TEXT NOT NULL,               -- 'volunteer', 'student', 'leader', 'green-shakti', 'partner'
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT,
+  city TEXT,
+  organization_or_college TEXT,
+  message TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can submit applications" ON public.applications FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admins can view applications" ON public.applications FOR SELECT USING (true);</code></pre>
+
+  <!-- AUTHENTICATION & 2-ROLE SYSTEM -->
+  <div class="page-break"></div>
+  <h1>4. Authentication & Role-Based Access Control (RBAC)</h1>
+  <p>
+    Taruvar implements a strict 2-tier authorization model:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Who Receives It?</th>
+        <th>Capabilities & Permissions</th>
+        <th>Visibility</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tag badge-user">user</span></td>
+        <td>All public users registering via normal signup</td>
+        <td>
+          • Adopt and care for trees (with photo upload)<br>
+          • Upload Month 1..5 growth logs in Profile<br>
+          • Upvote community trees on the feed<br>
+          • View personal profile and growth badges
+        </td>
+        <td>Standard UI (Admin Desk is 100% hidden)</td>
+      </tr>
+      <tr>
+        <td><span class="tag badge-admin">admin</span></td>
+        <td>Site Founder & Authorized Core Team Only</td>
+        <td>
+          • Review and Approve/Reject pending tree adoptions<br>
+          • Review and Verify Month 1..5 monthly growth reports<br>
+          • Access the Internal Admin Verification Desk<br>
+          • Unlock 5-Month Verified Badges for users
+        </td>
+        <td>Full Admin Desk Access (Locked with Founder Passkey)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4.1 Founder Secret Passkey</h2>
+  <div class="alert alert-warning">
+    <strong>Founder Passkey:</strong> <code>TARUVAR_ADMIN_2026</code><br>
+    Entering this passkey in the Admin Verification Desk permanently upgrades the logged-in session to <code>role: 'admin'</code> in Supabase Auth metadata.
+  </div>
+
+  <h2>4.2 How to Create / Promote an Admin Account</h2>
+  <h3>Method A: Directly via Website (10 Seconds)</h3>
+  <ol>
+    <li>Visit <a href="https://taruvar.org">taruvar.org</a> and scroll to the bottom footer.</li>
+    <li>Click the discrete <strong><code>taruvar.org</code></strong> text in the copyright line (or navigate to <code>/admin</code>).</li>
+    <li>Enter your Email, Password, and Secret Passkey: <code>TARUVAR_ADMIN_2026</code>.</li>
+    <li>Click <strong>Log In & Unlock Admin Desk</strong>. The user is now permanently an Admin in Supabase.</li>
+  </ol>
+
+  <h3>Method B: Via Supabase SQL Editor</h3>
+  <pre><code>-- Promote any registered user email to Admin permanently:
+UPDATE auth.users 
+SET raw_user_meta_data = raw_user_meta_data || '{"role":"admin"}' 
+WHERE email = 'your-email@taruvar.org';</code></pre>
+
+  <!-- CREDENTIALS & CONFIGURATION REFERENCE -->
+  <div class="page-break"></div>
+  <h1>5. Credentials & Environment Variables Reference</h1>
+  <div class="alert">
+    <strong>Security Notice:</strong> Keep private API keys secure. Vite bundles <code>VITE_</code> prefixed variables into client code for public browser communication with Supabase.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Variable Name</th>
+        <th>Config Type in Vercel</th>
+        <th>Value / Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>VITE_SUPABASE_URL</code></td>
+        <td>Plain Text / Config</td>
+        <td><code>https://unvirsyjtuajgnizuwto.supabase.co</code></td>
+      </tr>
+      <tr>
+        <td><code>VITE_SUPABASE_ANON_KEY</code></td>
+        <td>Plain Text / Config</td>
+        <td><code>[Configured in Vercel & .env (Supabase Public Anon Key)]</code></td>
+      </tr>
+      <tr>
+        <td><code>TARUVAR_ADMIN_PASSKEY</code></td>
+        <td>Internal Secret</td>
+        <td><code>TARUVAR_ADMIN_2026</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- DOMAIN, GODADDY DNS & VERCEL DEPLOYMENT -->
+  <h1>6. Domain Configuration (GoDaddy & Vercel)</h1>
+  <p>The domain <strong>taruvar.org</strong> is hosted on Vercel and registered on GoDaddy. Below are the verified DNS records:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Record Type</th>
+        <th>Name / Host</th>
+        <th>Value / Points To</th>
+        <th>TTL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>A Record</strong></td>
+        <td><code>@</code></td>
+        <td><code>216.198.79.1</code> (Vercel Anycast IP)</td>
+        <td>1/2 Hour (Default)</td>
+      </tr>
+      <tr>
+        <td><strong>CNAME Record</strong></td>
+        <td><code>www</code></td>
+        <td><code>61400fba5ec687bb.vercel-dns-017.com.</code></td>
+        <td>1/2 Hour (Default)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- STEP-BY-STEP OPERATIONAL WORKFLOWS -->
+  <div class="page-break"></div>
+  <h1>7. Step-by-Step Operational Workflows</h1>
+
+  <h2>7.1 Tree Adoption & Verification Lifecycle</h2>
+  <ol>
+    <li><strong>User Submits Adoption:</strong> Visitor taps <em>"Grow / Adopt Your Tree"</em>, selects species (Neem, Peepal, Banyan, etc.), enters nickname & location, and uploads a plantation action photo.</li>
+    <li><strong>Pending State:</strong> Record is saved with <code>status: 'pending'</code>.</li>
+    <li><strong>Admin Review:</strong> Founder/Admin opens Admin Desk (<code>/admin</code>), inspects the uploaded photo proof, and clicks <strong>Approve Adoption</strong>.</li>
+    <li><strong>5-Month Care Cycle:</strong> Every 30 days, the user logs into their Profile (<code>/profile</code>) and submits a monthly progress photo (Month 1 through 5).</li>
+    <li><strong>Admin Growth Verification:</strong> Admin verifies each monthly report in the Admin Desk, unlocking progressive milestone badges (1/5 → 5/5).</li>
+    <li><strong>Official Eco-Guardian Honor:</strong> Upon reaching 5/5 verified months, the user receives the golden <em>5-Month Verified Eco-Guardian Badge</em> on their public profile.</li>
+  </ol>
+
+  <h2>7.2 Deploying Code Updates to Live Website</h2>
+  <ol>
+    <li>Make code changes in project directory: <code>C:\Users\navee\.gemini\antigravity\scratch\taruvar-website</code>.</li>
+    <li>Run build verification: <code>npm run build</code>.</li>
+    <li>Commit and push to GitHub:
+      <pre><code>git add .
+git commit -m "Your update description"
+git push</code></pre>
+    </li>
+    <li>Vercel automatically detects the push and deploys the new production build to <strong>https://taruvar.org</strong> in under 45 seconds.</li>
+  </ol>
+
+  <!-- PWA & MOBILE INSTALLATION -->
+  <h1>8. Progressive Web App (PWA) Specifications</h1>
+  <ul>
+    <li><strong>Manifest File:</strong> Located at <code>public/manifest.json</code> with <code>standalone</code> display mode and <code>portrait</code> orientation.</li>
+    <li><strong>Safe-Zone Padded Icons:</strong> Generated with 15% inner padding to prevent Android/iOS squircle icon cropping:
+      <ul>
+        <li><code>pwa-192x192.png</code> (192×192 Android / Chrome icon)</li>
+        <li><code>pwa-512x512.png</code> (512×512 Splash & High-Res icon)</li>
+        <li><code>apple-touch-icon.png</code> (180×180 iOS Safari icon)</li>
+        <li><code>favicon.png</code> (64×64 Browser tab icon)</li>
+      </ul>
+    </li>
+    <li><strong>Native 1-Tap Installation:</strong> Captures <code>beforeinstallprompt</code> in <code>Navbar.jsx</code> so tapping <em>"Install App"</em> directly triggers native browser installation.</li>
+  </ul>
+
+  <div style="margin-top: 30px; text-align: center; border-top: 1px solid #dce8e0; padding-top: 15px; font-size: 8.5pt; color: #718096;">
+    © 2026 Taruvar Movement • <a href="https://taruvar.org" style="color:#2D7A4E;">taruvar.org</a> • Confidential System Documentation
+  </div>
+
+</body>
+</html>
