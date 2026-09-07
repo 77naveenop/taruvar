@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 import PledgeModal from './components/PledgeModal';
 import AuthModal from './components/AuthModal';
@@ -68,8 +69,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-taruvar-bg text-taruvar-dark selection:bg-taruvar-primary selection:text-white">
-      {/* Sticky Navigation */}
+    <div className="min-h-screen flex flex-col bg-taruvar-bg text-taruvar-dark selection:bg-taruvar-primary selection:text-white pb-16 sm:pb-14">
+      {/* Top Header Navigation */}
       <Navbar 
         activePage={activePage} 
         setActivePage={setActivePage} 
@@ -145,6 +146,15 @@ export default function App() {
         setActivePage={setActivePage} 
         onOpenPledge={() => setIsPledgeOpen(true)} 
         onNavigateGetInvolved={navigateToGetInvolved}
+      />
+
+      {/* Ergonomic Sticky Bottom Navigation Bar */}
+      <BottomNav
+        activePage={activePage}
+        setActivePage={setActivePage}
+        onOpenPledge={() => setIsPledgeOpen(true)}
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthOpen(true)}
       />
 
       {/* Interactive Tree Adoption Modal */}

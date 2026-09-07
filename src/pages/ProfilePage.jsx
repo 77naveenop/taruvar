@@ -65,7 +65,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
   ]);
 
   const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Tree Care Guardian';
-  const userEmail = currentUser?.email || 'connect@taruvar.org';
+  const userEmail = currentUser?.email || 'teamtaruvar@gmail.com';
 
   const handleUpvote = (treeId, isCommunity = false) => {
     if (isCommunity) {

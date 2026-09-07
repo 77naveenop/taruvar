@@ -1,5 +1,5 @@
 import React from 'react';
-import { Instagram, Mail, Globe, ArrowUpRight, Heart, Sprout } from 'lucide-react';
+import { Instagram, Mail, Phone, MessageCircle, Globe, ArrowUpRight, Heart, Sprout } from 'lucide-react';
 
 export default function Footer({ setActivePage, onOpenPledge, onNavigateGetInvolved }) {
   const navigateTo = (page) => {
@@ -8,14 +8,14 @@ export default function Footer({ setActivePage, onOpenPledge, onNavigateGetInvol
   };
 
   return (
-    <footer className="bg-taruvar-dark text-white border-t border-gray-800 pt-14 pb-10 relative overflow-hidden">
+    <footer className="bg-taruvar-dark text-white border-t border-gray-800 pt-14 pb-24 md:pb-12 relative overflow-hidden">
       {/* Decorative accent blur */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-taruvar-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           
-          {/* Col 1 & 2: Brand Info */}
+          {/* Col 1 & 2: Brand & Contact Info */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
               <div className="bg-white p-2 rounded-2xl inline-block">
@@ -31,20 +31,51 @@ export default function Footer({ setActivePage, onOpenPledge, onNavigateGetInvol
               Taruvar is an environmental movement dedicated to individual tree responsibility, long-term nurturing (Paalna), and technology-enabled tree growth documentation.
             </p>
 
-            <div className="pt-2 flex items-center gap-2.5">
+            {/* Direct Contact Links */}
+            <div className="space-y-2 text-xs text-gray-300 pt-1">
               <a 
-                href="https://instagram.com" 
+                href="mailto:teamtaruvar@gmail.com" 
+                className="flex items-center gap-2 hover:text-taruvar-accent transition-colors"
+              >
+                <Mail className="w-4 h-4 text-taruvar-primary shrink-0" />
+                <span>teamtaruvar@gmail.com</span>
+              </a>
+              <a 
+                href="tel:8543964107" 
+                className="flex items-center gap-2 hover:text-taruvar-accent transition-colors"
+              >
+                <Phone className="w-4 h-4 text-taruvar-primary shrink-0" />
+                <span>+91 8543964107</span>
+              </a>
+            </div>
+
+            {/* Social & Connect Badges */}
+            <div className="pt-2 flex flex-wrap items-center gap-2.5">
+              <a 
+                href="https://www.instagram.com/taruvar_foundationn?stkn=dnIxa2prN2N0YXRi" 
                 target="_blank" 
                 rel="noreferrer"
-                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-taruvar-primary/30 flex items-center justify-center text-gray-300 hover:text-white transition-all border border-white/10"
-                aria-label="Instagram"
+                className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 hover:opacity-90 flex items-center justify-center text-white transition-all shadow-sm"
+                aria-label="Taruvar Instagram"
+                title="Follow @taruvar_foundationn on Instagram"
               >
                 <Instagram className="w-4 h-4" />
               </a>
               <a 
-                href="mailto:connect@taruvar.org" 
+                href="https://wa.me/918543964107" 
+                target="_blank" 
+                rel="noreferrer"
+                className="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center text-white transition-all shadow-sm"
+                aria-label="WhatsApp Contact"
+                title="WhatsApp Taruvar Foundation"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </a>
+              <a 
+                href="mailto:teamtaruvar@gmail.com" 
                 className="w-9 h-9 rounded-xl bg-white/10 hover:bg-taruvar-primary/30 flex items-center justify-center text-gray-300 hover:text-white transition-all border border-white/10"
                 aria-label="Email"
+                title="Send Email"
               >
                 <Mail className="w-4 h-4" />
               </a>
@@ -117,7 +148,7 @@ export default function Footer({ setActivePage, onOpenPledge, onNavigateGetInvol
         {/* Bottom Bar with discreet admin link */}
         <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
           <p>
-            © 2026 Taruvar (
+            © 2026 Taruvar Foundation (
             <button 
               onClick={() => navigateTo('admin')} 
               className="hover:text-gray-200 transition-colors cursor-pointer"
