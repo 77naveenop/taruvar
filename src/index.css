@@ -34,3 +34,28 @@
 .accent-glow {
   box-shadow: 0 0 40px rgba(107, 191, 89, 0.2);
 }
+
+/* Print Optimization for PVC ID Cards */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-guardian-card, #printable-guardian-card * {
+    visibility: visible;
+  }
+  #printable-guardian-card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 85.6mm !important;
+    max-width: 85.6mm !important;
+    margin: 0 auto;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  header, nav, footer, button {
+    display: none !important;
+  }
+}
+

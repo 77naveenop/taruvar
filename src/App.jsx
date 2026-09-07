@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
-import PledgeModal from './components/PledgeModal';
-import AuthModal from './components/AuthModal';
 import Toast from './components/Toast';
 import { supabase } from './lib/supabase';
 
@@ -14,12 +12,12 @@ import InitiativesPage from './pages/InitiativesPage';
 import GetInvolvedPage from './pages/GetInvolvedPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdoptTreePage from './pages/AdoptTreePage';
+import AuthPage from './pages/AuthPage';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
   const [getInvolvedTab, setGetInvolvedTab] = useState('volunteer');
-  const [isPledgeOpen, setIsPledgeOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -47,7 +45,6 @@ export default function App() {
   const handleAuthSuccess = (user, msg) => {
     setCurrentUser(user);
     showToast(msg);
-    setIsAuthOpen(false);
   };
 
   const handleLogout = async () => {
@@ -56,10 +53,7 @@ export default function App() {
     }
     setCurrentUser(null);
     showToast('Signed out successfully.');
-  };
-
-  const handlePledgeComplete = (msg) => {
-    showToast(msg);
+    setActivePage('home');
   };
 
   const navigateToGetInvolved = (tabId = 'volunteer') => {
@@ -68,15 +62,25 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const navigateToAdopt = () => {
+    setActivePage('adopt');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToAuth = () => {
+    setActivePage('auth');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-taruvar-bg text-taruvar-dark selection:bg-taruvar-primary selection:text-white pb-16 sm:pb-14">
-      {/* Top Header Navigation */}
+      {/* Top Header Navigation (Clean, No Toggle Menu) */}
       <Navbar 
         activePage={activePage} 
         setActivePage={setActivePage} 
-        onOpenPledge={() => setIsPledgeOpen(true)}
+        onOpenPledge={navigateToAdopt}
         currentUser={currentUser}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={navigateToAuth}
         onLogout={handleLogout}
         onNavigateGetInvolved={navigateToGetInvolved}
       />
@@ -86,10 +90,10 @@ export default function App() {
         {activePage === 'home' && (
           <HomePage 
             setActivePage={setActivePage} 
-            onOpenPledge={() => setIsPledgeOpen(true)}
+            onOpenPledge={navigateToAdopt}
             showToast={showToast} 
             onNavigateGetInvolved={navigateToGetInvolved}
-            onOpenAuth={() => setIsAuthOpen(true)}
+            onOpenAuth={navigateToAuth}
             currentUser={currentUser}
           />
         )}
@@ -97,21 +101,21 @@ export default function App() {
         {activePage === 'about' && (
           <AboutPage 
             setActivePage={setActivePage} 
-            onOpenPledge={() => setIsPledgeOpen(true)} 
+            onOpenPledge={navigateToAdopt} 
           />
         )}
 
         {activePage === 'tree-journey' && (
           <TreeJourneyPage 
             showToast={showToast} 
-            onOpenPledge={() => setIsPledgeOpen(true)} 
+            onOpenPledge={navigateToAdopt} 
           />
         )}
 
         {activePage === 'initiatives' && (
           <InitiativesPage 
             setActivePage={setActivePage} 
-            onOpenPledge={() => setIsPledgeOpen(true)}
+            onOpenPledge={navigateToAdopt}
             onNavigateGetInvolved={navigateToGetInvolved}
           />
         )}
@@ -123,11 +127,28 @@ export default function App() {
           />
         )}
 
+        {activePage === 'adopt' && (
+          <AdoptTreePage 
+            currentUser={currentUser}
+            showToast={showToast}
+            setActivePage={setActivePage}
+            onOpenAuth={navigateToAuth}
+          />
+        )}
+
+        {activePage === 'auth' && (
+          <AuthPage 
+            onAuthSuccess={handleAuthSuccess}
+            setActivePage={setActivePage}
+            showToast={showToast}
+          />
+        )}
+
         {activePage === 'profile' && (
           <ProfilePage 
             currentUser={currentUser}
-            onOpenAuth={() => setIsAuthOpen(true)}
-            onOpenAdopt={() => setIsPledgeOpen(true)}
+            onOpenAuth={navigateToAuth}
+            onOpenAdopt={navigateToAdopt}
             showToast={showToast}
           />
         )}
@@ -136,7 +157,7 @@ export default function App() {
           <AdminDashboardPage 
             currentUser={currentUser}
             showToast={showToast}
-            onOpenAuth={() => setIsAuthOpen(true)}
+            onOpenAuth={navigateToAuth}
           />
         )}
       </main>
@@ -144,36 +165,17 @@ export default function App() {
       {/* Footer */}
       <Footer 
         setActivePage={setActivePage} 
-        onOpenPledge={() => setIsPledgeOpen(true)} 
+        onOpenPledge={navigateToAdopt} 
         onNavigateGetInvolved={navigateToGetInvolved}
       />
 
-      {/* Ergonomic Sticky Bottom Navigation Bar */}
+      {/* Modern Sticky Bottom Navigation Bar */}
       <BottomNav
         activePage={activePage}
         setActivePage={setActivePage}
-        onOpenPledge={() => setIsPledgeOpen(true)}
+        onOpenPledge={navigateToAdopt}
         currentUser={currentUser}
-        onOpenAuth={() => setIsAuthOpen(true)}
-      />
-
-      {/* Interactive Tree Adoption Modal */}
-      <PledgeModal 
-        isOpen={isPledgeOpen} 
-        onClose={() => setIsPledgeOpen(false)}
-        currentUser={currentUser}
-        onOpenAuth={() => {
-          setIsPledgeOpen(false);
-          setIsAuthOpen(true);
-        }}
-        onPledgeComplete={handlePledgeComplete} 
-      />
-
-      {/* Interactive Auth Modal (Register / Login) */}
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onAuthSuccess={handleAuthSuccess}
+        onOpenAuth={navigateToAuth}
       />
 
       {/* Toast Feedback */}

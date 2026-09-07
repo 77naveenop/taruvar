@@ -6,8 +6,10 @@ import {
 import { supabase } from '../lib/supabase';
 import confetti from 'canvas-confetti';
 
+import GuardianIdCard from '../components/GuardianIdCard';
+
 export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, showToast }) {
-  const [activeTab, setActiveTab] = useState('my-trees'); // 'my-trees' | 'community-feed' | 'leaderboard'
+  const [activeTab, setActiveTab] = useState('my-trees'); // 'my-trees' | 'id-card' | 'community-feed' | 'leaderboard'
   const [reportModalTree, setReportModalTree] = useState(null);
   const [reportMonth, setReportMonth] = useState(1);
   const [reportNotes, setReportNotes] = useState('');
@@ -206,6 +208,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
         <div className="flex items-center gap-2">
           {[
             { id: 'my-trees', label: 'My Adopted Trees', icon: '🌳' },
+            { id: 'id-card', label: 'My Eco-Guardian Card', icon: '🪪' },
             { id: 'community-feed', label: 'Community Feed', icon: '🌍' },
             { id: 'leaderboard', label: 'Eco Leaderboard', icon: '🏆' }
           ].map((t) => (
@@ -375,7 +378,33 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
         </div>
       )}
 
-      {/* TAB 2: COMMUNITY FEED */}
+      {/* TAB 2: MY ECO-GUARDIAN ID CARD */}
+      {activeTab === 'id-card' && (
+        <div className="bg-white p-6 sm:p-10 rounded-3xl border border-taruvar-border shadow-card space-y-6 text-center">
+          <div className="max-w-xl mx-auto space-y-2">
+            <span className="px-3 py-1 bg-taruvar-light text-taruvar-secondary text-xs font-bold rounded-full uppercase tracking-wider inline-block">
+              Digital Guardian Identity
+            </span>
+            <h2 className="text-2xl font-black text-taruvar-dark">Your Official Eco-Guardian ID Card</h2>
+            <p className="text-xs text-taruvar-muted">
+              Use this digital identity card to verify your adopted tree, show your 5-month care progress, or print a physical PVC card for your wallet/lanyard.
+            </p>
+          </div>
+
+          <GuardianIdCard
+            guardianName={displayName}
+            memberId={currentUser?.user_metadata?.member_id || 'TRV-IND-2026-4821'}
+            treeId={myTrees[0]?.id ? `TRV-TREE-${myTrees[0].id.replace(/\D/g, '') || '8092'}` : 'TRV-TREE-8092'}
+            species={myTrees[0]?.species || 'Peepal Tree (Ficus religiosa)'}
+            plantedDate={myTrees[0]?.planted_date || '15 Aug 2026'}
+            location={myTrees[0]?.location || 'Green Campus Sector 4'}
+            verifiedMonths={myTrees[0]?.verified_months || 2}
+            photoUrl={myTrees[0]?.plantation_photo || null}
+          />
+        </div>
+      )}
+
+      {/* TAB 3: COMMUNITY FEED */}
       {activeTab === 'community-feed' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {communityFeed.map((post) => (
