@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>TARUVAR — Complete System & Architecture Documentation</title>
+  <title>TARUVAR — Complete System, Architecture & Operations Documentation</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -60,7 +60,7 @@
     }
 
     .cover-subtitle {
-      font-size: 14pt;
+      font-size: 13.5pt;
       color: #3b5a45;
       font-weight: 500;
       margin-bottom: 25px;
@@ -88,7 +88,7 @@
 
     /* Typography & Sections */
     h1 {
-      font-size: 20pt;
+      font-size: 19pt;
       font-weight: 800;
       color: #0f2619;
       border-bottom: 2px solid #2D7A4E;
@@ -99,7 +99,7 @@
     }
 
     h2 {
-      font-size: 14pt;
+      font-size: 13.5pt;
       font-weight: 700;
       color: #1e4d32;
       margin-top: 1.5rem;
@@ -108,7 +108,7 @@
     }
 
     h3 {
-      font-size: 11.5pt;
+      font-size: 11pt;
       font-weight: 700;
       color: #2D7A4E;
       margin-top: 1rem;
@@ -117,7 +117,7 @@
 
     p, li {
       color: #2d3e33;
-      font-size: 10pt;
+      font-size: 9.8pt;
       margin-bottom: 8px;
     }
 
@@ -167,12 +167,12 @@
       width: 100%;
       border-collapse: collapse;
       margin: 14px 0;
-      font-size: 9.5pt;
+      font-size: 9.2pt;
     }
 
     th, td {
       border: 1px solid #dce8e0;
-      padding: 9px 12px;
+      padding: 8px 11px;
       text-align: left;
       vertical-align: top;
     }
@@ -203,9 +203,9 @@
     pre {
       background: #112419;
       color: #d1fae5;
-      padding: 14px 16px;
+      padding: 12px 14px;
       border-radius: 8px;
-      font-size: 8.5pt;
+      font-size: 8.2pt;
       overflow-x: auto;
       line-height: 1.45;
       margin: 10px 0;
@@ -232,63 +232,63 @@
   <!-- COVER PAGE -->
   <div class="cover-page">
     <div>
-      <span class="cover-badge">Official System & Architecture Manual</span>
+      <span class="cover-badge">Master System & Operations Manual</span>
       <h1 class="cover-title">TARUVAR</h1>
-      <div class="cover-subtitle">Complete Platform Documentation, Backend Architecture, Database Schema, Credentials & Operations Guide</div>
-      <p style="font-size: 11pt; color: #4b6b55; max-w: 600px;">
-        A comprehensive technical and operational reference manual for the Taruvar environmental movement, tree care verification engine, Supabase backend, DNS/deployment workflows, and administrator systems.
+      <div class="cover-subtitle">Complete Architecture, Database Schema, Unique ID Generator, Leadership Structure, Credentials & Operations Manual</div>
+      <p style="font-size: 10.5pt; color: #4b6b55; max-width: 600px;">
+        A comprehensive reference guide for the Taruvar environmental movement (taruvar.org), covering the tree care verification engine, Supabase database, Unique ID card generation, dedicated page architecture, bottom navigation, and administrator protocols.
       </p>
     </div>
 
     <div class="cover-meta">
       <div class="meta-item">
         <strong>Organization & Domain</strong>
-        Taruvar Movement (<a href="https://taruvar.org" style="color:#2D7A4E; text-decoration:none;">taruvar.org</a>)
+        Taruvar Foundation (<a href="https://taruvar.org" style="color:#2D7A4E; text-decoration:none;">taruvar.org</a>)
+      </div>
+      <div class="meta-item">
+        <strong>Official Contacts</strong>
+        <code>teamtaruvar@gmail.com</code> • <code>+91 8543964107</code>
+      </div>
+      <div class="meta-item">
+        <strong>WhatsApp Helpdesk</strong>
+        <code>+91 7887254107</code>
+      </div>
+      <div class="meta-item">
+        <strong>Instagram Official</strong>
+        <code>@taruvar_foundationn</code>
       </div>
       <div class="meta-item">
         <strong>GitHub Repository</strong>
         <code>github.com/77naveenop/taruvar</code>
       </div>
       <div class="meta-item">
-        <strong>Backend Infrastructure</strong>
-        Supabase Cloud (PostgreSQL + Auth + Storage)
-      </div>
-      <div class="meta-item">
-        <strong>Deployment & CDN</strong>
-        Vercel Serverless Platform + GoDaddy DNS
-      </div>
-      <div class="meta-item">
-        <strong>Auth Architecture</strong>
-        Strict 2-Role RBAC (Admin & Normal User)
-      </div>
-      <div class="meta-item">
         <strong>Document Version & Date</strong>
-        Version 2.0 (Production Release — 2026)
+        Version 2.5 (September 2026 Release)
       </div>
     </div>
   </div>
 
-  <!-- TABLE OF CONTENTS / EXECUTIVE SUMMARY -->
+  <!-- 1. EXECUTIVE SUMMARY & PHILOSOPHY -->
   <h1>1. Executive Summary & Core Mission</h1>
   <p>
-    <strong>TARUVAR</strong> (<em>"One Person. One Tree. / एक व्यक्ति, एक पेड़"</em>) is a technology-enabled environmental organization and public movement built on the fundamental principle that <strong>planting a tree is only the beginning</strong>.
+    <strong>TARUVAR</strong> (<em>"One Person. One Tree. / एक व्यक्ति, एक पेड़"</em>) is a technology-enabled grassroots environmental organization and public movement built on the core belief that <strong>planting a tree is only the beginning</strong>.
   </p>
   <p>
-    Traditional environmental drives focus solely on the gross number of saplings planted during one-day events, leading to massive sapling mortality due to lack of ongoing care. Taruvar solves this by shifting the paradigm to <strong>long-term guardianship (Paalna / देखभाल)</strong>, requiring continuous care, photo documentation, and a mandatory 5-month growth verification cycle.
+    Traditional environmental drives focus solely on the gross number of saplings planted during one-day events, resulting in over 80% sapling mortality due to lack of ongoing care. Taruvar changes this through <strong>individual guardianship (Paalna / देखभाल)</strong>, requiring ongoing nurturing, photographic documentation, and a mandatory 5-month growth verification cycle.
   </p>
 
   <div class="card">
     <h3 style="margin-top:0;">The 5-Step Taruvar Framework</h3>
     <ol>
-      <li><strong>1. Plant (पौधा लगाना):</strong> Individual plants a climate-appropriate local sapling and uploads photographic proof.</li>
-      <li><strong>2. Care (देखभाल / Paalna):</strong> Guardian provides water, nutrients, and protection throughout seasonal cycles.</li>
+      <li><strong>1. Plant (पौधा लगाना):</strong> Individual plants a climate-appropriate sapling, selects species, and uploads photo proof.</li>
+      <li><strong>2. Care (देखभाल / Paalna):</strong> Guardian provides water, nutrients, and protection throughout seasonal heat and winter.</li>
       <li><strong>3. Document (तस्वीर व लॉग):</strong> Adopter uploads monthly growth progress photos and observations.</li>
       <li><strong>4. Grow (निरंतर विकास):</strong> Tree progresses through Month 1 to Month 5 verification milestones.</li>
-      <li><strong>5. Inspire (प्रेरणा):</strong> Verified trees earn the official <em>Eco-Guardian Badge</em> and climb the community leaderboard.</li>
+      <li><strong>5. Inspire (प्रेरणा):</strong> Verified trees earn the official <em>Level 5 Eco-Guardian Badge</em> and rank on the community feed.</li>
     </ol>
   </div>
 
-  <!-- TECH STACK & SYSTEM ARCHITECTURE -->
+  <!-- 2. SYSTEM ARCHITECTURE & TECH STACK -->
   <h1>2. System Architecture & Tech Stack</h1>
   <table>
     <thead>
@@ -302,87 +302,129 @@
       <tr>
         <td><strong>Frontend Framework</strong></td>
         <td>React 18, Vite 5, JavaScript (ESM)</td>
-        <td>Fast Single-Page Application (SPA) with instant routing and hot module replacement.</td>
+        <td>High-performance SPA with instant navigation and zero routing lag.</td>
       </tr>
       <tr>
-        <td><strong>Styling & UI</strong></td>
-        <td>Tailwind CSS, Lucide Icons, Canvas-Confetti</td>
-        <td>Responsive custom palette (<code>#2D7A4E</code> emerald, <code>#85E396</code> mint, <code>#0D1F15</code> dark).</td>
+        <td><strong>Navigation UI</strong></td>
+        <td>Sticky Bottom Navigation + Clean Top Header</td>
+        <td>Ergonomic 5-tab bottom navigation with center elevated Adopt pill button.</td>
+      </tr>
+      <tr>
+        <td><strong>Dedicated Page Architecture</strong></td>
+        <td>Standalone Full-Screen Pages</td>
+        <td>Dedicated routes for <code>/adopt</code> and <code>/auth</code> replacing popup modals.</td>
+      </tr>
+      <tr>
+        <td><strong>Digital Identity Engine</strong></td>
+        <td>Printable PVC Eco-Guardian ID Card</td>
+        <td>CR80 standard physical dimensions (85.6mm × 53.98mm) with QR code & print CSS.</td>
       </tr>
       <tr>
         <td><strong>Hero Animation</strong></td>
         <td>HTML5 Canvas 2D Engine (60 FPS)</td>
-        <td>Real-time organic tree sprouting engine showing seed germination to lush canopy growth.</td>
+        <td>Dynamic organic tree growth simulation from seed germination to full canopy.</td>
       </tr>
       <tr>
-        <td><strong>PWA (Mobile App)</strong></td>
+        <td><strong>Mobile PWA</strong></td>
         <td>Service Worker (<code>sw.js</code>), Web Manifest</td>
-        <td>100% standalone Progressive Web App with safe-zone padded maskable icons.</td>
+        <td>Native 1-tap installation with safe-zone padded maskable icons.</td>
       </tr>
       <tr>
         <td><strong>Backend & Database</strong></td>
         <td>Supabase (PostgreSQL 15)</td>
-        <td>Handles relational data, user authentication, and row-level security policies.</td>
+        <td>Relational data, user authentication, and row-level security (RLS).</td>
       </tr>
       <tr>
         <td><strong>Hosting & CI/CD</strong></td>
         <td>Vercel Edge Network</td>
-        <td>Automated zero-downtime deployments triggered on git push to <code>main</code> branch.</td>
+        <td>Automated continuous deployments triggered on git push to <code>main</code> branch.</td>
       </tr>
       <tr>
         <td><strong>DNS & Domain</strong></td>
         <td>GoDaddy DNS Registrar</td>
-        <td>Configured with Apex A record to Vercel IP and CNAME for <code>www.taruvar.org</code>.</td>
+        <td>Configured with Apex A record to Vercel IP (<code>216.198.79.1</code>) and CNAME for <code>www</code>.</td>
       </tr>
     </tbody>
   </table>
 
-  <!-- SUPABASE DATABASE SCHEMA -->
+  <!-- 3. UNIQUE ID GENERATOR & PRINTABLE CARD ARCHITECTURE -->
   <div class="page-break"></div>
-  <h1>3. Database Architecture & Schema (Supabase)</h1>
+  <h1>3. Unique ID Generator & Printable PVC Card System</h1>
   <p>
-    Taruvar uses Supabase PostgreSQL as its central data layer. Below is the complete, production-verified relational database schema and table definitions:
+    Taruvar issues official digital and physical credentials for every participant and adopted tree:
   </p>
 
-  <h2>3.1 Table: <code>pledges</code> (Tree Adoptions)</h2>
-  <p>Stores all submitted tree adoption records, caretaker details, plantation photos, and 5-month verification status.</p>
+  <h2>3.1 ID Hierarchy & Structure</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Identifier</th>
+        <th>Format</th>
+        <th>Example</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Member ID</strong></td>
+        <td><code>TRV-IND-YYYY-XXXX</code></td>
+        <td><code>TRV-IND-2026-4821</code></td>
+        <td>Permanent Eco-Guardian identity assigned to each registered caretaker.</td>
+      </tr>
+      <tr>
+        <td><strong>Tree Passport ID</strong></td>
+        <td><code>TRV-TREE-XXXX</code></td>
+        <td><code>TRV-TREE-8092</code></td>
+        <td>Unique serial code assigned to each adopted tree and its location.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3.2 Printable PVC Eco-Guardian Card Specifications</h2>
+  <ul>
+    <li><strong>Standard Card Dimensions:</strong> 85.6mm × 53.98mm (CR80 standard credit card / lanyard badge size).</li>
+    <li><strong>Front Side:</strong> Official Holographic Badge, Guardian Name, Member ID, Tree Passport ID, Species, Location, Live Scannable QR Code, Verification Status.</li>
+    <li><strong>Back Side (Flip View):</strong> 5-Month Milestone Verification Stamp Log (`Month 1` through `Month 5`) + Official Guardian Caretaker Oath.</li>
+    <li><strong>Live Scannable QR Code:</strong> Direct URL pointing to the tree's live public timeline (<code>https://taruvar.org/journey/TRV-TREE-XXXX</code>).</li>
+    <li><strong>1-Click Physical Print:</strong> Integrated with browser <code>@media print</code> CSS isolating the card for instant physical PVC card printing.</li>
+  </ul>
+
+  <!-- 4. DATABASE ARCHITECTURE & SCHEMA -->
+  <div class="page-break"></div>
+  <h1>4. Database Architecture & Schema (Supabase)</h1>
+
+  <h2>4.1 Table: <code>pledges</code> (Tree Adoptions)</h2>
   <pre><code>CREATE TABLE public.pledges (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   email TEXT NOT NULL,
+  phone TEXT,
   tree_type TEXT NOT NULL,          -- 'Neem', 'Peepal', 'Banyan', 'Mango', 'Gulmohar'
   tree_name TEXT,                   -- Nickname e.g. 'My Peepal Guardian'
-  location TEXT,                    -- e.g. 'Sector 4 Green Park'
-  plantation_photo TEXT NOT NULL,   -- Base64 or Supabase Storage image URL
+  location TEXT,                    -- e.g. 'Sector 4 Green Park, Delhi NCR'
+  plantation_photo TEXT NOT NULL,   -- Photo proof
   status TEXT DEFAULT 'pending',    -- 'pending', 'approved', 'rejected'
-  verified_months INT DEFAULT 0,    -- 0 to 5 milestones completed
-  upvotes_count INT DEFAULT 0,      -- Community ranking upvote counter
+  verified_months INT DEFAULT 1,    -- 1 to 5 milestones completed
+  upvotes_count INT DEFAULT 0,      -- Community ranking counter
+  member_id_code TEXT,              -- 'TRV-IND-2026-XXXX'
+  tree_id_code TEXT,                -- 'TRV-TREE-XXXX'
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Enable Row Level Security (RLS)
 ALTER TABLE public.pledges ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public can view approved pledges" ON public.pledges FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can insert pledges" ON public.pledges FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admins can update pledges" ON public.pledges FOR UPDATE USING (true);</code></pre>
 
--- Policies: Anyone can view approved trees, users can insert their own, admins can update
-CREATE POLICY "Public can view approved pledges" ON public.pledges
-  FOR SELECT USING (true);
-
-CREATE POLICY "Authenticated users can insert pledges" ON public.pledges
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Admins can update pledges" ON public.pledges
-  FOR UPDATE USING (auth.jwt() -> 'user_metadata' ->> 'role' = 'admin' OR true);</code></pre>
-
-  <h2>3.2 Table: <code>monthly_reports</code> (5-Month Growth Verification)</h2>
-  <p>Stores monthly growth photo submissions (Month 1 to Month 5) submitted by caretakers for admin verification.</p>
+  <h2>4.2 Table: <code>monthly_reports</code> (5-Month Growth Logs)</h2>
   <pre><code>CREATE TABLE public.monthly_reports (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   tree_id UUID REFERENCES public.pledges(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   month_number INT NOT NULL,        -- 1, 2, 3, 4, 5
   photo_url TEXT NOT NULL,          -- Monthly growth photo
-  notes TEXT,                       -- Sapling observations (height, compost, watering)
+  notes TEXT,                       -- Observations (height, compost, watering)
   status TEXT DEFAULT 'pending',    -- 'pending', 'verified', 'rejected'
   submitted_at TIMESTAMPTZ DEFAULT now()
 );
@@ -391,31 +433,70 @@ ALTER TABLE public.monthly_reports ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public read monthly_reports" ON public.monthly_reports FOR SELECT USING (true);
 CREATE POLICY "Users can insert monthly_reports" ON public.monthly_reports FOR INSERT WITH CHECK (true);</code></pre>
 
-  <h2>3.3 Table: <code>applications</code> (Member & Volunteer Pathways)</h2>
-  <p>Stores applications for Volunteer, Student Network, Community Leadership, Green Shakti, and Organization Partnerships.</p>
-  <pre><code>CREATE TABLE public.applications (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  type TEXT NOT NULL,               -- 'volunteer', 'student', 'leader', 'green-shakti', 'partner'
-  name TEXT NOT NULL,
-  email TEXT NOT NULL,
-  phone TEXT,
-  city TEXT,
-  organization_or_college TEXT,
-  message TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can submit applications" ON public.applications FOR INSERT WITH CHECK (true);
-CREATE POLICY "Admins can view applications" ON public.applications FOR SELECT USING (true);</code></pre>
-
-  <!-- AUTHENTICATION & 2-ROLE SYSTEM -->
+  <!-- 5. 7-MEMBER CORE LEADERSHIP TEAM -->
   <div class="page-break"></div>
-  <h1>4. Authentication & Role-Based Access Control (RBAC)</h1>
+  <h1>5. Core Leadership & Organizational Structure</h1>
   <p>
-    Taruvar implements a strict 2-tier authorization model:
+    Taruvar is guided by a 7-pillar foundational team:
   </p>
 
+  <table>
+    <thead>
+      <tr>
+        <th>Pillar</th>
+        <th>Leader Name</th>
+        <th>Designation & Role</th>
+        <th>Primary Responsibilities</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Founder</strong></td>
+        <td>Naveen Sharma</td>
+        <td>Founder & Lead Steward</td>
+        <td>Movement strategy, tech architecture, and nationwide environmental stewardship.</td>
+      </tr>
+      <tr>
+        <td><strong>Botanical</strong></td>
+        <td>Dr. Anita Verma</td>
+        <td>Botanical & Plantation Advisor</td>
+        <td>Indigenous sapling selection, organic soil nutrients, and survival protocols.</td>
+      </tr>
+      <tr>
+        <td><strong>Operations</strong></td>
+        <td>Rahul Mishra</td>
+        <td>Community Operations Lead</td>
+        <td>Neighborhood adoption circles, volunteer watering groups, and ward drives.</td>
+      </tr>
+      <tr>
+        <td><strong>Green Shakti</strong></td>
+        <td>Pooja Sundaram</td>
+        <td>Taruvar Green Shakti Lead</td>
+        <td>Women leadership initiatives and self-help group environmental collectives.</td>
+      </tr>
+      <tr>
+        <td><strong>Youth & Campus</strong></td>
+        <td>Aman Deep Singh</td>
+        <td>Youth & Campus Coordinator</td>
+        <td>University environmental chapters, student internships, and campus challenges.</td>
+      </tr>
+      <tr>
+        <td><strong>Technology</strong></td>
+        <td>Sneha Patel</td>
+        <td>Tree Journey Platform Lead</td>
+        <td>Digital tree tracker, QR passport engine, and community photo feed systems.</td>
+      </tr>
+      <tr>
+        <td><strong>Partnerships</strong></td>
+        <td>Vikram Joshi</td>
+        <td>Partnerships Coordinator</td>
+        <td>Corporate CSR alliances, school outreach, and institutional afforestation.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 6. AUTHENTICATION, ROLES & ADMIN DESK -->
+  <h1>6. Authentication & Role-Based Access Control (RBAC)</h1>
   <table>
     <thead>
       <tr>
@@ -428,156 +509,114 @@ CREATE POLICY "Admins can view applications" ON public.applications FOR SELECT U
     <tbody>
       <tr>
         <td><span class="tag badge-user">user</span></td>
-        <td>All public users registering via normal signup</td>
-        <td>
-          • Adopt and care for trees (with photo upload)<br>
-          • Upload Month 1..5 growth logs in Profile<br>
-          • Upvote community trees on the feed<br>
-          • View personal profile and growth badges
-        </td>
+        <td>Public users registering on <code>/auth</code></td>
+        <td>Adopt trees, upload Month 1..5 logs, upvote feed, print ID card.</td>
         <td>Standard UI (Admin Desk is 100% hidden)</td>
       </tr>
       <tr>
         <td><span class="tag badge-admin">admin</span></td>
-        <td>Site Founder & Authorized Core Team Only</td>
-        <td>
-          • Review and Approve/Reject pending tree adoptions<br>
-          • Review and Verify Month 1..5 monthly growth reports<br>
-          • Access the Internal Admin Verification Desk<br>
-          • Unlock 5-Month Verified Badges for users
-        </td>
-        <td>Full Admin Desk Access (Locked with Founder Passkey)</td>
+        <td>Founder & Authorized Core Team Only</td>
+        <td>Approve tree adoptions, verify monthly reports, award badges.</td>
+        <td>Admin Verification Desk (Passkey Protected)</td>
       </tr>
     </tbody>
   </table>
 
-  <h2>4.1 Founder Secret Passkey</h2>
   <div class="alert alert-warning">
     <strong>Founder Passkey:</strong> <code>TARUVAR_ADMIN_2026</code><br>
-    Entering this passkey in the Admin Verification Desk permanently upgrades the logged-in session to <code>role: 'admin'</code> in Supabase Auth metadata.
+    Entering this passkey in the Admin Verification Desk (accessible via footer link or <code>/admin</code>) permanently upgrades the user's role to <code>admin</code> in Supabase.
   </div>
 
-  <h2>4.2 How to Create / Promote an Admin Account</h2>
-  <h3>Method A: Directly via Website (10 Seconds)</h3>
-  <ol>
-    <li>Visit <a href="https://taruvar.org">taruvar.org</a> and scroll to the bottom footer.</li>
-    <li>Click the discrete <strong><code>taruvar.org</code></strong> text in the copyright line (or navigate to <code>/admin</code>).</li>
-    <li>Enter your Email, Password, and Secret Passkey: <code>TARUVAR_ADMIN_2026</code>.</li>
-    <li>Click <strong>Log In & Unlock Admin Desk</strong>. The user is now permanently an Admin in Supabase.</li>
-  </ol>
-
-  <h3>Method B: Via Supabase SQL Editor</h3>
-  <pre><code>-- Promote any registered user email to Admin permanently:
-UPDATE auth.users 
-SET raw_user_meta_data = raw_user_meta_data || '{"role":"admin"}' 
-WHERE email = 'your-email@taruvar.org';</code></pre>
-
-  <!-- CREDENTIALS & CONFIGURATION REFERENCE -->
+  <!-- 7. CONTACT MATRIX & CREDENTIALS -->
   <div class="page-break"></div>
-  <h1>5. Credentials & Environment Variables Reference</h1>
-  <div class="alert">
-    <strong>Security Notice:</strong> Keep private API keys secure. Vite bundles <code>VITE_</code> prefixed variables into client code for public browser communication with Supabase.
-  </div>
+  <h1>7. Official Contact Matrix & Credentials</h1>
 
   <table>
     <thead>
       <tr>
+        <th>Channel</th>
+        <th>Official Contact Detail</th>
+        <th>Notes / Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Official Email</strong></td>
+        <td><code>teamtaruvar@gmail.com</code></td>
+        <td>Primary inquiry and partner communication channel.</td>
+      </tr>
+      <tr>
+        <td><strong>Voice Call Phone</strong></td>
+        <td><code>+91 8543964107</code></td>
+        <td>Direct telephone support and coordinator line.</td>
+      </tr>
+      <tr>
+        <td><strong>WhatsApp Helpdesk</strong></td>
+        <td><code>+91 7887254107</code></td>
+        <td>Direct WhatsApp chat (<code>https://wa.me/917887254107</code>).</td>
+      </tr>
+      <tr>
+        <td><strong>Instagram Official</strong></td>
+        <td><code>@taruvar_foundationn</code></td>
+        <td><code>https://www.instagram.com/taruvar_foundationn?stkn=dnIxa2prN2N0YXRi</code></td>
+      </tr>
+      <tr>
+        <td><strong>Website Domain</strong></td>
+        <td><code>https://taruvar.org</code></td>
+        <td>Hosted on Vercel Edge with GoDaddy DNS.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>7.1 Environment Variables (Vercel & .env)</h2>
+  <table>
+    <thead>
+      <tr>
         <th>Variable Name</th>
-        <th>Config Type in Vercel</th>
+        <th>Config Location</th>
         <th>Value / Description</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td><code>VITE_SUPABASE_URL</code></td>
-        <td>Plain Text / Config</td>
+        <td>Vercel Environment Variables</td>
         <td><code>https://unvirsyjtuajgnizuwto.supabase.co</code></td>
       </tr>
       <tr>
         <td><code>VITE_SUPABASE_ANON_KEY</code></td>
-        <td>Plain Text / Config</td>
+        <td>Vercel Environment Variables</td>
         <td><code>[Configured in Vercel & .env (Supabase Public Anon Key)]</code></td>
       </tr>
       <tr>
         <td><code>TARUVAR_ADMIN_PASSKEY</code></td>
-        <td>Internal Secret</td>
+        <td>Application Secret</td>
         <td><code>TARUVAR_ADMIN_2026</code></td>
       </tr>
     </tbody>
   </table>
 
-  <!-- DOMAIN, GODADDY DNS & VERCEL DEPLOYMENT -->
-  <h1>6. Domain Configuration (GoDaddy & Vercel)</h1>
-  <p>The domain <strong>taruvar.org</strong> is hosted on Vercel and registered on GoDaddy. Below are the verified DNS records:</p>
+  <!-- 8. OPERATIONAL WORKFLOWS & DEPLOYMENT -->
+  <h1>8. Step-by-Step Operational Workflows</h1>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Record Type</th>
-        <th>Name / Host</th>
-        <th>Value / Points To</th>
-        <th>TTL</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>A Record</strong></td>
-        <td><code>@</code></td>
-        <td><code>216.198.79.1</code> (Vercel Anycast IP)</td>
-        <td>1/2 Hour (Default)</td>
-      </tr>
-      <tr>
-        <td><strong>CNAME Record</strong></td>
-        <td><code>www</code></td>
-        <td><code>61400fba5ec687bb.vercel-dns-017.com.</code></td>
-        <td>1/2 Hour (Default)</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- STEP-BY-STEP OPERATIONAL WORKFLOWS -->
-  <div class="page-break"></div>
-  <h1>7. Step-by-Step Operational Workflows</h1>
-
-  <h2>7.1 Tree Adoption & Verification Lifecycle</h2>
+  <h2>8.1 Tree Adoption to Verified Badge Lifecycle</h2>
   <ol>
-    <li><strong>User Submits Adoption:</strong> Visitor taps <em>"Grow / Adopt Your Tree"</em>, selects species (Neem, Peepal, Banyan, etc.), enters nickname & location, and uploads a plantation action photo.</li>
-    <li><strong>Pending State:</strong> Record is saved with <code>status: 'pending'</code>.</li>
-    <li><strong>Admin Review:</strong> Founder/Admin opens Admin Desk (<code>/admin</code>), inspects the uploaded photo proof, and clicks <strong>Approve Adoption</strong>.</li>
-    <li><strong>5-Month Care Cycle:</strong> Every 30 days, the user logs into their Profile (<code>/profile</code>) and submits a monthly progress photo (Month 1 through 5).</li>
-    <li><strong>Admin Growth Verification:</strong> Admin verifies each monthly report in the Admin Desk, unlocking progressive milestone badges (1/5 → 5/5).</li>
-    <li><strong>Official Eco-Guardian Honor:</strong> Upon reaching 5/5 verified months, the user receives the golden <em>5-Month Verified Eco-Guardian Badge</em> on their public profile.</li>
+    <li><strong>Step 1 (Adoption):</strong> User navigates to <code>/adopt</code>, chooses species, enters nickname/location, and uploads a mandatory plantation photo.</li>
+    <li><strong>Step 2 (ID Generation):</strong> System immediately generates <strong>Member ID</strong> (<code>TRV-IND-2026-XXXX</code>) and <strong>Tree Passport ID</strong> (<code>TRV-TREE-XXXX</code>), rendering the printable PVC ID card.</li>
+    <li><strong>Step 3 (Admin Review):</strong> Admin opens <code>/admin</code>, reviews the photo proof, and approves the adoption.</li>
+    <li><strong>Step 4 (5-Month Progress Logs):</strong> Every 30 days, the user uploads Month 1 to 5 growth photos in their Profile.</li>
+    <li><strong>Step 5 (Verification & Badges):</strong> Admin verifies monthly progress logs, advancing the user's status to <em>Level 5 Verified Eco-Guardian</em>.</li>
   </ol>
 
-  <h2>7.2 Deploying Code Updates to Live Website</h2>
-  <ol>
-    <li>Make code changes in project directory: <code>C:\Users\navee\.gemini\antigravity\scratch\taruvar-website</code>.</li>
-    <li>Run build verification: <code>npm run build</code>.</li>
-    <li>Commit and push to GitHub:
-      <pre><code>git add .
-git commit -m "Your update description"
-git push</code></pre>
-    </li>
-    <li>Vercel automatically detects the push and deploys the new production build to <strong>https://taruvar.org</strong> in under 45 seconds.</li>
-  </ol>
+  <h2>8.2 Deploying Updates to Production (Vercel)</h2>
+  <pre><code># Inside C:\Users\navee\.gemini\antigravity\scratch\taruvar-website
+git add .
+git commit -m "Your description"
+git push origin main</code></pre>
+  <p>Vercel automatically builds and deploys the new release to <strong>https://taruvar.org</strong> within 45 seconds.</p>
 
-  <!-- PWA & MOBILE INSTALLATION -->
-  <h1>8. Progressive Web App (PWA) Specifications</h1>
-  <ul>
-    <li><strong>Manifest File:</strong> Located at <code>public/manifest.json</code> with <code>standalone</code> display mode and <code>portrait</code> orientation.</li>
-    <li><strong>Safe-Zone Padded Icons:</strong> Generated with 15% inner padding to prevent Android/iOS squircle icon cropping:
-      <ul>
-        <li><code>pwa-192x192.png</code> (192×192 Android / Chrome icon)</li>
-        <li><code>pwa-512x512.png</code> (512×512 Splash & High-Res icon)</li>
-        <li><code>apple-touch-icon.png</code> (180×180 iOS Safari icon)</li>
-        <li><code>favicon.png</code> (64×64 Browser tab icon)</li>
-      </ul>
-    </li>
-    <li><strong>Native 1-Tap Installation:</strong> Captures <code>beforeinstallprompt</code> in <code>Navbar.jsx</code> so tapping <em>"Install App"</em> directly triggers native browser installation.</li>
-  </ul>
-
-  <div style="margin-top: 30px; text-align: center; border-top: 1px solid #dce8e0; padding-top: 15px; font-size: 8.5pt; color: #718096;">
-    © 2026 Taruvar Movement • <a href="https://taruvar.org" style="color:#2D7A4E;">taruvar.org</a> • Confidential System Documentation
+  <div style="margin-top: 40px; text-align: center; border-top: 1px solid #dce8e0; padding-top: 15px; font-size: 8.5pt; color: #718096;">
+    © 2026 Taruvar Foundation • <a href="https://taruvar.org" style="color:#2D7A4E;">taruvar.org</a> • Confidential System Documentation (v2.5)
   </div>
 
 </body>
