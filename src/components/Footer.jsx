@@ -52,22 +52,22 @@ export default function Footer({ setActivePage, onOpenPledge, onNavigateGetInvol
             {/* Social & Connect Badges */}
             <div className="pt-2 flex flex-wrap items-center gap-2.5">
               <a 
-                href="https://www.instagram.com/taruvar_foundationn?stkn=dnIxa2prN2N0YXRi" 
+                href="https://www.instagram.com/taruvarfoundation_?stkn=dnIxa2prN2N0YXRi" 
                 target="_blank" 
                 rel="noreferrer"
                 className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 hover:opacity-90 flex items-center justify-center text-white transition-all shadow-sm"
                 aria-label="Taruvar Instagram"
-                title="Follow @taruvar_foundationn on Instagram"
+                title="Follow @taruvarfoundation_ on Instagram"
               >
                 <Instagram className="w-4 h-4" />
               </a>
               <a 
-                href="https://wa.me/918543964107" 
+                href="https://wa.me/917887254107" 
                 target="_blank" 
                 rel="noreferrer"
                 className="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center text-white transition-all shadow-sm"
                 aria-label="WhatsApp Contact"
-                title="WhatsApp Taruvar Foundation"
+                title="WhatsApp Taruvar Foundation (+91 7887254107)"
               >
                 <MessageCircle className="w-4 h-4" />
               </a>
