@@ -88,12 +88,12 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
           {/* Primary & Secondary Hero Action Buttons */}
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto">
             
-            {/* 1. Main Button: Grow / Adopt Your Tree */}
+            {/* 1. Main Button: Grow / Adopt Your Tree (with Taruvar Logo) */}
             <button
               onClick={onOpenPledge}
               className="w-full sm:w-auto px-8 py-4 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-extrabold text-base rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-2.5 group cursor-pointer"
             >
-              <Sprout className="w-5 h-5 text-taruvar-dark" />
+              <img src="/logo.jpg" alt="Taruvar Logo" className="w-6 h-6 rounded-full object-cover bg-white shadow-sm" />
               <span>Grow / Adopt Your Tree</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>

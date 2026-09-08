@@ -37,15 +37,19 @@ export default function BottomNav({ activePage, setActivePage, onOpenPledge, cur
           <span className="text-[10px] mt-0.5 tracking-tight">Journey</span>
         </button>
 
-        {/* 3. Center Raised Action Button: Grow / Adopt a Tree */}
+        {/* 3. Center Raised Action Button: Grow / Adopt a Tree (Taruvar Logo) */}
         <div className="relative -top-3.5 flex flex-col items-center">
           <button
             onClick={onOpenPledge}
-            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-taruvar-secondary via-[#1F5435] to-taruvar-primary text-white shadow-xl shadow-taruvar-secondary/35 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border-4 border-white group"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-xl shadow-taruvar-secondary/35 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border-4 border-taruvar-secondary group p-1 cursor-pointer overflow-hidden"
             title="Grow / Adopt Your Tree"
             aria-label="Adopt a Tree"
           >
-            <Sprout className="w-6 h-6 sm:w-7 sm:h-7 text-taruvar-accent group-hover:rotate-12 transition-transform" />
+            <img 
+              src="/logo.jpg" 
+              alt="Adopt Tree" 
+              className="w-full h-full object-contain rounded-full group-hover:scale-110 transition-transform" 
+            />
           </button>
           <span className="text-[9px] font-extrabold text-taruvar-secondary mt-0.5 uppercase tracking-wider">Adopt</span>
         </div>

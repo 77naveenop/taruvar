@@ -118,7 +118,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
                 onClick={() => handleNavClick('adopt')}
                 className="px-3.5 py-1.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white text-xs font-bold rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <Sprout className="w-3.5 h-3.5 text-taruvar-accent" />
+                <img src="/logo.jpg" alt="Logo" className="w-4 h-4 rounded-full object-cover bg-white" />
                 <span>Adopt</span>
               </button>
             )}
