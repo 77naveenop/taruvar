@@ -194,7 +194,7 @@ export default function AboutPage({ setActivePage, onOpenPledge }) {
           </a>
 
           <a
-            href="https://wa.me/917887254107"
+            href="https://wa.me/918543964107"
             target="_blank"
             rel="noreferrer"
             className="p-5 rounded-2xl bg-taruvar-bg hover:bg-emerald-50 border border-taruvar-border flex flex-col items-center text-center space-y-2 transition-all group"
@@ -203,7 +203,7 @@ export default function AboutPage({ setActivePage, onOpenPledge }) {
               <MessageCircle className="w-5 h-5" />
             </div>
             <p className="text-xs font-bold text-taruvar-dark">WhatsApp Chat</p>
-            <p className="text-xs text-emerald-600 font-semibold">+91 7887254107</p>
+            <p className="text-xs text-emerald-600 font-semibold">+91 8543964107</p>
           </a>
         </div>
       </section>
