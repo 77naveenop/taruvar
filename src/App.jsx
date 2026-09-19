@@ -35,7 +35,7 @@ export default function App() {
         setCurrentUser(parsed);
       }
 
-      // Auto-sync any existing local pending adoptions to cloud
+      // Auto-sync any existing local pending adoptions to cloud sequentially
       const localAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
       const localPending = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
       const allPending = [
@@ -43,9 +43,13 @@ export default function App() {
         ...localAdoptions.filter(a => a.status === 'pending')
       ];
 
-      allPending.forEach(item => {
-        saveCloudPendingAdoption(item).catch(() => {});
-      });
+      if (allPending.length > 0) {
+        (async () => {
+          for (const item of allPending) {
+            await saveCloudPendingAdoption(item);
+          }
+        })().catch(() => {});
+      }
     } catch (e) {
       console.error(e);
     }

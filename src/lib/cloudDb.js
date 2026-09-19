@@ -1,5 +1,5 @@
 // Cloud Database Sync for Taruvar Real-Time Cross-Device Adoption Approval
-// Uses GitHub High-Speed REST API on dedicated live-data branch
+// Uses GitHub High-Speed REST API on dedicated live-data branch with Atomic Conflict Resolution
 
 const GITHUB_REPO = '77naveenop/taruvar';
 const GITHUB_BRANCH = 'live-data';
@@ -69,44 +69,52 @@ async function fetchGithubJson(fileName) {
 }
 
 /**
- * Put a JSON file to GitHub branch
+ * Put a JSON file to GitHub branch with automatic conflict resolution & retry
  */
-async function putGithubJson(fileName, data, currentSha = null, commitMsg = 'Update database') {
-  try {
-    let sha = currentSha;
-    if (!sha) {
-      // try to retrieve latest sha
-      const info = await fetchGithubJson(fileName);
-      sha = info.sha;
+async function putGithubJsonWithRetry(fileName, transformFn, maxRetries = 4) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const { data: currentData, sha } = await fetchGithubJson(fileName);
+      const finalData = typeof transformFn === 'function' ? transformFn(currentData) : transformFn;
+
+      const contentBase64 = b64EncodeUnicode(JSON.stringify(finalData, null, 2));
+
+      const bodyPayload = {
+        message: `Sync ${fileName} (attempt ${attempt + 1})`,
+        content: contentBase64,
+        branch: GITHUB_BRANCH
+      };
+      if (sha) {
+        bodyPayload.sha = sha;
+      }
+
+      const res = await fetch(`${API_BASE}/${fileName}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'Taruvar-App'
+        },
+        body: JSON.stringify(bodyPayload)
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        return true;
+      }
+
+      if (res.status === 409) {
+        // SHA conflict: wait briefly and retry with latest SHA
+        await new Promise(r => setTimeout(r, 250 * (attempt + 1)));
+        continue;
+      }
+
+      return false;
+    } catch (err) {
+      await new Promise(r => setTimeout(r, 200 * (attempt + 1)));
     }
-
-    const contentBase64 = b64EncodeUnicode(JSON.stringify(data, null, 2));
-
-    const bodyPayload = {
-      message: commitMsg,
-      content: contentBase64,
-      branch: GITHUB_BRANCH
-    };
-    if (sha) {
-      bodyPayload.sha = sha;
-    }
-
-    const res = await fetch(`${API_BASE}/${fileName}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-        'User-Agent': 'Taruvar-App'
-      },
-      body: JSON.stringify(bodyPayload)
-    });
-
-    return res.ok;
-  } catch (err) {
-    console.warn(`Cloud put error for ${fileName}:`, err);
-    return false;
   }
+  return false;
 }
 
 /**
@@ -126,85 +134,65 @@ export async function getCloudApprovedAdoptions() {
 }
 
 /**
- * Push a new pending adoption to cloud
+ * Push a new pending adoption to cloud atomically
  */
 export async function saveCloudPendingAdoption(record) {
-  try {
-    const { data: current, sha } = await fetchGithubJson('pending_adoptions.json');
-    
-    // Deduplicate
-    const filtered = current.filter(item => item.id !== record.id && item.treeId !== record.treeId);
+  if (!record || (!record.id && !record.treeId)) return false;
 
-    const leanRecord = {
-      id: record.id || record.treeId,
-      treeId: record.treeId || record.id,
-      memberId: record.memberId || '',
-      adopter_name: record.adopter_name || record.guardianName || 'Adopter',
-      guardianName: record.guardianName || record.adopter_name || 'Adopter',
-      adopter_email: record.adopter_email || record.user_email || '',
-      user_email: record.user_email || record.adopter_email || '',
-      phone: record.phone || '',
-      tree_name: record.tree_name || record.treeName || 'Adopted Tree',
-      species: record.species || record.treeType || 'Indigenous Tree',
-      location: record.location || 'Community Area',
-      plantation_photo: record.plantation_photo || record.photoUrl || null,
-      status: 'pending',
-      isBulk: Boolean(record.isBulk),
-      treeCount: record.treeCount || 1,
-      orgName: record.orgName || null,
-      plantedDate: record.plantedDate || record.planted_date || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-      planted_date: record.planted_date || record.plantedDate || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-      timestamp: Date.now()
-    };
+  const leanRecord = {
+    id: record.id || record.treeId,
+    treeId: record.treeId || record.id,
+    memberId: record.memberId || '',
+    adopter_name: record.adopter_name || record.guardianName || 'Adopter',
+    guardianName: record.guardianName || record.adopter_name || 'Adopter',
+    adopter_email: record.adopter_email || record.user_email || '',
+    user_email: record.user_email || record.adopter_email || '',
+    phone: record.phone || '',
+    tree_name: record.tree_name || record.treeName || 'Adopted Tree',
+    species: record.species || record.treeType || 'Indigenous Tree',
+    location: record.location || 'Community Area',
+    plantation_photo: record.plantation_photo || record.photoUrl || null,
+    status: 'pending',
+    isBulk: Boolean(record.isBulk),
+    treeCount: record.treeCount || 1,
+    orgName: record.orgName || null,
+    plantedDate: record.plantedDate || record.planted_date || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    planted_date: record.planted_date || record.plantedDate || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    timestamp: Date.now()
+  };
 
-    const updated = [leanRecord, ...filtered].slice(0, 100);
-
-    const success = await putGithubJson(
-      'pending_adoptions.json',
-      updated,
-      sha,
-      `New Pending Adoption: ${leanRecord.tree_name} by ${leanRecord.adopter_name}`
-    );
-
-    return success;
-  } catch (e) {
-    console.warn('Cloud pending save note:', e);
-    return false;
-  }
+  return await putGithubJsonWithRetry('pending_adoptions.json', (currentList) => {
+    const list = Array.isArray(currentList) ? currentList : [];
+    const filtered = list.filter(item => item.id !== leanRecord.id && item.treeId !== leanRecord.treeId);
+    return [leanRecord, ...filtered].slice(0, 100);
+  });
 }
 
 /**
- * Admin approves adoption in cloud
+ * Admin approves adoption in cloud atomically
  */
 export async function approveCloudAdoption(treeId, approvedRecord) {
   try {
-    // 1. Remove from pending
-    const { data: currentPending, sha: pSha } = await fetchGithubJson('pending_adoptions.json');
-    const target = currentPending.find(t => t.id === treeId || t.treeId === treeId) || approvedRecord;
-    const remainingPending = currentPending.filter(t => t.id !== treeId && t.treeId !== treeId);
+    let target = approvedRecord;
 
-    await putGithubJson(
-      'pending_adoptions.json',
-      remainingPending,
-      pSha,
-      `Approve adoption: ${treeId}`
-    );
+    // 1. Remove from pending atomically
+    await putGithubJsonWithRetry('pending_adoptions.json', (currentPending) => {
+      const list = Array.isArray(currentPending) ? currentPending : [];
+      const found = list.find(t => t.id === treeId || t.treeId === treeId);
+      if (found) target = found;
+      return list.filter(t => t.id !== treeId && t.treeId !== treeId);
+    });
 
-    // 2. Add to approved
+    // 2. Add to approved atomically
     if (target) {
-      const { data: currentApproved, sha: aSha } = await fetchGithubJson('approved_adoptions.json');
-      const filteredApproved = currentApproved.filter(t => t.id !== treeId && t.treeId !== treeId);
-      const updatedApproved = [
-        { ...target, status: 'approved', verified_months: 1, verifiedMonths: 1 },
-        ...filteredApproved
-      ].slice(0, 300);
-
-      await putGithubJson(
-        'approved_adoptions.json',
-        updatedApproved,
-        aSha,
-        `Certified approved tree: ${treeId}`
-      );
+      await putGithubJsonWithRetry('approved_adoptions.json', (currentApproved) => {
+        const list = Array.isArray(currentApproved) ? currentApproved : [];
+        const filtered = list.filter(t => t.id !== treeId && t.treeId !== treeId);
+        return [
+          { ...target, status: 'approved', verified_months: 1, verifiedMonths: 1 },
+          ...filtered
+        ].slice(0, 300);
+      });
     }
     return true;
   } catch (e) {
@@ -214,20 +202,14 @@ export async function approveCloudAdoption(treeId, approvedRecord) {
 }
 
 /**
- * Admin rejects adoption in cloud
+ * Admin rejects adoption in cloud atomically
  */
 export async function rejectCloudAdoption(treeId) {
   try {
-    const { data: currentPending, sha: pSha } = await fetchGithubJson('pending_adoptions.json');
-    const remainingPending = currentPending.filter(t => t.id !== treeId && t.treeId !== treeId);
-
-    await putGithubJson(
-      'pending_adoptions.json',
-      remainingPending,
-      pSha,
-      `Reject adoption: ${treeId}`
-    );
-    return true;
+    return await putGithubJsonWithRetry('pending_adoptions.json', (currentPending) => {
+      const list = Array.isArray(currentPending) ? currentPending : [];
+      return list.filter(t => t.id !== treeId && t.treeId !== treeId);
+    });
   } catch (e) {
     console.warn('Cloud reject error:', e);
     return false;
