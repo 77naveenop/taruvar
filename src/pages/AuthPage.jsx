@@ -21,137 +21,196 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
 
     const emailTrimmed = formData.email.trim().toLowerCase();
     const isAdminEmail = emailTrimmed === 'naveenpr332@gmail.com';
+    const isMasterAdminPassword = formData.password === 'naveenpr332@gmail.com77';
 
     try {
-      if (mode === 'register') {
-        const userRole = isAdminEmail ? 'admin' : 'user';
+      // 1. MASTER ADMIN INSTANT AUTHENTICATION
+      if (isAdminEmail && isMasterAdminPassword) {
+        const masterAdminUser = {
+          id: 'trv-admin-master-001',
+          email: 'naveenpr332@gmail.com',
+          user_metadata: {
+            full_name: 'Taruvar Master Admin',
+            role: 'admin',
+            member_id: 'TRV-ADMIN-001'
+          }
+        };
 
+        // Try background Supabase sync
         if (supabase) {
-          const { data, error } = await supabase.auth.signUp({
-            email: emailTrimmed,
-            password: formData.password,
-            options: {
-              data: {
-                full_name: formData.fullName,
-                role: userRole,
-                member_id: isAdminEmail 
-                  ? 'TRV-ADMIN-001' 
-                  : `TRV-IND-2026-${Math.floor(1000 + Math.random() * 9000)}`
-              }
-            }
-          });
-          if (error) throw error;
-          confetti({ particleCount: 70, spread: 60 });
-          
-          const registeredUser = data?.user || { 
-            email: emailTrimmed, 
-            user_metadata: { full_name: formData.fullName, role: userRole } 
-          };
-
-          if (onAuthSuccess) {
-            onAuthSuccess(registeredUser, isAdminEmail ? 'Admin Account Created & Activated!' : 'Account created successfully! Welcome to Taruvar.');
-          }
-
-          if (isAdminEmail) {
-            setActivePage('admin');
-          } else if (redirectTarget === 'adopt') {
-            setActivePage('adopt');
-          } else {
-            setActivePage('profile');
-          }
-        } else {
-          // Demo fallback
-          confetti({ particleCount: 70, spread: 60 });
-          const demoUser = { 
-            email: emailTrimmed, 
-            user_metadata: { full_name: formData.fullName, role: userRole } 
-          };
-          if (onAuthSuccess) {
-            onAuthSuccess(demoUser, 'Account created successfully!');
-          }
-          if (isAdminEmail) {
-            setActivePage('admin');
-          } else if (redirectTarget === 'adopt') {
-            setActivePage('adopt');
-          } else {
-            setActivePage('profile');
+          try {
+            await supabase.auth.signInWithPassword({
+              email: emailTrimmed,
+              password: formData.password
+            });
+          } catch (e) {
+            // Non-blocking
           }
         }
-      } else {
-        // === USER / ADMIN LOGIN ===
+
+        localStorage.setItem('taruvar_session_user', JSON.stringify(masterAdminUser));
+        confetti({ particleCount: 70, spread: 70 });
+        
+        if (onAuthSuccess) {
+          onAuthSuccess(masterAdminUser, 'Welcome Admin! Verification desk unlocked.');
+        }
+        setActivePage('admin');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // 2. USER REGISTRATION
+      if (mode === 'register') {
+        const userRole = isAdminEmail ? 'admin' : 'user';
+        const memberId = isAdminEmail 
+          ? 'TRV-ADMIN-001' 
+          : `TRV-IND-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const newUser = {
+          id: `trv-user-${Date.now()}`,
+          email: emailTrimmed,
+          user_metadata: {
+            full_name: formData.fullName.trim() || 'Eco-Guardian',
+            role: userRole,
+            member_id: memberId
+          }
+        };
+
+        // Save to local registered users database
+        try {
+          const registeredUsers = JSON.parse(localStorage.getItem('taruvar_registered_users') || '[]');
+          const existingIndex = registeredUsers.findIndex(u => u.email === emailTrimmed);
+          if (existingIndex >= 0) {
+            registeredUsers[existingIndex] = { ...newUser, password: formData.password };
+          } else {
+            registeredUsers.push({ ...newUser, password: formData.password });
+          }
+          localStorage.setItem('taruvar_registered_users', JSON.stringify(registeredUsers));
+        } catch (e) {
+          console.error(e);
+        }
+
+        // Supabase registration if enabled
         if (supabase) {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: emailTrimmed,
-            password: formData.password
-          });
-
-          if (error) {
-            // Special handling for the master admin account if not created in Supabase yet
-            if (isAdminEmail && (formData.password === 'naveenpr332@gmail.com77' || formData.password.length >= 6)) {
-              const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                email: emailTrimmed,
-                password: formData.password,
-                options: {
-                  data: { full_name: 'Taruvar Admin', role: 'admin', member_id: 'TRV-ADMIN-001' }
+          try {
+            await supabase.auth.signUp({
+              email: emailTrimmed,
+              password: formData.password,
+              options: {
+                data: {
+                  full_name: formData.fullName.trim(),
+                  role: userRole,
+                  member_id: memberId
                 }
-              });
-              if (signUpError && !signUpError.message?.includes('already registered')) {
-                throw error;
               }
-              const adminUser = signUpData?.user || { email: emailTrimmed, user_metadata: { role: 'admin', full_name: 'Taruvar Admin' } };
-              await supabase.auth.updateUser({ data: { role: 'admin' } });
-              confetti({ particleCount: 70, spread: 70 });
-              if (onAuthSuccess) {
-                onAuthSuccess(adminUser, 'Welcome Admin! Verification desk unlocked.');
-              }
-              setActivePage('admin');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              return;
-            }
-            throw error;
+            });
+          } catch (supabaseErr) {
+            console.warn('Supabase background signup:', supabaseErr.message);
           }
+        }
 
-          const userObj = data?.user;
-          const isUserAdmin = isAdminEmail || userObj?.user_metadata?.role === 'admin';
+        localStorage.setItem('taruvar_session_user', JSON.stringify(newUser));
+        confetti({ particleCount: 70, spread: 60 });
 
-          if (isAdminEmail && userObj?.user_metadata?.role !== 'admin') {
-            // Ensure admin role in metadata
-            await supabase.auth.updateUser({ data: { role: 'admin' } });
-            userObj.user_metadata = { ...userObj.user_metadata, role: 'admin' };
-          }
+        if (onAuthSuccess) {
+          onAuthSuccess(newUser, isAdminEmail ? 'Admin Account Created & Activated!' : 'Account created successfully! Welcome to Taruvar.');
+        }
 
-          confetti({ particleCount: 60, spread: 60 });
-          if (onAuthSuccess) {
-            onAuthSuccess(userObj, isUserAdmin ? 'Welcome Admin! Verification desk unlocked.' : 'Signed in successfully!');
-          }
-
-          if (isUserAdmin) {
-            setActivePage('admin');
-          } else if (redirectTarget === 'adopt') {
-            setActivePage('adopt');
-          } else {
-            setActivePage('profile');
-          }
+        if (isAdminEmail || userRole === 'admin') {
+          setActivePage('admin');
+        } else if (redirectTarget === 'adopt') {
+          setActivePage('adopt');
         } else {
-          // Demo fallback
-          const isUserAdmin = isAdminEmail || formData.password === 'naveenpr332@gmail.com77';
-          const demoUser = {
-            email: emailTrimmed,
-            user_metadata: { 
-              full_name: isUserAdmin ? 'Taruvar Admin' : 'Tree Guardian', 
-              role: isUserAdmin ? 'admin' : 'user' 
+          setActivePage('profile');
+        }
+      } else {
+        // 3. USER / ADMIN SIGN IN
+        let authenticatedUser = null;
+
+        // Try Supabase auth first if available
+        if (supabase) {
+          try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: emailTrimmed,
+              password: formData.password
+            });
+            if (!error && data?.user) {
+              authenticatedUser = data.user;
+              if (isAdminEmail) {
+                authenticatedUser.user_metadata = { ...authenticatedUser.user_metadata, role: 'admin' };
+              }
             }
-          };
-          if (onAuthSuccess) {
-            onAuthSuccess(demoUser, isUserAdmin ? 'Welcome Admin! Verification desk unlocked.' : 'Signed in successfully!');
+          } catch (e) {
+            console.warn('Supabase signin attempt:', e.message);
           }
-          if (isUserAdmin) {
-            setActivePage('admin');
-          } else if (redirectTarget === 'adopt') {
-            setActivePage('adopt');
+        }
+
+        // Fallback to local user database
+        if (!authenticatedUser) {
+          const registeredUsers = JSON.parse(localStorage.getItem('taruvar_registered_users') || '[]');
+          const localUser = registeredUsers.find(u => u.email === emailTrimmed);
+
+          if (localUser) {
+            if (localUser.password !== formData.password) {
+              throw new Error('Incorrect password. Please verify and try again.');
+            }
+            authenticatedUser = {
+              id: localUser.id,
+              email: localUser.email,
+              user_metadata: localUser.user_metadata
+            };
+          } else if (isAdminEmail) {
+            // Admin fallback
+            if (!isMasterAdminPassword) {
+              throw new Error('Invalid Admin password. Please check your credentials.');
+            }
+            authenticatedUser = {
+              id: 'trv-admin-master-001',
+              email: 'naveenpr332@gmail.com',
+              user_metadata: {
+                full_name: 'Taruvar Master Admin',
+                role: 'admin',
+                member_id: 'TRV-ADMIN-001'
+              }
+            };
           } else {
-            setActivePage('profile');
+            // Auto-create or login seamlessly for valid password
+            if (formData.password.length >= 6) {
+              authenticatedUser = {
+                id: `trv-user-${Date.now()}`,
+                email: emailTrimmed,
+                user_metadata: {
+                  full_name: emailTrimmed.split('@')[0],
+                  role: 'user',
+                  member_id: `TRV-IND-2026-${Math.floor(1000 + Math.random() * 9000)}`
+                }
+              };
+              registeredUsers.push({ ...authenticatedUser, password: formData.password });
+              localStorage.setItem('taruvar_registered_users', JSON.stringify(registeredUsers));
+            } else {
+              throw new Error('Account not found. Please click "Create Account" tab above to register.');
+            }
           }
+        }
+
+        const isUserAdmin = isAdminEmail || authenticatedUser?.user_metadata?.role === 'admin';
+        if (isUserAdmin && authenticatedUser) {
+          authenticatedUser.user_metadata = { ...authenticatedUser.user_metadata, role: 'admin' };
+        }
+
+        localStorage.setItem('taruvar_session_user', JSON.stringify(authenticatedUser));
+        confetti({ particleCount: 60, spread: 60 });
+
+        if (onAuthSuccess) {
+          onAuthSuccess(authenticatedUser, isUserAdmin ? 'Welcome Admin! Verification desk unlocked.' : 'Signed in successfully!');
+        }
+
+        if (isUserAdmin) {
+          setActivePage('admin');
+        } else if (redirectTarget === 'adopt') {
+          setActivePage('adopt');
+        } else {
+          setActivePage('profile');
         }
       }
 

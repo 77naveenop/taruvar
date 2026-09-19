@@ -22,8 +22,21 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authRedirectTarget, setAuthRedirectTarget] = useState(null);
 
-  // Check Supabase Auth state on mount & set up listener
+  // Check session on mount & set up listener
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('taruvar_session_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.email?.toLowerCase() === 'naveenpr332@gmail.com') {
+          parsed.user_metadata = { ...(parsed.user_metadata || {}), role: 'admin' };
+        }
+        setCurrentUser(parsed);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     if (!supabase) return;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -33,15 +46,19 @@ export default function App() {
           session.user.user_metadata = { ...session.user.user_metadata, role: 'admin' };
         }
         setCurrentUser(session.user);
+        localStorage.setItem('taruvar_session_user', JSON.stringify(session.user));
       }
-    });
+    }).catch(() => {});
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user || null;
-      if (u && u.email?.toLowerCase() === 'naveenpr332@gmail.com') {
-        u.user_metadata = { ...u.user_metadata, role: 'admin' };
+      if (u) {
+        if (u.email?.toLowerCase() === 'naveenpr332@gmail.com') {
+          u.user_metadata = { ...u.user_metadata, role: 'admin' };
+        }
+        setCurrentUser(u);
+        localStorage.setItem('taruvar_session_user', JSON.stringify(u));
       }
-      setCurrentUser(u);
     });
 
     return () => subscription?.unsubscribe();
@@ -53,7 +70,10 @@ export default function App() {
 
   const handleAuthSuccess = (user, msg) => {
     if (user && user.email?.toLowerCase() === 'naveenpr332@gmail.com') {
-      user.user_metadata = { ...user.user_metadata, role: 'admin' };
+      user.user_metadata = { ...(user.user_metadata || {}), role: 'admin' };
+    }
+    if (user) {
+      localStorage.setItem('taruvar_session_user', JSON.stringify(user));
     }
     setCurrentUser(user);
     showToast(msg);
@@ -61,8 +81,11 @@ export default function App() {
 
   const handleLogout = async () => {
     if (supabase) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {}
     }
+    localStorage.removeItem('taruvar_session_user');
     setCurrentUser(null);
     setAuthRedirectTarget(null);
     showToast('Signed out successfully.');
