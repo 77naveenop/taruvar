@@ -186,14 +186,17 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
         plantation_photo: formData.photoPreview,
         date: newRecord.plantedDate
       });
-      localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(pendingAdoptions));
-
       // 3. Save to shared Cloud DB for instant cross-device admin receipt
-      saveCloudPendingAdoption(newRecord).catch((err) => console.warn('Cloud save notice:', err));
+      try {
+        await saveCloudPendingAdoption(newRecord);
+      } catch (err) {
+        console.warn('Cloud save notice:', err);
+      }
     } catch (e) {
       console.error(e);
     }
 
+    setLoading(false);
     setAdoptedRecord(newRecord);
     if (showToast) {
       showToast(isBulk 

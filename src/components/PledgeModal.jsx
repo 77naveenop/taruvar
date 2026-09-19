@@ -134,10 +134,12 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
         plantation_photo: photoPreview,
         date: newRecord.plantedDate
       });
-      localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(pendingAdoptions));
-
       // 3. Save to cloud DB
-      saveCloudPendingAdoption(newRecord).catch((err) => console.warn('Cloud save notice:', err));
+      try {
+        await saveCloudPendingAdoption(newRecord);
+      } catch (err) {
+        console.warn('Cloud save notice:', err);
+      }
     } catch (e) {
       console.error('Pledge local storage error:', e);
     } finally {
