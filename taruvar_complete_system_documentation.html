@@ -234,9 +234,9 @@
     <div>
       <span class="cover-badge">Master System & Operations Manual</span>
       <h1 class="cover-title">TARUVAR</h1>
-      <div class="cover-subtitle">Complete Architecture, Database Schema, Unique ID Generator, Leadership Structure, Credentials & Operations Manual</div>
+      <div class="cover-subtitle">Complete Architecture, Cloud Database, Unique ID Generator, 5-Month Verification Engine, Leadership Structure & Operations Manual</div>
       <p style="font-size: 10.5pt; color: #4b6b55; max-width: 600px;">
-        A comprehensive reference guide for the Taruvar environmental movement (taruvar.org), covering the tree care verification engine, Supabase database, Unique ID card generation, dedicated page architecture, bottom navigation, and administrator protocols.
+        A comprehensive technical reference guide for the Taruvar environmental movement (taruvar.org), covering the tree care verification engine, GitHub Cloud DB synchronization with conflict retry, printable CR80 PVC ID card generation, responsive navigation with role-aware Admin Desk, and deployment procedures.
       </p>
     </div>
 
@@ -263,7 +263,7 @@
       </div>
       <div class="meta-item">
         <strong>Document Version & Date</strong>
-        Version 2.5 (September 2026 Release)
+        Version 3.0 (September 2026 Production Release)
       </div>
     </div>
   </div>
@@ -301,18 +301,23 @@
     <tbody>
       <tr>
         <td><strong>Frontend Framework</strong></td>
-        <td>React 18, Vite 5, JavaScript (ESM)</td>
+        <td>React 18, Vite 5, JavaScript (ESM), Tailwind CSS</td>
         <td>High-performance SPA with instant navigation and zero routing lag.</td>
       </tr>
       <tr>
-        <td><strong>Navigation UI</strong></td>
-        <td>Sticky Bottom Navigation + Clean Top Header</td>
-        <td>Ergonomic 5-tab bottom navigation with center elevated Adopt pill button.</td>
+        <td><strong>Cloud Database Layer</strong></td>
+        <td>GitHub REST API (<code>live-data</code> branch)</td>
+        <td>Atomic cloud storage (<code>pending_adoptions.json</code>, <code>approved_adoptions.json</code>) with exponential backoff conflict retries.</td>
       </tr>
       <tr>
-        <td><strong>Dedicated Page Architecture</strong></td>
-        <td>Standalone Full-Screen Pages</td>
-        <td>Dedicated routes for <code>/adopt</code> and <code>/auth</code> replacing popup modals.</td>
+        <td><strong>Local & Offline Cache</strong></td>
+        <td>LocalStorage Engine</td>
+        <td>Offline-first instant UI rendering with background cloud sync.</td>
+      </tr>
+      <tr>
+        <td><strong>Navigation UI</strong></td>
+        <td>Responsive Header & Bottom Nav</td>
+        <td>Top header with role-aware Admin Desk button and mobile bottom navigation.</td>
       </tr>
       <tr>
         <td><strong>Digital Identity Engine</strong></td>
@@ -327,12 +332,7 @@
       <tr>
         <td><strong>Mobile PWA</strong></td>
         <td>Service Worker (<code>sw.js</code>), Web Manifest</td>
-        <td>Native 1-tap installation with safe-zone padded maskable icons.</td>
-      </tr>
-      <tr>
-        <td><strong>Backend & Database</strong></td>
-        <td>Supabase (PostgreSQL 15)</td>
-        <td>Relational data, user authentication, and row-level security (RLS).</td>
+        <td>Native 1-tap installation with auto-purging service worker cache.</td>
       </tr>
       <tr>
         <td><strong>Hosting & CI/CD</strong></td>
@@ -385,53 +385,61 @@
     <li><strong>Standard Card Dimensions:</strong> 85.6mm × 53.98mm (CR80 standard credit card / lanyard badge size).</li>
     <li><strong>Front Side:</strong> Official Holographic Badge, Guardian Name, Member ID, Tree Passport ID, Species, Location, Live Scannable QR Code, Verification Status.</li>
     <li><strong>Back Side (Flip View):</strong> 5-Month Milestone Verification Stamp Log (`Month 1` through `Month 5`) + Official Guardian Caretaker Oath.</li>
-    <li><strong>Live Scannable QR Code:</strong> Direct URL pointing to the tree's live public timeline (<code>https://taruvar.org/journey/TRV-TREE-XXXX</code>).</li>
+    <li><strong>Live Scannable QR Code:</strong> Direct URL pointing to the tree's live public timeline (<code>https://taruvar.org/journey</code>).</li>
     <li><strong>1-Click Physical Print:</strong> Integrated with browser <code>@media print</code> CSS isolating the card for instant physical PVC card printing.</li>
   </ul>
 
-  <!-- 4. DATABASE ARCHITECTURE & SCHEMA -->
+  <!-- 4. CLOUD DATABASE & DATA SCHEMA -->
   <div class="page-break"></div>
-  <h1>4. Database Architecture & Schema (Supabase)</h1>
+  <h1>4. Cloud Database & Real-Time Sync Architecture</h1>
+  <p>
+    Real-time cross-device data persistence is handled via an atomic GitHub REST API cloud layer (<code>77naveenop/taruvar</code> branch <code>live-data</code>).
+  </p>
 
-  <h2>4.1 Table: <code>pledges</code> (Tree Adoptions)</h2>
-  <pre><code>CREATE TABLE public.pledges (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  email TEXT NOT NULL,
-  phone TEXT,
-  tree_type TEXT NOT NULL,          -- 'Neem', 'Peepal', 'Banyan', 'Mango', 'Gulmohar'
-  tree_name TEXT,                   -- Nickname e.g. 'My Peepal Guardian'
-  location TEXT,                    -- e.g. 'Sector 4 Green Park, Delhi NCR'
-  plantation_photo TEXT NOT NULL,   -- Photo proof
-  status TEXT DEFAULT 'pending',    -- 'pending', 'approved', 'rejected'
-  verified_months INT DEFAULT 1,    -- 1 to 5 milestones completed
-  upvotes_count INT DEFAULT 0,      -- Community ranking counter
-  member_id_code TEXT,              -- 'TRV-IND-2026-XXXX'
-  tree_id_code TEXT,                -- 'TRV-TREE-XXXX'
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+  <h2>4.1 Data Structure: <code>pending_adoptions.json</code></h2>
+  <pre><code>[
+  {
+    "id": "TRV-TREE-1741234567890",
+    "adopter_name": "Naveen Sharma",
+    "adopter_email": "naveenpr332@gmail.com",
+    "adopter_phone": "+91 8543964107",
+    "tree_name": "Prithvi Peepal",
+    "species": "Peepal",
+    "location": "Sector 62, Noida, UP",
+    "plantation_photo": "data:image/jpeg;base64,...",
+    "status": "pending",
+    "verified_months": 1,
+    "upvotes": 1,
+    "reports": [],
+    "created_at": "2026-09-19T12:00:00.000Z"
+  }
+]</code></pre>
 
-ALTER TABLE public.pledges ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can view approved pledges" ON public.pledges FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can insert pledges" ON public.pledges FOR INSERT WITH CHECK (true);
-CREATE POLICY "Admins can update pledges" ON public.pledges FOR UPDATE USING (true);</code></pre>
+  <h2>4.2 Data Structure: <code>approved_adoptions.json</code></h2>
+  <pre><code>[
+  {
+    "id": "TRV-TREE-1741234567890",
+    "adopter_name": "Naveen Sharma",
+    "adopter_email": "naveenpr332@gmail.com",
+    "tree_name": "Prithvi Peepal",
+    "species": "Peepal",
+    "location": "Sector 62, Noida, UP",
+    "plantation_photo": "https://...",
+    "status": "approved",
+    "verified_months": 5,
+    "upvotes": 42,
+    "reports": [
+      { "month": 1, "photo": "...", "date": "Oct 19, 2026", "status": "verified" },
+      { "month": 2, "photo": "...", "date": "Nov 19, 2026", "status": "verified" }
+    ],
+    "approved_at": "2026-09-19T13:00:00.000Z"
+  }
+]</code></pre>
 
-  <h2>4.2 Table: <code>monthly_reports</code> (5-Month Growth Logs)</h2>
-  <pre><code>CREATE TABLE public.monthly_reports (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  tree_id UUID REFERENCES public.pledges(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  month_number INT NOT NULL,        -- 1, 2, 3, 4, 5
-  photo_url TEXT NOT NULL,          -- Monthly growth photo
-  notes TEXT,                       -- Observations (height, compost, watering)
-  status TEXT DEFAULT 'pending',    -- 'pending', 'verified', 'rejected'
-  submitted_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE public.monthly_reports ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read monthly_reports" ON public.monthly_reports FOR SELECT USING (true);
-CREATE POLICY "Users can insert monthly_reports" ON public.monthly_reports FOR INSERT WITH CHECK (true);</code></pre>
+  <h2>4.3 Conflict-Resilient Retry Mechanism</h2>
+  <p>
+    The client employs <code>putGithubJsonWithRetry()</code> featuring 5-stage exponential backoff. Whenever multiple guardians submit requests simultaneously, the client fetches the fresh SHA hash before committing to guarantee zero merge conflicts and complete data integrity.
+  </p>
 
   <!-- 5. 7-MEMBER CORE LEADERSHIP TEAM -->
   <div class="page-break"></div>
@@ -517,14 +525,14 @@ CREATE POLICY "Users can insert monthly_reports" ON public.monthly_reports FOR I
         <td><span class="tag badge-admin">admin</span></td>
         <td>Founder & Authorized Core Team Only</td>
         <td>Approve tree adoptions, verify monthly reports, award badges.</td>
-        <td>Admin Verification Desk (Passkey Protected)</td>
+        <td>Admin Desk button in Top Navbar near Profile</td>
       </tr>
     </tbody>
   </table>
 
   <div class="alert alert-warning">
     <strong>Founder Passkey:</strong> <code>TARUVAR_ADMIN_2026</code><br>
-    Entering this passkey in the Admin Verification Desk (accessible via footer link or <code>/admin</code>) permanently upgrades the user's role to <code>admin</code> in Supabase.
+    Entering this passkey in the Admin Verification Desk upgrades the session to permanent administrator status.
   </div>
 
   <!-- 7. CONTACT MATRIX & CREDENTIALS -->
@@ -568,34 +576,6 @@ CREATE POLICY "Users can insert monthly_reports" ON public.monthly_reports FOR I
     </tbody>
   </table>
 
-  <h2>7.1 Environment Variables (Vercel & .env)</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Variable Name</th>
-        <th>Config Location</th>
-        <th>Value / Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>VITE_SUPABASE_URL</code></td>
-        <td>Vercel Environment Variables</td>
-        <td><code>https://unvirsyjtuajgnizuwto.supabase.co</code></td>
-      </tr>
-      <tr>
-        <td><code>VITE_SUPABASE_ANON_KEY</code></td>
-        <td>Vercel Environment Variables</td>
-        <td><code>[Configured in Vercel & .env (Supabase Public Anon Key)]</code></td>
-      </tr>
-      <tr>
-        <td><code>TARUVAR_ADMIN_PASSKEY</code></td>
-        <td>Application Secret</td>
-        <td><code>TARUVAR_ADMIN_2026</code></td>
-      </tr>
-    </tbody>
-  </table>
-
   <!-- 8. OPERATIONAL WORKFLOWS & DEPLOYMENT -->
   <h1>8. Step-by-Step Operational Workflows</h1>
 
@@ -603,7 +583,7 @@ CREATE POLICY "Users can insert monthly_reports" ON public.monthly_reports FOR I
   <ol>
     <li><strong>Step 1 (Adoption):</strong> User navigates to <code>/adopt</code>, chooses species, enters nickname/location, and uploads a mandatory plantation photo.</li>
     <li><strong>Step 2 (ID Generation):</strong> System immediately generates <strong>Member ID</strong> (<code>TRV-IND-2026-XXXX</code>) and <strong>Tree Passport ID</strong> (<code>TRV-TREE-XXXX</code>), rendering the printable PVC ID card.</li>
-    <li><strong>Step 3 (Admin Review):</strong> Admin opens <code>/admin</code>, reviews the photo proof, and approves the adoption.</li>
+    <li><strong>Step 3 (Admin Review):</strong> Admin opens Admin Desk from the top navbar, reviews the photo proof, and approves the adoption.</li>
     <li><strong>Step 4 (5-Month Progress Logs):</strong> Every 30 days, the user uploads Month 1 to 5 growth photos in their Profile.</li>
     <li><strong>Step 5 (Verification & Badges):</strong> Admin verifies monthly progress logs, advancing the user's status to <em>Level 5 Verified Eco-Guardian</em>.</li>
   </ol>
@@ -616,7 +596,7 @@ git push origin main</code></pre>
   <p>Vercel automatically builds and deploys the new release to <strong>https://taruvar.org</strong> within 45 seconds.</p>
 
   <div style="margin-top: 40px; text-align: center; border-top: 1px solid #dce8e0; padding-top: 15px; font-size: 8.5pt; color: #718096;">
-    © 2026 Taruvar Foundation • <a href="https://taruvar.org" style="color:#2D7A4E;">taruvar.org</a> • Confidential System Documentation (v2.5)
+    © 2026 Taruvar Foundation • <a href="https://taruvar.org" style="color:#2D7A4E;">taruvar.org</a> • Confidential System Documentation (v3.0)
   </div>
 
 </body>
