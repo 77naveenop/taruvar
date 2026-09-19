@@ -1,5 +1,9 @@
 [
   {
+    "id": "tree-B",
+    "name": "Tree B"
+  },
+  {
     "id": "tree-A",
     "name": "Tree A"
   },
