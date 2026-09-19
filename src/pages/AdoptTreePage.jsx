@@ -17,6 +17,7 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
     name: currentUser?.user_metadata?.full_name || '',
     email: currentUser?.email || '',
     phone: '',
+    adopterAge: 18,
     treeType: 'Neem Tree (Azadirachta indica)',
     treeName: '',
     location: '',
@@ -34,13 +35,21 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
   const [adoptedRecord, setAdoptedRecord] = useState(null);
   const [photoError, setPhotoError] = useState('');
 
-  const individualTreeOptions = [
-    { name: 'Neem Tree (Azadirachta indica)', desc: 'High oxygen, natural air purifier, drought hardy', icon: '🌿' },
-    { name: 'Peepal Tree (Ficus religiosa)', desc: '24/7 oxygen emissions, deep heritage, massive canopy', icon: '🍃' },
-    { name: 'Banyan Tree (Ficus benghalensis)', desc: 'National tree of India, expansive shade, centuries lifespan', icon: '🌳' },
-    { name: 'Mango Tree (Mangifera indica)', desc: 'Delicious fruit yield, biodiversity support, lush foliage', icon: '🥭' },
-    { name: 'Gulmohar (Delonix regia)', desc: 'Vibrant fiery flowers, fast growing, great street shade', icon: '🌸' },
-    { name: 'Jamun Tree (Syzygium cumini)', desc: 'Medicinal berries, groundwater retention, pollinator hub', icon: '🫐' }
+  const suggestedTreeSpecies = [
+    '🌿 Neem (Azadirachta indica)',
+    '🍃 Peepal (Ficus religiosa)',
+    '🌳 Banyan (Bargad)',
+    '🥭 Mango (Mangifera indica)',
+    '🫐 Jamun (Syzygium cumini)',
+    '🌸 Gulmohar (Delonix regia)',
+    '🍈 Amla (Indian Gooseberry)',
+    '🌱 Guava (Amrood)',
+    '🌲 Arjun Tree',
+    '🌿 Ashoka Tree',
+    '🍋 Lemon / Citrus',
+    '🎋 Bamboo / Bambusoideae',
+    '🍀 Bel Patra (Aegle marmelos)',
+    '🌳 Kadam Tree'
   ];
 
   const orgTypes = [
@@ -78,8 +87,12 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
     e.preventDefault();
     
     if (adoptionMode === 'individual') {
-      if (!formData.name || !formData.email || !formData.photo) {
-        setPhotoError('Please upload a photo of your plantation action to complete adoption.');
+      if (!formData.name || !formData.email || !formData.treeType || !formData.photo) {
+        setPhotoError('Please fill all required fields and upload a photo of your plantation action.');
+        return;
+      }
+      if (Number(formData.adopterAge) < 15) {
+        setPhotoError('Adopter age must be at least 15 years to undertake the 15–20 year tree nurturing commitment.');
         return;
       }
     } else {
@@ -281,6 +294,7 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                     name: currentUser?.user_metadata?.full_name || '',
                     email: currentUser?.email || '',
                     phone: '',
+                    adopterAge: 18,
                     treeType: 'Neem Tree (Azadirachta indica)',
                     treeName: '',
                     location: '',
@@ -396,7 +410,7 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                 <div className="space-y-4">
                   <h2 className="text-base font-extrabold text-taruvar-dark flex items-center gap-2 border-b border-taruvar-border pb-2">
                     <span className="w-6 h-6 rounded-full bg-taruvar-light text-taruvar-secondary text-xs flex items-center justify-center font-bold">1</span>
-                    <span>Guardian Information (अभिभावक की जानकारी)</span>
+                    <span>Guardian Information & Age (अभिभावक की जानकारी एवं आयु)</span>
                   </h2>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -412,6 +426,28 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                         placeholder="e.g. Naveen Sharma"
                         className="w-full px-4 py-3 rounded-2xl border border-taruvar-border text-sm focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                        <span>Adopter Age / आयु *</span>
+                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          Min. 15–20 Years Limit
+                        </span>
+                      </label>
+                      <input
+                        type="number"
+                        min="15"
+                        max="110"
+                        required
+                        value={formData.adopterAge}
+                        onChange={(e) => setFormData({ ...formData, adopterAge: e.target.value })}
+                        placeholder="e.g. 18"
+                        className="w-full px-4 py-3 rounded-2xl border border-taruvar-border text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                      />
+                      <p className="text-[10px] text-taruvar-muted mt-1">
+                        Adopter must be at least 15–20 years old to pledge responsible 15–20 year lifelong nurturing (Paalna).
+                      </p>
                     </div>
 
                     <div>
@@ -441,7 +477,7 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                       />
                     </div>
 
-                    <div>
+                    <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1.5">
                         Plantation Location / City *
                       </label>
@@ -450,41 +486,58 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                         required
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        placeholder="e.g. Sector 15 Botanical Park, Delhi NCR"
+                        placeholder="e.g. Sector 15 Botanical Park, Delhi NCR / Home Garden"
                         className="w-full px-4 py-3 rounded-2xl border border-taruvar-border text-sm focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* 2. Tree Species Selection */}
+                {/* 2. Tree Species (Open / Any Species) */}
                 <div className="space-y-4">
                   <h2 className="text-base font-extrabold text-taruvar-dark flex items-center gap-2 border-b border-taruvar-border pb-2">
                     <span className="w-6 h-6 rounded-full bg-taruvar-light text-taruvar-secondary text-xs flex items-center justify-center font-bold">2</span>
-                    <span>Select Indigenous Tree Species (पौधे की प्रजाति)</span>
+                    <span>Tree Species & Details (पौधे का नाम या प्रजाति - कोई भी पौधा)</span>
                   </h2>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {individualTreeOptions.map((t) => (
-                      <div
-                        key={t.name}
-                        onClick={() => setFormData({ ...formData, treeType: t.name })}
-                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 ${
-                          formData.treeType === t.name
-                            ? 'border-taruvar-secondary bg-taruvar-light/50 shadow-md'
-                            : 'border-taruvar-border bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <span className="text-2xl mt-0.5">{t.icon}</span>
-                        <div className="flex-1">
-                          <h4 className="text-xs font-bold text-taruvar-dark">{t.name}</h4>
-                          <p className="text-[11px] text-taruvar-muted mt-0.5 leading-tight">{t.desc}</p>
-                        </div>
-                        {formData.treeType === t.name && (
-                          <Check className="w-4 h-4 text-taruvar-secondary shrink-0 mt-0.5" />
-                        )}
-                      </div>
-                    ))}
+                  <div>
+                    <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1.5">
+                      Enter Tree Species / Plant Name (Any Tree) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.treeType}
+                      onChange={(e) => setFormData({ ...formData, treeType: e.target.value })}
+                      placeholder="e.g. Neem, Peepal, Mango, Banyan, Jamun, Gulmohar, Amla, Guava, Lemon, or any tree..."
+                      className="w-full px-4 py-3.5 rounded-2xl border border-taruvar-border text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50 bg-taruvar-bg/40 focus:bg-white"
+                    />
+                    <p className="text-[11px] text-taruvar-muted mt-1">
+                      You can adopt <strong>any tree species</strong> of your choice suitable for your local climate.
+                    </p>
+                  </div>
+
+                  {/* Quick Suggestion Chips */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-taruvar-muted uppercase tracking-wider mb-2">
+                      Popular Suggestions (Click any to auto-fill):
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestedTreeSpecies.map((species) => (
+                        <button
+                          key={species}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, treeType: species })}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                            formData.treeType === species
+                              ? 'bg-taruvar-secondary text-white border-taruvar-secondary shadow-xs scale-105'
+                              : 'bg-taruvar-light/70 text-taruvar-dark border-taruvar-border hover:bg-taruvar-light hover:border-taruvar-secondary/40'
+                          }`}
+                        >
+                          {species}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div>
@@ -495,7 +548,7 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                       type="text"
                       value={formData.treeName}
                       onChange={(e) => setFormData({ ...formData, treeName: e.target.value })}
-                      placeholder="e.g. My Peepal Guardian, Shanti Tree"
+                      placeholder="e.g. My Green Guardian, Shanti Tree, Prana Vriksh"
                       className="w-full px-4 py-3 rounded-2xl border border-taruvar-border text-sm focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
                     />
                   </div>

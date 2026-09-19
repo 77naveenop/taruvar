@@ -4,7 +4,8 @@ import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
 
 export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, onPledgeComplete }) {
-  const [treeType, setTreeType] = useState('Neem');
+  const [treeType, setTreeType] = useState('Neem Tree (Azadirachta indica)');
+  const [adopterAge, setAdopterAge] = useState(18);
   const [treeNickname, setTreeNickname] = useState('');
   const [location, setLocation] = useState('');
   const [plantationPhoto, setPlantationPhoto] = useState(null);
@@ -18,12 +19,15 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
 
   if (!isOpen) return null;
 
-  const treeOptions = [
-    { name: 'Neem', desc: 'Air purifying & medicinal guardian', emoji: '🌿' },
-    { name: 'Peepal', desc: 'Oxygen giver & natural shade', emoji: '🌳' },
-    { name: 'Banyan', desc: 'Deep roots & strong canopy', emoji: '🌴' },
-    { name: 'Mango', desc: 'Fruit-bearing & bird home', emoji: '🥭' },
-    { name: 'Gulmohar', desc: 'Vibrant shade & summer bloom', emoji: '🌺' }
+  const quickSpecies = [
+    '🌿 Neem',
+    '🍃 Peepal',
+    '🌳 Banyan',
+    '🥭 Mango',
+    '🌸 Gulmohar',
+    '🫐 Jamun',
+    '🍈 Amla',
+    '🌱 Guava'
   ];
 
   const handlePhotoSelect = (e) => {
@@ -46,6 +50,16 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
     if (!currentUser) {
       setErrorMsg('Please log in or create an account first to complete tree adoption.');
       onOpenAuth();
+      return;
+    }
+
+    if (Number(adopterAge) < 15) {
+      setErrorMsg('Adopters must be at least 15–20 years old to pledge 15–20 year lifelong nurturing (Paalna).');
+      return;
+    }
+
+    if (!treeType.trim()) {
+      setErrorMsg('Please specify a tree species or sapling name.');
       return;
     }
 
@@ -173,34 +187,57 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
                 </div>
               )}
 
-              {/* Tree Type Selector */}
+              {/* Adopter Age & Tree Species */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-taruvar-muted mb-1 flex items-center justify-between">
+                    <span>Adopter Age / आयु *</span>
+                    <span className="text-[10px] text-emerald-700 font-bold">Min 15–20 Yrs</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="15"
+                    max="110"
+                    required
+                    value={adopterAge}
+                    onChange={(e) => setAdopterAge(e.target.value)}
+                    placeholder="e.g. 18"
+                    className="w-full px-3 py-2 rounded-xl border border-taruvar-border text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-taruvar-muted mb-1">
+                    Tree Species (Any) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={treeType}
+                    onChange={(e) => setTreeType(e.target.value)}
+                    placeholder="e.g. Neem, Peepal, Mango, Jamun..."
+                    className="w-full px-3 py-2 rounded-xl border border-taruvar-border text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                  />
+                </div>
+              </div>
+
+              {/* Quick Suggestion Pills */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-taruvar-muted mb-1.5">
-                  1. Select Tree Species
+                <label className="block text-[10px] font-bold text-taruvar-muted uppercase tracking-wider mb-1">
+                  Quick Species Suggestions:
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {treeOptions.map((t) => (
+                <div className="flex flex-wrap gap-1.5">
+                  {quickSpecies.map((species) => (
                     <button
-                      key={t.name}
+                      key={species}
                       type="button"
-                      onClick={() => setTreeType(t.name)}
-                      className={`p-2.5 rounded-2xl border text-left transition-all flex flex-col justify-between ${
-                        treeType === t.name 
-                          ? 'border-taruvar-secondary bg-taruvar-light/50 ring-2 ring-taruvar-primary/30' 
-                          : 'border-taruvar-border hover:border-taruvar-primary/50 bg-white'
+                      onClick={() => setTreeType(species.replace(/^[^\s]+\s/, ''))}
+                      className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition-all cursor-pointer ${
+                        treeType.toLowerCase().includes(species.replace(/^[^\s]+\s/, '').toLowerCase())
+                          ? 'bg-taruvar-secondary text-white border-taruvar-secondary shadow-xs'
+                          : 'bg-taruvar-bg text-taruvar-dark border-taruvar-border hover:bg-taruvar-light'
                       }`}
                     >
-                      <div className="flex justify-between items-start">
-                        <span className="text-lg">{t.emoji}</span>
-                        {treeType === t.name && (
-                          <span className="w-3.5 h-3.5 rounded-full bg-taruvar-secondary text-white flex items-center justify-center text-[9px]">
-                            <Check className="w-2.5 h-2.5" />
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-1">
-                        <p className="font-bold text-xs text-taruvar-dark">{t.name}</p>
-                      </div>
+                      {species}
                     </button>
                   ))}
                 </div>
@@ -210,7 +247,7 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-taruvar-muted mb-1">
-                    Tree Nickname / Name
+                    Tree Nickname / Name (Optional)
                   </label>
                   <input
                     type="text"
@@ -222,13 +259,14 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-taruvar-muted mb-1">
-                    Plantation Location
+                    Plantation Location *
                   </label>
                   <input
                     type="text"
+                    required
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    placeholder="e.g. Sector 4 Green Park"
+                    placeholder="e.g. Sector 4 Green Park, Delhi"
                     className="w-full px-3 py-2 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
                   />
                 </div>

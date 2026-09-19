@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, User, LogOut, LogIn, Download, Sprout, ShieldCheck, Heart } from 'lucide-react';
+import { ArrowRight, User, LogOut, LogIn, Download, Sprout, ShieldCheck, Heart, Compass } from 'lucide-react';
 
 export default function Navbar({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth, onLogout }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
