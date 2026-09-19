@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, User, LogOut, LogIn, Download, Sprout, ShieldCheck } from 'lucide-react';
+import { ArrowRight, User, LogOut, LogIn, Download, Sprout, ShieldCheck, Heart } from 'lucide-react';
 
 export default function Navbar({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth, onLogout }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -50,76 +50,109 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const isAdmin = currentUser?.user_metadata?.role === 'admin';
   const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0];
 
+  const desktopNavLinks = [
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'Our Mission' },
+    { id: 'tree-journey', label: 'Tree Journey' },
+    { id: 'initiatives', label: 'Initiatives' },
+    { id: 'get-involved', label: 'Get Involved' },
+    ...(isAdmin ? [{ id: 'admin', label: 'Admin Desk 🔒' }] : [])
+  ];
+
   return (
-    <header className="sticky top-0 z-40 glass-header border-b border-taruvar-border/70 transition-all">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-taruvar-border shadow-xs transition-all">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
           
-          {/* 1. LEFT: Logo Icon Only */}
-          <div className="flex items-center shrink-0">
+          {/* 1. LEFT: Prominent Logo + Brand Wordmark */}
+          <div className="flex items-center gap-3 shrink-0">
             <button 
               onClick={() => handleNavClick('home')}
-              className="group focus:outline-none p-1 rounded-xl hover:bg-taruvar-light/50 transition-all cursor-pointer"
-              title="Taruvar Homepage"
+              className="flex items-center gap-3 group focus:outline-none cursor-pointer text-left"
+              title="Taruvar — One Person. One Tree."
             >
               <img 
                 src="/logo.jpg" 
-                alt="Taruvar Logo" 
-                className="h-9 w-9 sm:h-11 sm:w-11 object-contain rounded-xl mix-blend-multiply group-hover:scale-105 transition-transform"
+                alt="TARUVAR Logo" 
+                className="h-11 w-11 sm:h-14 sm:w-14 object-contain rounded-2xl group-hover:scale-105 transition-transform drop-shadow-sm"
               />
+              <div className="flex flex-col justify-center">
+                <span className="text-xl sm:text-2xl font-black tracking-tight text-taruvar-dark group-hover:text-taruvar-secondary transition-colors leading-none font-sans">
+                  TARUVAR
+                </span>
+                <span className="text-[9px] sm:text-[11px] font-bold text-taruvar-secondary tracking-widest uppercase mt-0.5">
+                  One Person. One Tree.
+                </span>
+              </div>
             </button>
           </div>
 
-          {/* 2. MIDDLE: TARUVAR Wordmark (Takes to Homepage) */}
-          <div className="flex-1 text-center min-w-0 px-1 overflow-hidden">
-            <button
-              onClick={() => handleNavClick('home')}
-              className="group focus:outline-none inline-block max-w-full cursor-pointer"
-            >
-              <span className="text-base sm:text-2xl font-black tracking-wider text-taruvar-dark group-hover:text-taruvar-secondary transition-colors font-sans truncate block leading-none">
-                TARUVAR
-              </span>
-              <span className="text-[8px] sm:text-[10px] font-bold text-taruvar-secondary tracking-widest uppercase truncate block mt-0.5">
-                One Person. One Tree. • एक व्यक्ति, एक पेड़
-              </span>
-            </button>
-          </div>
+          {/* 2. CENTER: Full Desktop Navigation Bar (Visible on Desktop / Tablets) */}
+          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+            {desktopNavLinks.map((link) => {
+              const isActive = activePage === link.id;
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => handleNavClick(link.id)}
+                  className={`px-3.5 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? 'text-taruvar-secondary bg-taruvar-light font-extrabold shadow-xs'
+                      : 'text-taruvar-dark hover:text-taruvar-secondary hover:bg-taruvar-bg'
+                  }`}
+                >
+                  {link.label}
+                </button>
+              );
+            })}
+          </nav>
 
-          {/* 3. RIGHT: Clean Install & Action Buttons (No Menu Toggle) */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* 3. RIGHT: Action Buttons (Install + Adopt Tree + Profile / Log In) */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             
             {/* PWA Install Button */}
             {!isAppInstalled && (
               <button
                 onClick={handleInstallPWA}
-                className="px-2.5 py-1 sm:px-3.5 sm:py-1.5 bg-gradient-to-r from-taruvar-secondary via-[#1F5435] to-taruvar-secondary hover:brightness-110 text-white text-[10px] sm:text-xs font-extrabold rounded-full shadow-sm hover:shadow-md transition-all flex items-center gap-1 border border-taruvar-accent/40 tracking-tight shrink-0 cursor-pointer"
-                title="Install Taruvar PWA App"
-                aria-label="Install App"
+                className="hidden sm:flex px-3 py-1.5 bg-taruvar-bg hover:bg-taruvar-light text-taruvar-dark text-xs font-bold rounded-xl border border-taruvar-border transition-all items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Install Taruvar App"
               >
-                <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-taruvar-accent animate-bounce shrink-0" />
-                <span className="font-sans">Install</span>
+                <Download className="w-3.5 h-3.5 text-taruvar-secondary animate-bounce" />
+                <span>Install App</span>
               </button>
             )}
 
-            {/* Adopt / Profile Link Button */}
+            {/* Prominent Adopt Button (With Logo) */}
+            <button
+              onClick={() => handleNavClick('adopt')}
+              className="px-3.5 py-2 sm:px-5 sm:py-2.5 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-black text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2 cursor-pointer border border-taruvar-primary/30"
+              title="Grow / Adopt Your Tree"
+            >
+              <img src="/logo.jpg" alt="Logo" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover bg-white shadow-xs" />
+              <span>Adopt Tree</span>
+            </button>
+
+            {/* Account / Login Button */}
             {currentUser ? (
               <button
                 onClick={() => handleNavClick('profile')}
-                className="px-3 py-1.5 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary text-xs font-bold rounded-xl border border-taruvar-border transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-2 sm:px-4 sm:py-2.5 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary text-xs sm:text-sm font-bold rounded-xl sm:rounded-2xl border border-taruvar-border transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                title="View Profile"
               >
-                <User className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{displayName}</span>
-                <span className="sm:hidden">Profile</span>
+                <User className="w-4 h-4" />
+                <span className="hidden lg:inline">{displayName}</span>
+                <span className="lg:hidden">Profile</span>
               </button>
             ) : (
               <button
-                onClick={() => handleNavClick('adopt')}
-                className="px-3.5 py-1.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white text-xs font-bold rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
+                onClick={() => handleNavClick('auth')}
+                className="hidden md:flex px-4 py-2.5 bg-taruvar-bg hover:bg-taruvar-light text-taruvar-dark text-xs sm:text-sm font-bold rounded-2xl border border-taruvar-border transition-all items-center gap-1.5 cursor-pointer shadow-xs"
               >
-                <img src="/logo.jpg" alt="Logo" className="w-4 h-4 rounded-full object-cover bg-white" />
-                <span>Adopt</span>
+                <LogIn className="w-4 h-4 text-taruvar-secondary" />
+                <span>Log In</span>
               </button>
             )}
 
@@ -128,7 +161,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
         </div>
       </div>
 
-      {/* PWA Install Guide Modal (Shown only if browser blocks beforeinstallprompt) */}
+      {/* PWA Install Guide Modal */}
       {showInstallGuide && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white max-w-sm w-full p-6 rounded-3xl shadow-2xl border border-taruvar-border space-y-4 text-center relative">
@@ -139,11 +172,11 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
               ✕
             </button>
 
-            <img src="/logo.jpg" alt="Taruvar Logo" className="w-16 h-auto mx-auto mix-blend-multiply" />
+            <img src="/logo.jpg" alt="Taruvar Logo" className="w-16 h-auto mx-auto drop-shadow-sm rounded-2xl" />
 
             <h3 className="text-xl font-bold text-taruvar-dark">Install Taruvar App</h3>
             <p className="text-xs text-taruvar-muted leading-relaxed">
-              Install Taruvar directly onto your phone or desktop home screen for 1-tap offline access:
+              Install Taruvar directly onto your phone or desktop for fast 1-tap offline access:
             </p>
 
             <div className="bg-taruvar-bg p-4 rounded-2xl text-left space-y-2 text-xs text-taruvar-dark">

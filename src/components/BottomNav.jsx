@@ -8,7 +8,7 @@ export default function BottomNav({ activePage, setActivePage, onOpenPledge, cur
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-taruvar-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-2 py-1.5 transition-all">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-taruvar-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-2 py-1.5 transition-all">
       <div className="max-w-lg mx-auto flex items-center justify-around relative">
         
         {/* 1. Home Tab */}

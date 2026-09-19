@@ -18,12 +18,16 @@ export default function Footer({ setActivePage, onOpenPledge, onNavigateGetInvol
           {/* Col 1 & 2: Brand & Contact Info */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-2xl inline-block">
+              <div className="bg-white p-1.5 rounded-2xl inline-block shadow-sm">
                 <img 
                   src="/logo.jpg" 
                   alt="TARUVAR — One Person. One Tree." 
-                  className="h-11 w-auto object-contain"
+                  className="h-12 sm:h-14 w-auto object-contain rounded-xl"
                 />
+              </div>
+              <div>
+                <h4 className="text-lg font-black tracking-tight text-white leading-none">TARUVAR</h4>
+                <p className="text-[10px] font-bold text-taruvar-accent tracking-widest uppercase mt-0.5">One Person. One Tree.</p>
               </div>
             </div>
 
