@@ -1,14 +1,1 @@
-[
-  {
-    "id": "TRV-TREE-TEST-1",
-    "treeId": "TRV-TREE-TEST-1",
-    "adopter_name": "Rohit Verma",
-    "adopter_email": "rohit@example.com",
-    "tree_name": "Green Gulmohar",
-    "species": "Gulmohar Tree (Delonix regia)",
-    "location": "Sector 62, Noida",
-    "plantation_photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-    "status": "pending",
-    "date": "19 Sep 2026"
-  }
-]
+[]
