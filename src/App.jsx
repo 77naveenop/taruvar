@@ -20,6 +20,7 @@ export default function App() {
   const [getInvolvedTab, setGetInvolvedTab] = useState('volunteer');
   const [toastMessage, setToastMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [authRedirectTarget, setAuthRedirectTarget] = useState(null);
 
   // Check Supabase Auth state on mount & set up listener
   useEffect(() => {
@@ -27,12 +28,20 @@ export default function App() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        // Auto recognize admin email
+        if (session.user.email?.toLowerCase() === 'naveenpr332@gmail.com') {
+          session.user.user_metadata = { ...session.user.user_metadata, role: 'admin' };
+        }
         setCurrentUser(session.user);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user || null);
+      const u = session?.user || null;
+      if (u && u.email?.toLowerCase() === 'naveenpr332@gmail.com') {
+        u.user_metadata = { ...u.user_metadata, role: 'admin' };
+      }
+      setCurrentUser(u);
     });
 
     return () => subscription?.unsubscribe();
@@ -43,6 +52,9 @@ export default function App() {
   };
 
   const handleAuthSuccess = (user, msg) => {
+    if (user && user.email?.toLowerCase() === 'naveenpr332@gmail.com') {
+      user.user_metadata = { ...user.user_metadata, role: 'admin' };
+    }
     setCurrentUser(user);
     showToast(msg);
   };
@@ -52,6 +64,7 @@ export default function App() {
       await supabase.auth.signOut();
     }
     setCurrentUser(null);
+    setAuthRedirectTarget(null);
     showToast('Signed out successfully.');
     setActivePage('home');
   };
@@ -63,11 +76,19 @@ export default function App() {
   };
 
   const navigateToAdopt = () => {
-    setActivePage('adopt');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!currentUser) {
+      setAuthRedirectTarget('adopt');
+      setActivePage('auth');
+      showToast('Please sign in or register to adopt a tree / पौधा अपनाने के लिए कृपया लॉग इन करें');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setActivePage('adopt');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
-  const navigateToAuth = () => {
+  const navigateToAuth = (target = null) => {
+    setAuthRedirectTarget(target);
     setActivePage('auth');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -80,7 +101,7 @@ export default function App() {
         setActivePage={setActivePage} 
         onOpenPledge={navigateToAdopt}
         currentUser={currentUser}
-        onOpenAuth={navigateToAuth}
+        onOpenAuth={() => navigateToAuth(null)}
         onLogout={handleLogout}
         onNavigateGetInvolved={navigateToGetInvolved}
       />
@@ -93,7 +114,7 @@ export default function App() {
             onOpenPledge={navigateToAdopt}
             showToast={showToast} 
             onNavigateGetInvolved={navigateToGetInvolved}
-            onOpenAuth={navigateToAuth}
+            onOpenAuth={() => navigateToAuth(null)}
             currentUser={currentUser}
           />
         )}
@@ -132,7 +153,7 @@ export default function App() {
             currentUser={currentUser}
             showToast={showToast}
             setActivePage={setActivePage}
-            onOpenAuth={navigateToAuth}
+            onOpenAuth={() => navigateToAuth('adopt')}
           />
         )}
 
@@ -141,13 +162,14 @@ export default function App() {
             onAuthSuccess={handleAuthSuccess}
             setActivePage={setActivePage}
             showToast={showToast}
+            redirectTarget={authRedirectTarget}
           />
         )}
 
         {activePage === 'profile' && (
           <ProfilePage 
             currentUser={currentUser}
-            onOpenAuth={navigateToAuth}
+            onOpenAuth={() => navigateToAuth(null)}
             onOpenAdopt={navigateToAdopt}
             showToast={showToast}
           />
@@ -157,7 +179,7 @@ export default function App() {
           <AdminDashboardPage 
             currentUser={currentUser}
             showToast={showToast}
-            onOpenAuth={navigateToAuth}
+            onOpenAuth={() => navigateToAuth('admin')}
           />
         )}
       </main>
@@ -169,13 +191,13 @@ export default function App() {
         onNavigateGetInvolved={navigateToGetInvolved}
       />
 
-      {/* Modern Sticky Bottom Navigation Bar */}
+      {/* Modern Sticky Bottom Navigation Bar (Mobile only) */}
       <BottomNav
         activePage={activePage}
         setActivePage={setActivePage}
         onOpenPledge={navigateToAdopt}
         currentUser={currentUser}
-        onOpenAuth={navigateToAuth}
+        onOpenAuth={() => navigateToAuth(null)}
       />
 
       {/* Toast Feedback */}

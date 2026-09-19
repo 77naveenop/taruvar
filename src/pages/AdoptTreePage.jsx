@@ -153,6 +153,32 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  if (!currentUser) {
+    return (
+      <div className="py-16 max-w-lg mx-auto px-4 text-center space-y-6">
+        <div className="w-20 h-20 bg-taruvar-light text-taruvar-secondary rounded-3xl flex items-center justify-center mx-auto text-4xl shadow-xs border border-taruvar-border">
+          🌱
+        </div>
+        <div className="space-y-2">
+          <span className="px-3.5 py-1 bg-taruvar-light text-taruvar-secondary text-xs font-bold rounded-full uppercase tracking-wider">
+            Guardian Account Required
+          </span>
+          <h2 className="text-3xl font-black text-taruvar-dark">Sign In to Adopt a Tree</h2>
+          <p className="text-xs sm:text-sm text-taruvar-muted leading-relaxed max-w-md mx-auto">
+            To issue official Unique IDs, prevent unauthorized entries, and track 5-month growth logs, please sign in or register before adopting a tree.
+          </p>
+        </div>
+        <button
+          onClick={onOpenAuth}
+          className="px-8 py-4 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-black text-sm rounded-2xl shadow-lg hover:scale-105 transition-all inline-flex items-center gap-2 cursor-pointer"
+        >
+          <span>Sign In / Create Account to Adopt</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-12 pb-24 pt-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       
