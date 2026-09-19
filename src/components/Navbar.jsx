@@ -126,10 +126,10 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
               </button>
             )}
 
-            {/* Prominent Explore / Reels Button in place of Adopt Button */}
+            {/* Prominent Explore / Reels Button in place of Adopt Button (Desktop Only) */}
             <button
               onClick={() => handleNavClick('explore')}
-              className="px-3.5 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2 cursor-pointer border border-emerald-500/30"
+              className="hidden md:flex px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-all items-center gap-2 cursor-pointer border border-emerald-500/30"
               title="Explore Tree Reels & Adoption Stories"
             >
               <Compass className="w-4 h-4 text-taruvar-accent" />
