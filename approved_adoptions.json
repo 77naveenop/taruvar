@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "id": "TRV-TREE-2026-001",
+    "treeId": "TRV-TREE-2026-001",
+    "memberId": "TRV-IND-2026-001",
+    "adopter_name": "Priya Sharma",
+    "guardianName": "Priya Sharma",
+    "adopter_email": "priya.sharma@example.com",
+    "user_email": "priya.sharma@example.com",
+    "tree_name": "Amrit Neem Guardian",
+    "species": "Neem Tree (Azadirachta indica)",
+    "location": "Botanical Eco Corridor, Delhi NCR",
+    "plantation_photo": "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80",
+    "status": "approved",
+    "date": "19 Sep 2026",
+    "plantedDate": "19 Sep 2026",
+    "timestamp": 1789820450197,
+    "verified_months": 1,
+    "verifiedMonths": 1
+  }
+]
