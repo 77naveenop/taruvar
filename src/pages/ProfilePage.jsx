@@ -6,6 +6,7 @@ import {
 import confetti from 'canvas-confetti';
 
 import GuardianIdCard from '../components/GuardianIdCard';
+import { getCloudPendingAdoptions, getCloudApprovedAdoptions } from '../lib/cloudDb';
 
 export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLogout, setActivePage, showToast }) {
   const [activeTab, setActiveTab] = useState('my-trees'); // 'my-trees' | 'id-card' | 'community-feed' | 'leaderboard'
@@ -51,43 +52,46 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
     }
   });
 
-  // Sync with Supabase pledges in background if connected
+  // Sync with Cloud database in background
   useEffect(() => {
-    if (!supabase) return;
-    supabase.from('pledges').select('*').then(({ data }) => {
-      if (data && data.length > 0) {
-        const userTrees = currentUser?.email ? data.filter(d => d.email === currentUser.email) : data;
-        if (userTrees.length > 0) {
-          setMyTrees(userTrees.map(d => ({
-            id: d.id,
-            tree_name: d.tree_name,
-            species: d.tree_type,
-            status: d.status || 'approved',
-            plantation_photo: d.plantation_photo,
-            location: d.location,
-            verified_months: d.verified_months || 1,
+    async function loadCloudProfileData() {
+      try {
+        const [cloudPending, cloudApproved] = await Promise.all([
+          getCloudPendingAdoptions(),
+          getCloudApprovedAdoptions()
+        ]);
+        const allCloud = [...(cloudApproved || []), ...(cloudPending || [])];
+        if (allCloud.length > 0) {
+          if (currentUser?.email) {
+            const userEmailLower = currentUser.email.toLowerCase();
+            const userTrees = allCloud.filter(d => 
+              (d.adopter_email && d.adopter_email.toLowerCase() === userEmailLower) ||
+              (d.user_email && d.user_email.toLowerCase() === userEmailLower)
+            );
+            if (userTrees.length > 0) {
+              setMyTrees(userTrees);
+            }
+          }
+
+          setCommunityFeed(allCloud.map(d => ({
+            id: d.id || d.treeId,
+            author: d.adopter_name || d.guardianName || 'Eco Guardian',
+            avatar: '🌱',
+            tree_name: d.tree_name || d.treeName || 'Adopted Tree',
+            species: d.species || 'Indigenous Tree',
+            location: d.location || 'Community Area',
+            plantation_photo: d.plantation_photo || d.photoUrl || '/logo.jpg',
+            verified_months: d.verified_months || d.verifiedMonths || 1,
             upvotes: 1,
             user_upvoted: false,
-            planted_date: new Date(d.created_at || Date.now()).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-            reports: []
+            date: d.plantedDate || d.planted_date || 'Recent'
           })));
         }
-
-        setCommunityFeed(data.map(d => ({
-          id: d.id,
-          author: d.name,
-          avatar: '🌱',
-          tree_name: d.tree_name,
-          species: d.tree_type,
-          location: d.location,
-          plantation_photo: d.plantation_photo,
-          verified_months: d.verified_months || 1,
-          upvotes: 1,
-          user_upvoted: false,
-          date: new Date(d.created_at || Date.now()).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-        })));
+      } catch (e) {
+        console.warn('Profile cloud sync note:', e);
       }
-    }).catch(() => {});
+    }
+    loadCloudProfileData();
   }, [currentUser]);
 
   const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Tree Care Guardian';

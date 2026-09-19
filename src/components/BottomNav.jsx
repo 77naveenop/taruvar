@@ -69,23 +69,7 @@ export default function BottomNav({ activePage, setActivePage, onOpenPledge, cur
           <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate">Explore</span>
         </button>
 
-        {/* 5. Admin Desk Tab (Visible only for Admin Accounts) */}
-        {isAdmin && (
-          <button
-            onClick={() => handleNav('admin')}
-            className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer ${
-              activePage === 'admin'
-                ? 'text-amber-700 font-extrabold scale-105'
-                : 'text-amber-600 hover:text-amber-700 font-bold'
-            }`}
-            title="Admin Approval Desk"
-          >
-            <ShieldCheck className={`w-5 h-5 shrink-0 ${activePage === 'admin' ? 'text-amber-700 stroke-[2.5]' : 'text-amber-600'}`} />
-            <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate font-bold">Admin</span>
-          </button>
-        )}
-
-        {/* 6. Profile / Feed Tab */}
+        {/* 5. Profile / Feed Tab */}
         <button
           onClick={() => {
             if (currentUser) {

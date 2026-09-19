@@ -139,6 +139,22 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
               <span>Explore Reels 🎥</span>
             </button>
 
+            {/* Admin Desk Button (Mobile & Desktop) */}
+            {isAdmin && (
+              <button
+                onClick={() => handleNavClick('admin')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap shadow-2xs ${
+                  activePage === 'admin'
+                    ? 'bg-amber-700 text-white shadow-sm ring-2 ring-amber-400/40'
+                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300'
+                }`}
+                title="Admin Verification Desk"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                <span>Admin</span>
+              </button>
+            )}
+
             {/* Account / Login Button */}
             {currentUser ? (
               <button
