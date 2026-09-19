@@ -3,10 +3,10 @@ import { X, Sprout, Heart, ShieldCheck, Share2, Sparkles, Check, UserCheck, Lock
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
 import { saveCloudPendingAdoption } from '../lib/cloudDb';
+import { compressImage } from '../lib/imageCompressor';
 
 export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, onPledgeComplete }) {
   const [treeType, setTreeType] = useState('Neem Tree (Azadirachta indica)');
-  const [adopterAge, setAdopterAge] = useState(18);
   const [treeNickname, setTreeNickname] = useState('');
   const [location, setLocation] = useState('');
   const [plantationPhoto, setPlantationPhoto] = useState(null);
@@ -31,16 +31,19 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
     '🌱 Guava'
   ];
 
-  const handlePhotoSelect = (e) => {
+  const handlePhotoSelect = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
       setPlantationPhoto(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-        setErrorMsg('');
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedBase64 = await compressImage(file, 900, 900, 0.7);
+        if (compressedBase64) {
+          setPhotoPreview(compressedBase64);
+          setErrorMsg('');
+        }
+      } catch (err) {
+        console.error('Photo error:', err);
+      }
     }
   };
 
@@ -51,11 +54,6 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
     if (!currentUser) {
       setErrorMsg('Please log in or create an account first to complete tree adoption.');
       onOpenAuth();
-      return;
-    }
-
-    if (Number(adopterAge) < 15) {
-      setErrorMsg('Adopters must be at least 15–20 years old to pledge 15–20 year lifelong nurturing (Paalna).');
       return;
     }
 
@@ -239,37 +237,27 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
                 </div>
               )}
 
-              {/* Adopter Age & Tree Species */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-taruvar-muted mb-1 flex items-center justify-between">
-                    <span>Adopter Age / आयु *</span>
-                    <span className="text-[10px] text-emerald-700 font-bold">Min 15–20 Yrs</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="15"
-                    max="110"
-                    required
-                    value={adopterAge}
-                    onChange={(e) => setAdopterAge(e.target.value)}
-                    placeholder="e.g. 18"
-                    className="w-full px-3 py-2 rounded-xl border border-taruvar-border text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-taruvar-muted mb-1">
-                    Tree Species (Any) *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={treeType}
-                    onChange={(e) => setTreeType(e.target.value)}
-                    placeholder="e.g. Neem, Peepal, Mango, Jamun..."
-                    className="w-full px-3 py-2 rounded-xl border border-taruvar-border text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
-                  />
-                </div>
+              {/* Lifespan Recommendation Note */}
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-2 text-xs text-emerald-950">
+                <span className="text-sm shrink-0">💡</span>
+                <p className="text-[11px] leading-relaxed">
+                  <strong>Lifespan Suggestion:</strong> We recommend indigenous trees with a lifespan of <strong>15–20+ years</strong> (Neem, Peepal, Banyan, Mango, Jamun, etc.).
+                </p>
+              </div>
+
+              {/* Tree Species (Any) */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-taruvar-muted mb-1">
+                  Tree Species / Plant Name (Any Tree) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={treeType}
+                  onChange={(e) => setTreeType(e.target.value)}
+                  placeholder="e.g. Neem, Peepal, Mango, Jamun, Gulmohar..."
+                  className="w-full px-3 py-2.5 rounded-xl border border-taruvar-border text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                />
               </div>
 
               {/* Quick Suggestion Pills */}

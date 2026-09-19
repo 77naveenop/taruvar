@@ -3,6 +3,7 @@ import { Sprout, Camera, Check, ArrowRight, ShieldCheck, Sparkles, MapPin, Heart
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
 import { saveCloudPendingAdoption } from '../lib/cloudDb';
+import { compressImage } from '../lib/imageCompressor';
 import GuardianIdCard from '../components/GuardianIdCard';
 
 export default function AdoptTreePage({ currentUser, showToast, setActivePage, onOpenAuth }) {
@@ -18,7 +19,6 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
     name: currentUser?.user_metadata?.full_name || '',
     email: currentUser?.email || '',
     phone: '',
-    adopterAge: 18,
     treeType: 'Neem Tree (Azadirachta indica)',
     treeName: '',
     location: '',
@@ -64,23 +64,27 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
 
   const bulkCountPresets = [10, 25, 50, 100, 250, 500];
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 8 * 1024 * 1024) {
-        setPhotoError('Image size exceeds 8MB limit. Please choose a smaller photo.');
+      if (file.size > 15 * 1024 * 1024) {
+        setPhotoError('Image size exceeds 15MB limit. Please choose a smaller photo.');
         return;
       }
       setPhotoError('');
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          photo: reader.result,
-          photoPreview: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Compress image using HTML Canvas to prevent localStorage quota issues and allow instant cloud sync
+        const compressedBase64 = await compressImage(file, 900, 900, 0.7);
+        if (compressedBase64) {
+          setFormData(prev => ({
+            ...prev,
+            photo: compressedBase64,
+            photoPreview: compressedBase64
+          }));
+        }
+      } catch (err) {
+        console.error('Photo compression error:', err);
+      }
     }
   };
 
@@ -90,10 +94,6 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
     if (adoptionMode === 'individual') {
       if (!formData.name || !formData.email || !formData.treeType || !formData.photo) {
         setPhotoError('Please fill all required fields and upload a photo of your plantation action.');
-        return;
-      }
-      if (Number(formData.adopterAge) < 15) {
-        setPhotoError('Adopter age must be at least 15 years to undertake the 15–20 year tree nurturing commitment.');
         return;
       }
     } else {
@@ -414,7 +414,7 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                 <div className="space-y-4">
                   <h2 className="text-base font-extrabold text-taruvar-dark flex items-center gap-2 border-b border-taruvar-border pb-2">
                     <span className="w-6 h-6 rounded-full bg-taruvar-light text-taruvar-secondary text-xs flex items-center justify-center font-bold">1</span>
-                    <span>Guardian Information & Age (अभिभावक की जानकारी एवं आयु)</span>
+                    <span>Guardian Information (अभिभावक की जानकारी)</span>
                   </h2>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -430,28 +430,6 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                         placeholder="e.g. Naveen Sharma"
                         className="w-full px-4 py-3 rounded-2xl border border-taruvar-border text-sm focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                        <span>Adopter Age / आयु *</span>
-                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          Min. 15–20 Years Limit
-                        </span>
-                      </label>
-                      <input
-                        type="number"
-                        min="15"
-                        max="110"
-                        required
-                        value={formData.adopterAge}
-                        onChange={(e) => setFormData({ ...formData, adopterAge: e.target.value })}
-                        placeholder="e.g. 18"
-                        className="w-full px-4 py-3 rounded-2xl border border-taruvar-border text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
-                      />
-                      <p className="text-[10px] text-taruvar-muted mt-1">
-                        Adopter must be at least 15–20 years old to pledge responsible 15–20 year lifelong nurturing (Paalna).
-                      </p>
                     </div>
 
                     <div>
@@ -481,7 +459,7 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                       />
                     </div>
 
-                    <div className="sm:col-span-2">
+                    <div>
                       <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1.5">
                         Plantation Location / City *
                       </label>
@@ -497,12 +475,23 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
                   </div>
                 </div>
 
-                {/* 2. Tree Species (Open / Any Species) */}
+                {/* 2. Tree Species (Open / Any Species with Lifespan Suggestion) */}
                 <div className="space-y-4">
                   <h2 className="text-base font-extrabold text-taruvar-dark flex items-center gap-2 border-b border-taruvar-border pb-2">
                     <span className="w-6 h-6 rounded-full bg-taruvar-light text-taruvar-secondary text-xs flex items-center justify-center font-bold">2</span>
                     <span>Tree Species & Details (पौधे का नाम या प्रजाति - कोई भी पौधा)</span>
                   </h2>
+
+                  {/* Lifespan Recommendation Note */}
+                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-950">
+                    <span className="text-base shrink-0">💡</span>
+                    <div>
+                      <p className="font-bold text-emerald-900">Tree Lifespan Recommendation (पेड़ की आयु सुझाव):</p>
+                      <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                        We recommend choosing indigenous tree species with a long lifespan of <strong>15–20+ years</strong> (such as Neem, Peepal, Banyan, Mango, Jamun, Gulmohar, Amla, Guava, Arjun, etc.) for enduring shade, oxygen, and lifetime nurturing (Paalna).
+                      </p>
+                    </div>
+                  </div>
 
                   <div>
                     <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1.5">

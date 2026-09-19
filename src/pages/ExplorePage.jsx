@@ -8,6 +8,65 @@ import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
 
 export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOpenAuth }) {
+  // If user is not logged in, show auth gate screen
+  if (!currentUser) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 sm:p-10 border border-taruvar-border shadow-card text-center space-y-6 animate-fade-in">
+          <div className="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-taruvar-primary text-taruvar-dark rounded-3xl flex items-center justify-center mx-auto text-4xl shadow-lg shadow-emerald-500/20">
+            🌱
+          </div>
+
+          <div className="space-y-2">
+            <span className="px-3.5 py-1 bg-taruvar-light text-taruvar-secondary text-xs font-black rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-taruvar-secondary" />
+              <span>Taruvar Reels & Feed</span>
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-taruvar-dark">
+              Sign In to Watch Taruvar Reels
+            </h2>
+            <p className="text-xs sm:text-sm text-taruvar-muted leading-relaxed">
+              Join the <strong>#OnePersonOneTree</strong> movement to watch real-time sapling reels, cheer tree guardians, and track 5-month growth stories across India.
+            </p>
+          </div>
+
+          <div className="p-4 bg-taruvar-bg/70 rounded-2xl border border-taruvar-border text-left space-y-2.5 text-xs">
+            <div className="flex items-center gap-2 text-taruvar-dark font-bold">
+              <span className="text-emerald-600">✓</span>
+              <span>Watch verified tree plantation reels & videos</span>
+            </div>
+            <div className="flex items-center gap-2 text-taruvar-dark font-bold">
+              <span className="text-emerald-600">✓</span>
+              <span>Like, cheer & comment on fellow guardians' progress</span>
+            </div>
+            <div className="flex items-center gap-2 text-taruvar-dark font-bold">
+              <span className="text-emerald-600">✓</span>
+              <span>Post your own tree updates & earn milestone badges</span>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <button
+              onClick={onOpenAuth}
+              className="w-full py-3.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-black text-sm rounded-2xl shadow-lg hover:scale-102 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Sign In / Create Guardian Account</span>
+            </button>
+
+            <button
+              onClick={onOpenPledge}
+              className="w-full py-3 bg-taruvar-light hover:bg-taruvar-border text-taruvar-dark font-bold text-xs rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Sprout className="w-4 h-4 text-taruvar-secondary" />
+              <span>Adopt a Tree First</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'adoptions' | 'milestones' | 'bulk'
   const [currentReelIndex, setCurrentReelIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);

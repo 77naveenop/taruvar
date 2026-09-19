@@ -120,6 +120,8 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
           setActivePage('admin');
         } else if (redirectTarget === 'adopt') {
           setActivePage('adopt');
+        } else if (redirectTarget === 'explore') {
+          setActivePage('explore');
         } else {
           setActivePage('profile');
         }
@@ -209,6 +211,8 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
           setActivePage('admin');
         } else if (redirectTarget === 'adopt') {
           setActivePage('adopt');
+        } else if (redirectTarget === 'explore') {
+          setActivePage('explore');
         } else {
           setActivePage('profile');
         }
@@ -241,6 +245,11 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
           {redirectTarget === 'adopt' && (
             <span className="text-taruvar-secondary font-bold block mb-1">
               🌱 Please sign in or register to complete your tree adoption.
+            </span>
+          )}
+          {redirectTarget === 'explore' && (
+            <span className="text-taruvar-secondary font-bold block mb-1">
+              🌟 Please sign in or register to watch and share Explore Reels.
             </span>
           )}
           {mode === 'register' 
