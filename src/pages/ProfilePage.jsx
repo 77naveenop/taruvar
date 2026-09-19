@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, ShieldCheck, Heart, Award, Camera, Upload, CheckCircle2, Clock, 
-  Sparkles, ThumbsUp, MapPin, Calendar, Plus, ChevronRight, Layers, Lock, Flame
+  Sparkles, ThumbsUp, MapPin, Calendar, Plus, ChevronRight, Layers, Lock, Flame, LogOut
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import confetti from 'canvas-confetti';
 
 import GuardianIdCard from '../components/GuardianIdCard';
 
-export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, showToast }) {
+export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLogout, setActivePage, showToast }) {
   const [activeTab, setActiveTab] = useState('my-trees'); // 'my-trees' | 'id-card' | 'community-feed' | 'leaderboard'
   const [reportModalTree, setReportModalTree] = useState(null);
   const [reportMonth, setReportMonth] = useState(1);
@@ -93,6 +93,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
 
   const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Tree Care Guardian';
   const userEmail = currentUser?.email || 'teamtaruvar@gmail.com';
+  const isAdmin = currentUser?.user_metadata?.role === 'admin' || currentUser?.email?.toLowerCase() === 'naveenpr332@gmail.com';
 
   const handleUpvote = (treeId, isCommunity = false) => {
     if (isCommunity) {
@@ -215,15 +216,46 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
           </div>
         </div>
 
-        {/* Stats Summary */}
-        <div className="flex items-center gap-3 bg-white/10 backdrop-blur p-3 rounded-2xl border border-white/10 z-10">
-          <div className="text-center px-3 border-r border-white/10">
-            <p className="text-2xl font-black text-taruvar-accent">{myTrees.length}</p>
-            <p className="text-[10px] text-white/80 uppercase">Trees Adopted</p>
+        {/* Right Action & Stats Summary */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 z-10">
+          {/* Stats Summary */}
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur p-3 rounded-2xl border border-white/10">
+            <div className="text-center px-3 border-r border-white/10">
+              <p className="text-2xl font-black text-taruvar-accent">{myTrees.length}</p>
+              <p className="text-[10px] text-white/80 uppercase">Trees Adopted</p>
+            </div>
+            <div className="text-center px-3">
+              <p className="text-2xl font-black text-white">{myTrees.reduce((acc, t) => acc + t.upvotes, 0)}</p>
+              <p className="text-[10px] text-white/80 uppercase">Upvotes Received</p>
+            </div>
           </div>
-          <div className="text-center px-3">
-            <p className="text-2xl font-black text-white">{myTrees.reduce((acc, t) => acc + t.upvotes, 0)}</p>
-            <p className="text-[10px] text-white/80 uppercase">Upvotes Received</p>
+
+          {/* Admin Desk & Logout Action Buttons */}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  if (setActivePage) setActivePage('admin');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="px-3.5 py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-taruvar-dark font-black text-xs rounded-2xl shadow-lg hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer border border-amber-300/40"
+                title="Open Admin Approval Desk"
+              >
+                <ShieldCheck className="w-4 h-4 text-taruvar-dark stroke-[2.5]" />
+                <span>Admin Desk</span>
+              </button>
+            )}
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-3.5 py-2.5 bg-white/15 hover:bg-red-600 text-white font-bold text-xs rounded-2xl border border-white/20 shadow-sm hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Sign Out of Account"
+              >
+                <LogOut className="w-4 h-4 text-red-300" />
+                <span>Log Out</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

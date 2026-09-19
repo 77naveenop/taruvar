@@ -195,6 +195,8 @@ export default function App() {
             currentUser={currentUser}
             onOpenAuth={() => navigateToAuth(null)}
             onOpenAdopt={navigateToAdopt}
+            onLogout={handleLogout}
+            setActivePage={setActivePage}
             showToast={showToast}
           />
         )}

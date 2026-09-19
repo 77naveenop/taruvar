@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShieldCheck, Check, X, Eye, Camera, Clock, Award, KeyRound, Lock, AlertCircle, User, Mail, UserPlus, LogIn } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ShieldCheck, Check, X, Eye, Camera, Clock, Award, KeyRound, Lock, AlertCircle, User, Mail, UserPlus, LogIn, RefreshCw } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
 
@@ -7,7 +7,11 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
   const [activeTab, setActiveTab] = useState('pending-trees');
   const [passkeyInput, setPasskeyInput] = useState('');
   const [passkeyError, setPasskeyError] = useState('');
-  const [localIsAdmin, setLocalIsAdmin] = useState(currentUser?.user_metadata?.role === 'admin');
+  const [localIsAdmin, setLocalIsAdmin] = useState(
+    currentUser?.user_metadata?.role === 'admin' || 
+    currentUser?.email?.toLowerCase() === 'naveenpr332@gmail.com'
+  );
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Direct Admin Login Form State if not logged in
   const [adminEmail, setAdminEmail] = useState('');
@@ -17,7 +21,26 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
   // Live pending tree adoptions awaiting admin confirmation
   const [pendingTrees, setPendingTrees] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      const p = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      const pendingFromAll = all.filter(t => t.status === 'pending').map(t => ({
+        id: t.id || t.treeId,
+        treeId: t.treeId || t.id,
+        adopter_name: t.guardianName || t.adopter_name,
+        adopter_email: t.user_email || t.adopter_email,
+        tree_name: t.tree_name || t.treeName,
+        species: t.species || t.treeType,
+        location: t.location,
+        plantation_photo: t.photoUrl || t.plantation_photo,
+        date: t.plantedDate || t.planted_date
+      }));
+      const combined = [...p];
+      pendingFromAll.forEach(item => {
+        if (!combined.some(c => c.id === item.id || c.treeId === item.treeId)) {
+          combined.push(item);
+        }
+      });
+      return combined;
     } catch {
       return [];
     }
@@ -45,44 +68,106 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
 
-  // Load from Supabase in background if available
-  React.useEffect(() => {
-    if (!supabase) return;
-    supabase.from('pledges').select('*').then(({ data }) => {
-      if (data && data.length > 0) {
-        const pending = data.filter(d => d.status === 'pending').map(d => ({
-          id: d.id,
-          adopter_name: d.name,
-          adopter_email: d.email,
-          tree_name: d.tree_name,
-          species: d.tree_type,
-          location: d.location,
-          plantation_photo: d.plantation_photo,
-          treeId: d.tree_id_code || `TRV-TREE-${d.id}`,
-          memberId: d.member_id_code,
-          isBulk: d.name?.includes('(') || false,
-          date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        }));
-        setPendingTrees(pending);
+  // Robust unified data loader across Supabase + LocalStorage
+  const loadAllData = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      // 1. Load from localStorage
+      const localPending = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      const localAll = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      const pendingFromAll = localAll.filter(t => t.status === 'pending').map(t => ({
+        id: t.id || t.treeId,
+        treeId: t.treeId || t.id,
+        adopter_name: t.guardianName || t.adopter_name,
+        adopter_email: t.user_email || t.adopter_email,
+        tree_name: t.tree_name || t.treeName,
+        species: t.species || t.treeType,
+        location: t.location,
+        plantation_photo: t.photoUrl || t.plantation_photo,
+        date: t.plantedDate || t.planted_date
+      }));
 
-        const approved = data.filter(d => d.status === 'approved').map(d => ({
-          id: d.id,
-          adopter_name: d.name,
-          adopter_email: d.email,
-          tree_name: d.tree_name,
-          species: d.tree_type,
-          location: d.location,
-          plantation_photo: d.plantation_photo,
-          treeId: d.tree_id_code || `TRV-TREE-${d.id}`,
-          memberId: d.member_id_code,
-          isBulk: d.name?.includes('(') || false,
-          verified_months: d.verified_months || 1,
-          date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        }));
-        setApprovedTrees(approved);
+      const mergedPending = [...localPending];
+      pendingFromAll.forEach(item => {
+        if (!mergedPending.some(c => c.id === item.id || (c.treeId && c.treeId === item.treeId))) {
+          mergedPending.push(item);
+        }
+      });
+
+      const localApproved = localAll.filter(t => t.status === 'approved' || (!t.status && t.plantedDate));
+      
+      setPendingTrees(mergedPending);
+      setApprovedTrees(localApproved);
+
+      // 2. Load from Supabase pledges table if available
+      if (supabase) {
+        const { data, error } = await supabase.from('pledges').select('*').order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          const supabasePending = data.filter(d => d.status === 'pending').map(d => ({
+            id: d.id,
+            adopter_name: d.name,
+            adopter_email: d.email,
+            tree_name: d.tree_name,
+            species: d.tree_type,
+            location: d.location,
+            plantation_photo: d.plantation_photo,
+            treeId: d.tree_id_code || `TRV-TREE-${d.id}`,
+            memberId: d.member_id_code,
+            isBulk: d.name?.includes('(') || false,
+            date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          }));
+
+          const combinedPending = [...mergedPending];
+          supabasePending.forEach(sp => {
+            if (!combinedPending.some(p => p.id === sp.id || p.treeId === sp.treeId || (p.adopter_email === sp.adopter_email && p.species === sp.species && p.tree_name === sp.tree_name))) {
+              combinedPending.push(sp);
+            }
+          });
+          setPendingTrees(combinedPending);
+
+          const supabaseApproved = data.filter(d => d.status === 'approved').map(d => ({
+            id: d.id,
+            adopter_name: d.name,
+            adopter_email: d.email,
+            tree_name: d.tree_name,
+            species: d.tree_type,
+            location: d.location,
+            plantation_photo: d.plantation_photo,
+            treeId: d.tree_id_code || `TRV-TREE-${d.id}`,
+            memberId: d.member_id_code,
+            isBulk: d.name?.includes('(') || false,
+            verified_months: d.verified_months || 1,
+            date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          }));
+
+          const combinedApproved = [...localApproved];
+          supabaseApproved.forEach(sa => {
+            if (!combinedApproved.some(a => a.id === sa.id || a.treeId === sa.treeId)) {
+              combinedApproved.push(sa);
+            }
+          });
+          setApprovedTrees(combinedApproved);
+        }
       }
-    }).catch(() => {});
+    } catch (err) {
+      console.warn('Admin load data note:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadAllData();
+    // Auto sync interval every 4 seconds while admin is on the page
+    const interval = setInterval(() => {
+      loadAllData();
+    }, 4000);
+    window.addEventListener('focus', loadAllData);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', loadAllData);
+    };
+  }, [loadAllData]);
 
   // Unlock Admin with Passkey
   const handleUnlockAdmin = async (e) => {
@@ -157,20 +242,36 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
   };
 
   const handleApproveTree = async (treeId, adopterName) => {
-    const approvedTree = pendingTrees.find(t => t.id === treeId);
-    const updatedPending = pendingTrees.filter(t => t.id !== treeId);
+    const approvedTree = pendingTrees.find(t => t.id === treeId || t.treeId === treeId);
+    const updatedPending = pendingTrees.filter(t => t.id !== treeId && t.treeId !== treeId);
     setPendingTrees(updatedPending);
     localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(updatedPending));
 
     if (approvedTree) {
+      const newApprovedItem = {
+        ...approvedTree,
+        status: 'approved',
+        verified_months: 1,
+        verifiedMonths: 1
+      };
+      setApprovedTrees(prev => [newApprovedItem, ...prev.filter(t => t.id !== treeId && t.treeId !== treeId)]);
+
       try {
         const currentAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+        let found = false;
         const updatedAdoptions = currentAdoptions.map(t => {
           if (t.id === treeId || t.treeId === treeId) {
+            found = true;
             return { ...t, status: 'approved' };
           }
           return t;
         });
+        if (!found) {
+          updatedAdoptions.unshift({
+            ...newApprovedItem,
+            status: 'approved'
+          });
+        }
         localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedAdoptions));
       } catch (e) {
         console.error(e);
@@ -185,14 +286,27 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
 
     confetti({ particleCount: 50, spread: 50 });
     if (showToast) {
-      showToast(`Adoption approved for ${adopterName}! Verified and active.`);
+      showToast(`Adoption approved for ${adopterName}! Verified and active in Planted Directory.`);
     }
   };
 
   const handleRejectTree = async (treeId) => {
-    const updatedPending = pendingTrees.filter(t => t.id !== treeId);
+    const updatedPending = pendingTrees.filter(t => t.id !== treeId && t.treeId !== treeId);
     setPendingTrees(updatedPending);
     localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(updatedPending));
+
+    try {
+      const currentAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      const updatedAdoptions = currentAdoptions.map(t => {
+        if (t.id === treeId || t.treeId === treeId) {
+          return { ...t, status: 'rejected' };
+        }
+        return t;
+      });
+      localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedAdoptions));
+    } catch (e) {
+      console.error(e);
+    }
 
     if (supabase) {
       try {
@@ -373,42 +487,55 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-taruvar-border pb-4 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('pending-trees')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-            activeTab === 'pending-trees'
-              ? 'bg-amber-600 text-white shadow'
-              : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
-          }`}
-        >
-          <Clock className="w-4 h-4 text-amber-200" />
-          <span>Pending Adoptions ({pendingTrees.length})</span>
-        </button>
+      {/* Tabs & Live Refresh Control */}
+      <div className="flex items-center justify-between border-b border-taruvar-border pb-4 overflow-x-auto gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('pending-trees')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              activeTab === 'pending-trees'
+                ? 'bg-amber-600 text-white shadow'
+                : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
+            }`}
+          >
+            <Clock className="w-4 h-4 text-amber-200" />
+            <span>Pending Adoptions ({pendingTrees.length})</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('planted-directory')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-            activeTab === 'planted-directory'
-              ? 'bg-taruvar-secondary text-white shadow'
-              : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4 text-taruvar-accent" />
-          <span>Planted Trees Directory ({approvedTrees.length})</span>
-        </button>
+          <button
+            onClick={() => setActiveTab('planted-directory')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              activeTab === 'planted-directory'
+                ? 'bg-taruvar-secondary text-white shadow'
+                : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4 text-taruvar-accent" />
+            <span>Planted Trees Directory ({approvedTrees.length})</span>
+          </button>
 
+          <button
+            onClick={() => setActiveTab('pending-reports')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              activeTab === 'pending-reports'
+                ? 'bg-taruvar-secondary text-white shadow'
+                : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
+            }`}
+          >
+            <Camera className="w-4 h-4 text-taruvar-accent" />
+            <span>Pending Growth Reports ({pendingReports.length})</span>
+          </button>
+        </div>
+
+        {/* Live Refresh Button */}
         <button
-          onClick={() => setActiveTab('pending-reports')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-            activeTab === 'pending-reports'
-              ? 'bg-taruvar-secondary text-white shadow'
-              : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
-          }`}
+          onClick={loadAllData}
+          disabled={isRefreshing}
+          className="px-3.5 py-2.5 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary text-xs font-bold rounded-2xl border border-taruvar-border transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
+          title="Refresh All Adoption Requests"
         >
-          <Camera className="w-4 h-4 text-taruvar-accent" />
-          <span>Pending Growth Reports ({pendingReports.length})</span>
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span>{isRefreshing ? 'Syncing...' : 'Sync Live Data'}</span>
         </button>
       </div>
 

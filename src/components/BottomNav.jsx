@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Compass, Sprout, User, Layers, Sparkles } from 'lucide-react';
+import { Home, Compass, Sprout, User, ShieldCheck } from 'lucide-react';
 
 export default function BottomNav({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth }) {
   const handleNav = (pageId) => {
@@ -7,41 +7,43 @@ export default function BottomNav({ activePage, setActivePage, onOpenPledge, cur
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const isAdmin = currentUser?.user_metadata?.role === 'admin' || currentUser?.email?.toLowerCase() === 'naveenpr332@gmail.com';
+
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-taruvar-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-2 py-1.5 transition-all">
-      <div className="max-w-lg mx-auto flex items-center justify-around relative">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-taruvar-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-1.5 sm:px-3 py-1.5 transition-all">
+      <div className="max-w-lg mx-auto flex items-center justify-between relative">
         
         {/* 1. Home Tab */}
         <button
           onClick={() => handleNav('home')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all ${
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer ${
             activePage === 'home'
               ? 'text-taruvar-secondary font-extrabold scale-105'
               : 'text-taruvar-muted hover:text-taruvar-dark font-medium'
           }`}
         >
-          <Home className={`w-5 h-5 ${activePage === 'home' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
-          <span className="text-[10px] mt-0.5 tracking-tight">Home</span>
+          <Home className={`w-5 h-5 shrink-0 ${activePage === 'home' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate">Home</span>
         </button>
 
         {/* 2. Tree Journey Tab */}
         <button
           onClick={() => handleNav('tree-journey')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all ${
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer ${
             activePage === 'tree-journey'
               ? 'text-taruvar-secondary font-extrabold scale-105'
               : 'text-taruvar-muted hover:text-taruvar-dark font-medium'
           }`}
         >
-          <Compass className={`w-5 h-5 ${activePage === 'tree-journey' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
-          <span className="text-[10px] mt-0.5 tracking-tight">Journey</span>
+          <Compass className={`w-5 h-5 shrink-0 ${activePage === 'tree-journey' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate">Journey</span>
         </button>
 
         {/* 3. Center Raised Action Button: Grow / Adopt a Tree (Taruvar Logo) */}
-        <div className="relative -top-3.5 flex flex-col items-center">
+        <div className="relative -top-3.5 flex flex-col items-center px-1 shrink-0">
           <button
             onClick={onOpenPledge}
-            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-xl shadow-taruvar-secondary/35 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border-4 border-taruvar-secondary group p-1 cursor-pointer overflow-hidden"
+            className="w-12 h-12 rounded-full bg-white shadow-xl shadow-taruvar-secondary/35 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border-4 border-taruvar-secondary group p-1 cursor-pointer overflow-hidden"
             title="Grow / Adopt Your Tree"
             aria-label="Adopt a Tree"
           >
@@ -54,7 +56,36 @@ export default function BottomNav({ activePage, setActivePage, onOpenPledge, cur
           <span className="text-[9px] font-extrabold text-taruvar-secondary mt-0.5 uppercase tracking-wider">Adopt</span>
         </div>
 
-        {/* 4. Profile / Feed Tab */}
+        {/* 4. Explore Reels Feed Tab */}
+        <button
+          onClick={() => handleNav('explore')}
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer ${
+            activePage === 'explore'
+              ? 'text-taruvar-secondary font-extrabold scale-105'
+              : 'text-taruvar-muted hover:text-taruvar-dark font-medium'
+          }`}
+        >
+          <Compass className={`w-5 h-5 shrink-0 ${activePage === 'explore' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate">Explore</span>
+        </button>
+
+        {/* 5. Admin Desk Tab (Visible only for Admin Accounts) */}
+        {isAdmin && (
+          <button
+            onClick={() => handleNav('admin')}
+            className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer ${
+              activePage === 'admin'
+                ? 'text-amber-700 font-extrabold scale-105'
+                : 'text-amber-600 hover:text-amber-700 font-bold'
+            }`}
+            title="Admin Approval Desk"
+          >
+            <ShieldCheck className={`w-5 h-5 shrink-0 ${activePage === 'admin' ? 'text-amber-700 stroke-[2.5]' : 'text-amber-600'}`} />
+            <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate font-bold">Admin</span>
+          </button>
+        )}
+
+        {/* 6. Profile / Feed Tab */}
         <button
           onClick={() => {
             if (currentUser) {
@@ -63,27 +94,14 @@ export default function BottomNav({ activePage, setActivePage, onOpenPledge, cur
               onOpenAuth();
             }
           }}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all ${
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer ${
             activePage === 'profile'
               ? 'text-taruvar-secondary font-extrabold scale-105'
               : 'text-taruvar-muted hover:text-taruvar-dark font-medium'
           }`}
         >
-          <User className={`w-5 h-5 ${activePage === 'profile' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
-          <span className="text-[10px] mt-0.5 tracking-tight">{currentUser ? 'Profile' : 'Log In'}</span>
-        </button>
-
-        {/* 5. Explore Reels Feed Tab */}
-        <button
-          onClick={() => handleNav('explore')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all ${
-            activePage === 'explore'
-              ? 'text-taruvar-secondary font-extrabold scale-105'
-              : 'text-taruvar-muted hover:text-taruvar-dark font-medium'
-          }`}
-        >
-          <Compass className={`w-5 h-5 ${activePage === 'explore' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
-          <span className="text-[10px] mt-0.5 tracking-tight">Explore</span>
+          <User className={`w-5 h-5 shrink-0 ${activePage === 'profile' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate">{currentUser ? 'Profile' : 'Log In'}</span>
         </button>
 
       </div>

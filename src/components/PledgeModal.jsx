@@ -90,6 +90,54 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
       }
     } catch (err) {
       console.warn('Adoption submission note:', err);
+    }
+
+    // Save to local storage for instant frontend and admin reflection
+    try {
+      const generatedTreeId = `TRV-TREE-${Math.floor(1000 + Math.random() * 9000)}`;
+      const generatedMemberId = `TRV-IND-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const newRecord = {
+        id: generatedTreeId,
+        isBulk: false,
+        guardianName: userName,
+        user_email: userEmail,
+        adopter_name: userName,
+        adopter_email: userEmail,
+        memberId: generatedMemberId,
+        treeId: generatedTreeId,
+        tree_name: treeNickname || `${treeType} Guardian`,
+        species: treeType,
+        plantedDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+        planted_date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+        location: location || 'Community Neighborhood',
+        verified_months: 1,
+        verifiedMonths: 1,
+        photoUrl: photoPreview,
+        plantation_photo: photoPreview,
+        status: 'pending',
+        upvotes: 1,
+        user_upvoted: false,
+        reports: []
+      };
+
+      const allAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      allAdoptions.unshift(newRecord);
+      localStorage.setItem('taruvar_adoptions', JSON.stringify(allAdoptions));
+
+      const pendingAdoptions = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      pendingAdoptions.unshift({
+        id: generatedTreeId,
+        adopter_name: userName,
+        adopter_email: userEmail,
+        tree_name: newRecord.tree_name,
+        species: treeType,
+        location: location || 'Community Neighborhood',
+        plantation_photo: photoPreview,
+        date: newRecord.plantedDate
+      });
+      localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(pendingAdoptions));
+    } catch (e) {
+      console.error('Pledge local storage error:', e);
     } finally {
       setLoading(false);
       setPledged(true);
