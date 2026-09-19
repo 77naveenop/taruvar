@@ -21,10 +21,21 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   const [myTrees, setMyTrees] = useState(() => {
     try {
       const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
-      if (currentUser?.email) {
-        return all.filter(t => t.user_email === currentUser.email || t.adopter_email === currentUser.email);
-      }
-      return all;
+      const filtered = currentUser?.email
+        ? all.filter(t => t.user_email === currentUser.email || t.adopter_email === currentUser.email)
+        : all;
+      return filtered.map(t => ({
+        ...t,
+        id: t.id || t.treeId || `tree-${Date.now()}`,
+        tree_name: t.tree_name || t.treeName || 'My Adopted Tree',
+        species: t.species || 'Indigenous Tree',
+        location: t.location || 'Community Green Area',
+        plantation_photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
+        verified_months: t.verified_months || t.verifiedMonths || 1,
+        upvotes: t.upvotes || 1,
+        user_upvoted: false,
+        reports: Array.isArray(t.reports) ? t.reports : []
+      }));
     } catch {
       return [];
     }
@@ -64,10 +75,23 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
         if (allCloud.length > 0) {
           if (currentUser?.email) {
             const userEmailLower = currentUser.email.toLowerCase();
-            const userTrees = allCloud.filter(d => 
-              (d.adopter_email && d.adopter_email.toLowerCase() === userEmailLower) ||
-              (d.user_email && d.user_email.toLowerCase() === userEmailLower)
-            );
+            const userTrees = allCloud
+              .filter(d => 
+                (d.adopter_email && d.adopter_email.toLowerCase() === userEmailLower) ||
+                (d.user_email && d.user_email.toLowerCase() === userEmailLower)
+              )
+              .map(d => ({
+                ...d,
+                id: d.id || d.treeId || `tree-${Date.now()}`,
+                tree_name: d.tree_name || d.treeName || 'My Adopted Tree',
+                species: d.species || 'Indigenous Tree',
+                location: d.location || 'Community Green Area',
+                plantation_photo: d.plantation_photo || d.photoUrl || '/logo.jpg',
+                verified_months: d.verified_months || d.verifiedMonths || 1,
+                upvotes: d.upvotes || 1,
+                user_upvoted: false,
+                reports: Array.isArray(d.reports) ? d.reports : []
+              }));
             if (userTrees.length > 0) {
               setMyTrees(userTrees);
             }
@@ -159,7 +183,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
       if (t.id === reportModalTree.id) {
         return {
           ...t,
-          reports: [...t.reports, newReport]
+          reports: [...(t.reports || []), newReport]
         };
       }
       return t;
@@ -384,7 +408,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
                       {/* 5 Milestone Circles */}
                       <div className="grid grid-cols-5 gap-2 text-center pt-2">
                         {[1, 2, 3, 4, 5].map((monthNum) => {
-                          const report = tree.reports.find(r => r.month === monthNum);
+                          const report = (tree.reports || []).find(r => r.month === monthNum);
                           const isVerified = report && report.status === 'verified';
                           const isPending = report && report.status === 'pending';
 
@@ -409,7 +433,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
 
                       {/* Submitted Monthly Reports List */}
                       <div className="space-y-2 pt-2">
-                        {tree.reports.map((rep) => (
+                        {(tree.reports || []).map((rep) => (
                           <div key={rep.month} className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-center gap-3 text-xs">
                             <img src={rep.photo} alt={`Month ${rep.month}`} className="w-12 h-12 rounded-xl object-cover shrink-0" />
                             <div className="flex-1">
@@ -430,11 +454,11 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
                         <button
                           onClick={() => {
                             setReportModalTree(tree);
-                            setReportMonth(tree.reports.length + 1);
+                            setReportMonth((tree.reports || []).length + 1);
                           }}
                           className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold text-xs rounded-2xl shadow transition-all flex items-center justify-center gap-2"
                         >
-                          <Camera className="w-4 h-4" /> Submit Month {tree.reports.length + 1} Growth Photo Report
+                          <Camera className="w-4 h-4" /> Submit Month {(tree.reports || []).length + 1} Growth Photo Report
                         </button>
                       </div>
                     )}
