@@ -50,12 +50,11 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const isAdmin = currentUser?.user_metadata?.role === 'admin';
-  const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0];
+  const isAdmin = currentUser?.user_metadata?.role === 'admin' || currentUser?.email?.toLowerCase() === 'naveenpr332@gmail.com';
+  const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'User';
 
   const desktopNavLinks = [
     { id: 'home', label: 'Home' },
-    { id: 'explore', label: 'Explore Reels 🎥' },
     { id: 'about', label: 'Our Mission' },
     { id: 'tree-journey', label: 'Tree Journey' },
     { id: 'initiatives', label: 'Initiatives' },
@@ -66,43 +65,43 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-taruvar-border shadow-xs transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-3 lg:gap-6">
           
-          {/* 1. LEFT: Prominent Logo + Brand Wordmark */}
+          {/* 1. LEFT: Logo + Wordmark */}
           <div className="flex items-center gap-3 shrink-0">
             <button 
               onClick={() => handleNavClick('home')}
-              className="flex items-center gap-3 group focus:outline-none cursor-pointer text-left"
+              className="flex items-center gap-2.5 sm:gap-3 group focus:outline-none cursor-pointer text-left"
               title="Taruvar — One Person. One Tree."
             >
               <img 
                 src="/logo.jpg" 
                 alt="TARUVAR Logo" 
-                className="h-11 w-11 sm:h-14 sm:w-14 object-contain rounded-2xl group-hover:scale-105 transition-transform drop-shadow-sm"
+                className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded-2xl group-hover:scale-105 transition-transform drop-shadow-sm shrink-0"
               />
               <div className="flex flex-col justify-center">
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-taruvar-dark group-hover:text-taruvar-secondary transition-colors leading-none font-sans">
+                <span className="text-lg sm:text-xl font-black tracking-tight text-taruvar-dark group-hover:text-taruvar-secondary transition-colors leading-none font-sans">
                   TARUVAR
                 </span>
-                <span className="text-[9px] sm:text-[11px] font-bold text-taruvar-secondary tracking-widest uppercase mt-0.5">
+                <span className="text-[8px] sm:text-[10px] font-bold text-taruvar-secondary tracking-widest uppercase mt-0.5 whitespace-nowrap">
                   One Person. One Tree.
                 </span>
               </div>
             </button>
           </div>
 
-          {/* 2. CENTER: Full Desktop Navigation Bar (Visible on Desktop / Tablets) */}
-          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+          {/* 2. CENTER: Clean Desktop Navigation Menu */}
+          <nav className="hidden md:flex items-center gap-1 lg:gap-1.5 whitespace-nowrap">
             {desktopNavLinks.map((link) => {
               const isActive = activePage === link.id;
               return (
                 <button
                   key={link.id}
                   onClick={() => handleNavClick(link.id)}
-                  className={`px-3.5 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 lg:px-3.5 lg:py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all cursor-pointer ${
                     isActive
-                      ? 'text-taruvar-secondary bg-taruvar-light font-extrabold shadow-xs'
-                      : 'text-taruvar-dark hover:text-taruvar-secondary hover:bg-taruvar-bg'
+                      ? 'text-taruvar-secondary bg-taruvar-light font-black shadow-2xs'
+                      : 'text-taruvar-dark hover:text-taruvar-secondary hover:bg-taruvar-bg/70'
                   }`}
                 >
                   {link.label}
@@ -111,48 +110,53 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             })}
           </nav>
 
-          {/* 3. RIGHT: Action Buttons (Install + Explore / Reels Button + Profile / Log In) */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* 3. RIGHT: Action Buttons (Explore Reels + Profile/Login) */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             
             {/* PWA Install Button */}
             {!isAppInstalled && (
               <button
                 onClick={handleInstallPWA}
-                className="hidden sm:flex px-3 py-1.5 bg-taruvar-bg hover:bg-taruvar-light text-taruvar-dark text-xs font-bold rounded-xl border border-taruvar-border transition-all items-center gap-1.5 shadow-xs cursor-pointer"
+                className="hidden lg:flex px-2.5 py-1.5 bg-taruvar-bg hover:bg-taruvar-light text-taruvar-dark text-xs font-bold rounded-xl border border-taruvar-border transition-all items-center gap-1.5 shadow-2xs cursor-pointer whitespace-nowrap"
                 title="Install Taruvar App"
               >
                 <Download className="w-3.5 h-3.5 text-taruvar-secondary animate-bounce" />
-                <span>Install App</span>
+                <span>Install</span>
               </button>
             )}
 
-            {/* Prominent Explore / Reels Button in place of Adopt Button (Desktop Only) */}
+            {/* Explore Reels Button (Desktop Only) */}
             <button
               onClick={() => handleNavClick('explore')}
-              className="hidden md:flex px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-all items-center gap-2 cursor-pointer border border-emerald-500/30"
+              className={`hidden md:flex items-center gap-1.5 px-3.5 py-2 lg:px-4 lg:py-2 text-xs lg:text-sm font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap shadow-xs ${
+                activePage === 'explore'
+                  ? 'bg-emerald-800 text-white shadow-sm ring-2 ring-emerald-400/40'
+                  : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white hover:scale-105'
+              }`}
               title="Explore Tree Reels & Adoption Stories"
             >
-              <Compass className="w-4 h-4 text-taruvar-accent" />
-              <span>Explore / एक्सप्लोर</span>
+              <Compass className="w-4 h-4 text-emerald-200 shrink-0" />
+              <span>Explore Reels 🎥</span>
             </button>
 
             {/* Account / Login Button */}
             {currentUser ? (
               <button
                 onClick={() => handleNavClick('profile')}
-                className="px-3 py-2 sm:px-4 sm:py-2.5 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary text-xs sm:text-sm font-bold rounded-xl sm:rounded-2xl border border-taruvar-border transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="flex items-center gap-2 px-3 py-1.5 lg:px-3.5 lg:py-2 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary text-xs sm:text-sm font-bold rounded-xl border border-taruvar-border transition-all cursor-pointer shadow-2xs whitespace-nowrap"
                 title="View Profile"
               >
-                <User className="w-4 h-4" />
-                <span className="hidden lg:inline">{displayName}</span>
-                <span className="lg:hidden">Profile</span>
+                <div className="w-5 h-5 rounded-full bg-taruvar-secondary text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+                <span className="hidden sm:inline max-w-[100px] truncate">{displayName}</span>
               </button>
             ) : (
               <button
                 onClick={() => handleNavClick('auth')}
-                className="hidden md:flex px-4 py-2.5 bg-taruvar-bg hover:bg-taruvar-light text-taruvar-dark text-xs sm:text-sm font-bold rounded-2xl border border-taruvar-border transition-all items-center gap-1.5 cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-taruvar-bg hover:bg-taruvar-light text-taruvar-dark text-xs sm:text-sm font-bold rounded-xl border border-taruvar-border transition-all cursor-pointer shadow-2xs whitespace-nowrap"
               >
-                <LogIn className="w-4 h-4 text-taruvar-secondary" />
+                <LogIn className="w-4 h-4 text-taruvar-secondary shrink-0" />
                 <span>Log In</span>
               </button>
             )}

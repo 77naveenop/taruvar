@@ -2,6 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Check, X, Eye, Camera, Clock, Award, KeyRound, Lock, AlertCircle, User, Mail, UserPlus, LogIn, RefreshCw } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
+import { 
+  getCloudPendingAdoptions, 
+  getCloudApprovedAdoptions, 
+  approveCloudAdoption, 
+  rejectCloudAdoption 
+} from '../lib/cloudDb';
 
 export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth }) {
   const [activeTab, setActiveTab] = useState('pending-trees');
@@ -68,7 +74,7 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
 
-  // Robust unified data loader across Supabase + LocalStorage
+  // Robust unified data loader across Cloud DB + Supabase + LocalStorage
   const loadAllData = useCallback(async () => {
     setIsRefreshing(true);
     try {
@@ -95,11 +101,34 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
       });
 
       const localApproved = localAll.filter(t => t.status === 'approved' || (!t.status && t.plantedDate));
-      
-      setPendingTrees(mergedPending);
-      setApprovedTrees(localApproved);
 
-      // 2. Load from Supabase pledges table if available
+      // 2. Load from Shared Cloud Database (Real-time Cross-Device Sync)
+      try {
+        const cloudPending = await getCloudPendingAdoptions();
+        if (Array.isArray(cloudPending) && cloudPending.length > 0) {
+          cloudPending.forEach(cp => {
+            if (!mergedPending.some(p => p.id === cp.id || p.treeId === cp.treeId)) {
+              mergedPending.push(cp);
+            }
+          });
+        }
+
+        const cloudApproved = await getCloudApprovedAdoptions();
+        if (Array.isArray(cloudApproved) && cloudApproved.length > 0) {
+          cloudApproved.forEach(ca => {
+            if (!localApproved.some(a => a.id === ca.id || a.treeId === ca.treeId)) {
+              localApproved.push(ca);
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Cloud load notice:', err);
+      }
+      
+      setPendingTrees([...mergedPending]);
+      setApprovedTrees([...localApproved]);
+
+      // 3. Load from Supabase pledges table if available
       if (supabase) {
         const { data, error } = await supabase.from('pledges').select('*').order('created_at', { ascending: false });
         if (!error && data && data.length > 0) {
@@ -119,7 +148,7 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
 
           const combinedPending = [...mergedPending];
           supabasePending.forEach(sp => {
-            if (!combinedPending.some(p => p.id === sp.id || p.treeId === sp.treeId || (p.adopter_email === sp.adopter_email && p.species === sp.species && p.tree_name === sp.tree_name))) {
+            if (!combinedPending.some(p => p.id === sp.id || p.treeId === sp.treeId)) {
               combinedPending.push(sp);
             }
           });
@@ -276,6 +305,9 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
       } catch (e) {
         console.error(e);
       }
+
+      // Sync approval with cloud
+      approveCloudAdoption(treeId, newApprovedItem).catch(e => console.warn('Cloud approve error:', e));
     }
 
     if (supabase) {
@@ -294,6 +326,9 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
     const updatedPending = pendingTrees.filter(t => t.id !== treeId && t.treeId !== treeId);
     setPendingTrees(updatedPending);
     localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(updatedPending));
+
+    // Sync rejection with cloud
+    rejectCloudAdoption(treeId).catch(e => console.warn('Cloud reject error:', e));
 
     try {
       const currentAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');

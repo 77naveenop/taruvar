@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sprout, Camera, Check, ArrowRight, ShieldCheck, Sparkles, MapPin, Heart, QrCode, Printer, AlertCircle, RefreshCw, Building2, Users, User, TreePine, Layers } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
+import { saveCloudPendingAdoption } from '../lib/cloudDb';
 import GuardianIdCard from '../components/GuardianIdCard';
 
 export default function AdoptTreePage({ currentUser, showToast, setActivePage, onOpenAuth }) {
@@ -186,6 +187,9 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
         date: newRecord.plantedDate
       });
       localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(pendingAdoptions));
+
+      // 3. Save to shared Cloud DB for instant cross-device admin receipt
+      saveCloudPendingAdoption(newRecord).catch((err) => console.warn('Cloud save notice:', err));
     } catch (e) {
       console.error(e);
     }

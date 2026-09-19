@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Sprout, Heart, ShieldCheck, Share2, Sparkles, Check, UserCheck, Lock, Camera, AlertCircle, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabase';
+import { saveCloudPendingAdoption } from '../lib/cloudDb';
 
 export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, onPledgeComplete }) {
   const [treeType, setTreeType] = useState('Neem Tree (Azadirachta indica)');
@@ -136,6 +137,9 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
         date: newRecord.plantedDate
       });
       localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(pendingAdoptions));
+
+      // 3. Save to cloud DB
+      saveCloudPendingAdoption(newRecord).catch((err) => console.warn('Cloud save notice:', err));
     } catch (e) {
       console.error('Pledge local storage error:', e);
     } finally {
