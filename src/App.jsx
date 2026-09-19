@@ -4,6 +4,7 @@ import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
 import { supabase } from './lib/supabase';
+import { saveCloudPendingAdoption } from './lib/cloudDb';
 
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
@@ -23,7 +24,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authRedirectTarget, setAuthRedirectTarget] = useState(null);
 
-  // Check session on mount & set up listener
+  // Check session on mount & sync any local pending adoptions to cloud
   useEffect(() => {
     try {
       const saved = localStorage.getItem('taruvar_session_user');
@@ -34,6 +35,18 @@ export default function App() {
         }
         setCurrentUser(parsed);
       }
+
+      // Auto-sync any existing local pending adoptions to cloud
+      const localAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      const localPending = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      const allPending = [
+        ...localPending,
+        ...localAdoptions.filter(a => a.status === 'pending')
+      ];
+
+      allPending.forEach(item => {
+        saveCloudPendingAdoption(item).catch(() => {});
+      });
     } catch (e) {
       console.error(e);
     }

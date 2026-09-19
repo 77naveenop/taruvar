@@ -24,12 +24,25 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration with Auto-Update -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
-            .then((reg) => console.log('Taruvar PWA Service Worker Registered:', reg.scope))
+            .then((reg) => {
+              reg.update();
+              reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                      console.log('New Taruvar version activated, reloading...');
+                      window.location.reload();
+                    }
+                  });
+                }
+              });
+            })
             .catch((err) => console.error('SW Registration Failed:', err));
         });
       }
