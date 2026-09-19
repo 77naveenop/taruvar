@@ -130,18 +130,52 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
     confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
 
     const newRecord = {
+      id: generatedTreeId,
       isBulk: isBulk,
       orgName: isBulk ? formData.orgName : null,
       treeCount: count,
       guardianName: formData.name,
+      user_email: formData.email,
+      adopter_name: isBulk ? `${formData.orgName} (${formData.name})` : formData.name,
+      adopter_email: formData.email,
       memberId: generatedMemberId,
       treeId: generatedTreeId,
+      tree_name: isBulk ? `${formData.orgName} Green Drive` : (formData.treeName || formData.treeType.split(' ')[0] + ' Guardian'),
       species: isBulk ? `${count} Trees • ${formData.speciesMix}` : formData.treeType,
       plantedDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      planted_date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       location: formData.location || (isBulk ? `${formData.orgName} Campus` : 'Community Area'),
+      verified_months: 1,
       verifiedMonths: 1,
-      photoUrl: formData.photoPreview
+      photoUrl: formData.photoPreview,
+      plantation_photo: formData.photoPreview,
+      status: 'pending',
+      upvotes: 1,
+      user_upvoted: false,
+      reports: []
     };
+
+    // Save locally for real-time live site use
+    try {
+      const allAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      allAdoptions.unshift(newRecord);
+      localStorage.setItem('taruvar_adoptions', JSON.stringify(allAdoptions));
+
+      const pendingAdoptions = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      pendingAdoptions.unshift({
+        id: generatedTreeId,
+        adopter_name: newRecord.adopter_name,
+        adopter_email: formData.email,
+        tree_name: newRecord.tree_name,
+        species: newRecord.species,
+        location: newRecord.location,
+        plantation_photo: formData.photoPreview,
+        date: newRecord.plantedDate
+      });
+      localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(pendingAdoptions));
+    } catch (e) {
+      console.error(e);
+    }
 
     setAdoptedRecord(newRecord);
     if (showToast) {

@@ -14,44 +14,45 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
   const [adminPassword, setAdminPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Pending tree adoptions awaiting admin confirmation
-  const [pendingTrees, setPendingTrees] = useState([
-    {
-      id: 'tree-301',
-      adopter_name: 'Vikas Gupta',
-      adopter_email: 'vikas@example.com',
-      tree_name: 'Green Neem Shelter',
-      species: 'Neem Tree',
-      location: 'Sector 15 Botanical Garden',
-      plantation_photo: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80',
-      date: 'Aug 25, 2026'
-    },
-    {
-      id: 'tree-302',
-      adopter_name: 'Pooja Nair',
-      adopter_email: 'pooja@example.com',
-      tree_name: 'Banyan Legacy',
-      species: 'Banyan Tree',
-      location: 'Community Green Circle',
-      plantation_photo: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80',
-      date: 'Aug 24, 2026'
+  // Live pending tree adoptions awaiting admin confirmation (no dummy data)
+  const [pendingTrees, setPendingTrees] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+    } catch {
+      return [];
     }
-  ]);
+  });
 
-  // Pending monthly growth reports awaiting admin verification
-  const [pendingReports, setPendingReports] = useState([
-    {
-      id: 'rep-401',
-      tree_name: 'My Peepal Guardian',
-      adopter_name: 'Priya Sharma',
-      month: 3,
-      growth_photo: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80',
-      notes: 'Month 3 checkup: Height increased by 12cm, soil fertilized with vermicompost.',
-      date: 'Aug 25, 2026'
+  // Live pending monthly growth reports awaiting admin verification (no dummy data)
+  const [pendingReports, setPendingReports] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('taruvar_pending_reports') || '[]');
+    } catch {
+      return [];
     }
-  ]);
+  });
 
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
+
+  // Load from Supabase in background if available
+  React.useEffect(() => {
+    if (!supabase) return;
+    supabase.from('pledges').select('*').eq('status', 'pending').then(({ data }) => {
+      if (data && data.length > 0) {
+        const mapped = data.map(d => ({
+          id: d.id,
+          adopter_name: d.name,
+          adopter_email: d.email,
+          tree_name: d.tree_name,
+          species: d.tree_type,
+          location: d.location,
+          plantation_photo: d.plantation_photo,
+          date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        }));
+        setPendingTrees(mapped);
+      }
+    }).catch(() => {});
+  }, []);
 
   // Unlock Admin with Passkey
   const handleUnlockAdmin = async (e) => {
@@ -125,23 +126,59 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
     }
   };
 
-  const handleApproveTree = (treeId, adopterName) => {
-    setPendingTrees(prev => prev.filter(t => t.id !== treeId));
+  const handleApproveTree = async (treeId, adopterName) => {
+    const approvedTree = pendingTrees.find(t => t.id === treeId);
+    const updatedPending = pendingTrees.filter(t => t.id !== treeId);
+    setPendingTrees(updatedPending);
+    localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(updatedPending));
+
+    if (approvedTree) {
+      try {
+        const currentAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+        const updatedAdoptions = currentAdoptions.map(t => {
+          if (t.id === treeId || t.treeId === treeId) {
+            return { ...t, status: 'approved' };
+          }
+          return t;
+        });
+        localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedAdoptions));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    if (supabase) {
+      try {
+        await supabase.from('pledges').update({ status: 'approved' }).eq('id', treeId);
+      } catch (e) {}
+    }
+
     confetti({ particleCount: 50, spread: 50 });
     if (showToast) {
-      showToast(`Adoption approved for ${adopterName}! Notification email sent.`);
+      showToast(`Adoption approved for ${adopterName}! Verified and active.`);
     }
   };
 
-  const handleRejectTree = (treeId) => {
-    setPendingTrees(prev => prev.filter(t => t.id !== treeId));
+  const handleRejectTree = async (treeId) => {
+    const updatedPending = pendingTrees.filter(t => t.id !== treeId);
+    setPendingTrees(updatedPending);
+    localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(updatedPending));
+
+    if (supabase) {
+      try {
+        await supabase.from('pledges').update({ status: 'rejected' }).eq('id', treeId);
+      } catch (e) {}
+    }
+
     if (showToast) {
       showToast(`Adoption submission rejected.`);
     }
   };
 
   const handleVerifyReport = (reportId, monthNum, adopterName) => {
-    setPendingReports(prev => prev.filter(r => r.id !== reportId));
+    const updatedReports = pendingReports.filter(r => r.id !== reportId);
+    setPendingReports(updatedReports);
+    localStorage.setItem('taruvar_pending_reports', JSON.stringify(updatedReports));
     confetti({ particleCount: 60, spread: 60 });
     if (showToast) {
       showToast(`Month ${monthNum} Growth Report verified for ${adopterName}! Progress updated.`);

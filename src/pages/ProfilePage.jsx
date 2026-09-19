@@ -17,54 +17,79 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
   const [reportPhotoPreview, setReportPhotoPreview] = useState(null);
   const [submittingReport, setSubmittingReport] = useState(false);
 
-  // Sample initial tree adoptions state (backed by local state + Supabase if available)
-  const [myTrees, setMyTrees] = useState([
-    {
-      id: 'tree-101',
-      tree_name: 'My Peepal Guardian',
-      species: 'Peepal Tree',
-      status: 'approved', // 'pending' | 'approved' | 'rejected'
-      plantation_photo: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80',
-      location: 'Green Campus Sector 4',
-      verified_months: 2, // 0 to 5
-      upvotes: 24,
-      user_upvoted: false,
-      planted_date: 'Aug 15, 2026',
-      reports: [
-        { month: 1, photo: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80', notes: 'First monthly check. Sapling grew 5cm with new leaves!', status: 'verified', date: 'Sep 15, 2026' },
-        { month: 2, photo: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80', notes: 'Month 2 report. Organic compost added, stem is thickening.', status: 'verified', date: 'Oct 15, 2026' }
-      ]
+  // User's own adopted trees (no dummy data)
+  const [myTrees, setMyTrees] = useState(() => {
+    try {
+      const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      if (currentUser?.email) {
+        return all.filter(t => t.user_email === currentUser.email || t.adopter_email === currentUser.email);
+      }
+      return all;
+    } catch {
+      return [];
     }
-  ]);
+  });
 
-  const [communityFeed, setCommunityFeed] = useState([
-    {
-      id: 'tree-201',
-      author: 'Ananya Sharma',
-      avatar: '👩‍🌾',
-      tree_name: 'Banyan Sanctuary',
-      species: 'Banyan Tree',
-      location: 'Community Park Area',
-      plantation_photo: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80',
-      verified_months: 4,
-      upvotes: 58,
-      user_upvoted: false,
-      date: 'Aug 10, 2026'
-    },
-    {
-      id: 'tree-202',
-      author: 'Rahul Verma',
-      avatar: '👨‍🎓',
-      tree_name: 'Gulmohar Bloom',
-      species: 'Gulmohar Tree',
-      location: 'University Quadrangle',
-      plantation_photo: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80',
-      verified_months: 5,
-      upvotes: 92,
-      user_upvoted: false,
-      date: 'Jul 22, 2026'
+  // Live community feed across all eco-guardians (no dummy data)
+  const [communityFeed, setCommunityFeed] = useState(() => {
+    try {
+      const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      return all.map(t => ({
+        id: t.id || t.treeId,
+        author: t.guardianName || t.adopter_name || 'Eco Guardian',
+        avatar: '🌱',
+        tree_name: t.tree_name || t.treeName || 'My Adopted Tree',
+        species: t.species || 'Indigenous Species',
+        location: t.location || 'Community Green Area',
+        plantation_photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
+        verified_months: t.verified_months || t.verifiedMonths || 1,
+        upvotes: t.upvotes || 1,
+        user_upvoted: false,
+        date: t.plantedDate || t.planted_date || 'Recent'
+      }));
+    } catch {
+      return [];
     }
-  ]);
+  });
+
+  // Sync with Supabase pledges in background if connected
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from('pledges').select('*').then(({ data }) => {
+      if (data && data.length > 0) {
+        const userTrees = currentUser?.email ? data.filter(d => d.email === currentUser.email) : data;
+        if (userTrees.length > 0) {
+          setMyTrees(userTrees.map(d => ({
+            id: d.id,
+            tree_name: d.tree_name,
+            species: d.tree_type,
+            status: d.status || 'approved',
+            plantation_photo: d.plantation_photo,
+            location: d.location,
+            verified_months: d.verified_months || 1,
+            upvotes: 1,
+            user_upvoted: false,
+            planted_date: new Date(d.created_at || Date.now()).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+            reports: []
+          })));
+        }
+
+        setCommunityFeed(data.map(d => ({
+          id: d.id,
+          author: d.name,
+          avatar: '🌱',
+          tree_name: d.tree_name,
+          species: d.tree_type,
+          location: d.location,
+          plantation_photo: d.plantation_photo,
+          verified_months: d.verified_months || 1,
+          upvotes: 1,
+          user_upvoted: false,
+          date: new Date(d.created_at || Date.now()).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+        })));
+      }
+    }).catch(() => {});
+  }, [currentUser]);
 
   const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Tree Care Guardian';
   const userEmail = currentUser?.email || 'teamtaruvar@gmail.com';
@@ -393,63 +418,81 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
 
           <GuardianIdCard
             guardianName={displayName}
-            memberId={currentUser?.user_metadata?.member_id || 'TRV-IND-2026-4821'}
-            treeId={myTrees[0]?.id ? `TRV-TREE-${myTrees[0].id.replace(/\D/g, '') || '8092'}` : 'TRV-TREE-8092'}
-            species={myTrees[0]?.species || 'Peepal Tree (Ficus religiosa)'}
-            plantedDate={myTrees[0]?.planted_date || '15 Aug 2026'}
-            location={myTrees[0]?.location || 'Green Campus Sector 4'}
-            verifiedMonths={myTrees[0]?.verified_months || 2}
-            photoUrl={myTrees[0]?.plantation_photo || null}
+            memberId={currentUser?.user_metadata?.member_id || `TRV-IND-2026-${currentUser?.id ? currentUser.id.substring(0, 4) : '2026'}`}
+            treeId={myTrees[0]?.id || myTrees[0]?.treeId || 'TRV-TREE-PENDING'}
+            species={myTrees[0]?.species || 'Registered Eco-Guardian'}
+            plantedDate={myTrees[0]?.planted_date || myTrees[0]?.plantedDate || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+            location={myTrees[0]?.location || 'Active Guardian Community'}
+            verifiedMonths={myTrees[0]?.verified_months || 1}
+            photoUrl={myTrees[0]?.plantation_photo || myTrees[0]?.photoUrl || null}
+            isBulk={myTrees[0]?.isBulk}
+            orgName={myTrees[0]?.orgName}
+            treeCount={myTrees[0]?.treeCount}
           />
         </div>
       )}
 
       {/* TAB 3: COMMUNITY FEED */}
       {activeTab === 'community-feed' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {communityFeed.map((post) => (
-            <div key={post.id} className="bg-white p-6 rounded-3xl border border-taruvar-border shadow-card space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">{post.avatar}</span>
-                  <div>
-                    <h4 className="font-bold text-taruvar-dark text-sm">{post.author}</h4>
-                    <p className="text-[10px] text-taruvar-muted">{post.date} • {post.location}</p>
+        <div className="space-y-6">
+          {communityFeed.length === 0 ? (
+            <div className="bg-white p-12 rounded-3xl border border-taruvar-border text-center space-y-4">
+              <span className="text-4xl">🌍</span>
+              <h3 className="text-xl font-bold text-taruvar-dark">No Community Tree Logs Yet</h3>
+              <p className="text-xs text-taruvar-muted max-w-sm mx-auto">
+                As Eco-Guardians across India adopt trees and post monthly growth photos, verified tree progress updates will appear right here!
+              </p>
+              <button onClick={onOpenAdopt} className="px-6 py-3 bg-taruvar-secondary text-white font-bold text-xs rounded-xl">
+                Adopt a Tree & Share First Log
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {communityFeed.map((post) => (
+                <div key={post.id} className="bg-white p-6 rounded-3xl border border-taruvar-border shadow-card space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl">{post.avatar}</span>
+                      <div>
+                        <h4 className="font-bold text-taruvar-dark text-sm">{post.author}</h4>
+                        <p className="text-[10px] text-taruvar-muted">{post.date} • {post.location}</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-taruvar-light text-taruvar-secondary text-[10px] font-bold rounded-full">
+                      {post.verified_months}/5 Months Verified
+                    </span>
+                  </div>
+
+                  <div className="aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border">
+                    <img src={post.plantation_photo} alt={post.tree_name} className="w-full h-full object-cover" />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-taruvar-secondary">{post.species}</span>
+                      <h3 className="font-extrabold text-taruvar-dark text-base">{post.tree_name}</h3>
+                    </div>
+
+                    <button
+                      onClick={() => handleUpvote(post.id, true)}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        post.user_upvoted 
+                          ? 'bg-taruvar-secondary text-white' 
+                          : 'bg-taruvar-bg text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
+                      }`}
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                      <span>{post.upvotes}</span>
+                    </button>
                   </div>
                 </div>
-                <span className="px-3 py-1 bg-taruvar-light text-taruvar-secondary text-[10px] font-bold rounded-full">
-                  {post.verified_months}/5 Months Verified
-                </span>
-              </div>
-
-              <div className="aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border">
-                <img src={post.plantation_photo} alt={post.tree_name} className="w-full h-full object-cover" />
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-taruvar-secondary">{post.species}</span>
-                  <h3 className="font-extrabold text-taruvar-dark text-base">{post.tree_name}</h3>
-                </div>
-
-                <button
-                  onClick={() => handleUpvote(post.id, true)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    post.user_upvoted 
-                      ? 'bg-taruvar-secondary text-white' 
-                      : 'bg-taruvar-bg text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
-                  }`}
-                >
-                  <ThumbsUp className="w-3.5 h-3.5" />
-                  <span>{post.upvotes}</span>
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       )}
 
-      {/* TAB 3: ECO LEADERBOARD */}
+      {/* TAB 4: ECO LEADERBOARD */}
       {activeTab === 'leaderboard' && (
         <div className="bg-white p-8 rounded-3xl border border-taruvar-border shadow-card space-y-6">
           <div className="text-center space-y-2 max-w-xl mx-auto">
@@ -460,30 +503,40 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
             <p className="text-xs text-taruvar-muted">Ranked by community upvotes and 5-month verification progress.</p>
           </div>
 
-          <div className="space-y-3 max-w-2xl mx-auto">
-            {communityFeed.map((rank, idx) => (
-              <div key={rank.id} className="p-4 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white ${
-                    idx === 0 ? 'bg-amber-500' : idx === 1 ? 'bg-gray-400' : 'bg-amber-700'
-                  }`}>
-                    #{idx + 1}
-                  </span>
-                  <div>
-                    <h4 className="font-bold text-taruvar-dark text-sm">{rank.tree_name}</h4>
-                    <p className="text-[11px] text-taruvar-muted">Nurtured by {rank.author} • {rank.species}</p>
+          {communityFeed.length === 0 ? (
+            <div className="p-12 text-center space-y-3 bg-taruvar-bg rounded-2xl border border-taruvar-border max-w-2xl mx-auto">
+              <span className="text-4xl">🏆</span>
+              <h4 className="font-bold text-taruvar-dark text-base">Leaderboard Ready For Launch</h4>
+              <p className="text-xs text-taruvar-muted">
+                Rankings will automatically calculate as trees achieve monthly verified milestones and community appreciation.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-w-2xl mx-auto">
+              {communityFeed.map((rank, idx) => (
+                <div key={rank.id} className="p-4 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white ${
+                      idx === 0 ? 'bg-amber-500' : idx === 1 ? 'bg-gray-400' : 'bg-amber-700'
+                    }`}>
+                      #{idx + 1}
+                    </span>
+                    <div>
+                      <h4 className="font-bold text-taruvar-dark text-sm">{rank.tree_name}</h4>
+                      <p className="text-[11px] text-taruvar-muted">Nurtured by {rank.author} • {rank.species}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs font-bold text-taruvar-secondary">
+                    <span>👍 {rank.upvotes} Upvotes</span>
+                    <span className="px-3 py-1 bg-white rounded-xl border border-taruvar-border text-taruvar-dark">
+                      {rank.verified_months}/5 Verified
+                    </span>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-4 text-xs font-bold text-taruvar-secondary">
-                  <span>👍 {rank.upvotes} Upvotes</span>
-                  <span className="px-3 py-1 bg-white rounded-xl border border-taruvar-border text-taruvar-dark">
-                    {rank.verified_months}/5 Verified
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
