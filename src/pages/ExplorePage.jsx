@@ -5,7 +5,6 @@ import {
   Plus, Camera, Upload, ShieldCheck, TreePine, Eye, X, Send
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { supabase } from '../lib/supabase';
 
 export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOpenAuth }) {
   // If user is not logged in, show auth gate screen

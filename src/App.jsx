@@ -3,7 +3,6 @@ import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
-import { supabase } from './lib/supabase';
 import { saveCloudPendingAdoption } from './lib/cloudDb';
 
 import HomePage from './pages/HomePage';
@@ -50,32 +49,6 @@ export default function App() {
     } catch (e) {
       console.error(e);
     }
-
-    if (!supabase) return;
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        // Auto recognize admin email
-        if (session.user.email?.toLowerCase() === 'naveenpr332@gmail.com') {
-          session.user.user_metadata = { ...session.user.user_metadata, role: 'admin' };
-        }
-        setCurrentUser(session.user);
-        localStorage.setItem('taruvar_session_user', JSON.stringify(session.user));
-      }
-    }).catch(() => {});
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user || null;
-      if (u) {
-        if (u.email?.toLowerCase() === 'naveenpr332@gmail.com') {
-          u.user_metadata = { ...u.user_metadata, role: 'admin' };
-        }
-        setCurrentUser(u);
-        localStorage.setItem('taruvar_session_user', JSON.stringify(u));
-      }
-    });
-
-    return () => subscription?.unsubscribe();
   }, []);
 
   const showToast = (msg) => {
@@ -94,11 +67,6 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    if (supabase) {
-      try {
-        await supabase.auth.signOut();
-      } catch (e) {}
-    }
     localStorage.removeItem('taruvar_session_user');
     setCurrentUser(null);
     setAuthRedirectTarget(null);

@@ -1,8 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-export const supabase = (supabaseUrl && supabaseAnonKey) 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null;
+// Taruvar uses High-Speed GitHub Cloud Database Engine (live-data branch)
+// Supabase is completely disabled to avoid unresolvable DNS queries
+export const supabase = null;

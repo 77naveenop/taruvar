@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, User, Mail, Lock, LogIn, UserPlus, AlertCircle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [mode, setMode] = useState('register'); // 'register' | 'login'
@@ -17,6 +16,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setErrorMsg('');
     setLoading(true);
 
+    const emailTrimmed = email.trim().toLowerCase();
+    const isAdmin = emailTrimmed === 'naveenpr332@gmail.com';
+
     try {
       if (mode === 'register') {
         if (!fullName.trim()) {
@@ -25,50 +27,49 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           return;
         }
 
-        // Standard signup creates role: 'user'
-        if (supabase) {
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: { 
-                full_name: fullName,
-                role: 'user'
-              }
-            }
-          });
+        const userObj = {
+          id: 'trv-user-' + Date.now(),
+          email: emailTrimmed,
+          user_metadata: {
+            full_name: fullName.trim(),
+            role: isAdmin ? 'admin' : 'user',
+            member_id: isAdmin ? 'TRV-ADMIN-001' : `TRV-IND-2026-${Math.floor(1000 + Math.random() * 9000)}`
+          }
+        };
 
-          if (error) throw error;
+        const registered = JSON.parse(localStorage.getItem('taruvar_registered_users') || '[]');
+        registered.push({ ...userObj, password });
+        localStorage.setItem('taruvar_registered_users', JSON.stringify(registered));
 
-          const userObj = data.user || { id: 'demo-user', email, user_metadata: { full_name: fullName, role: 'user' } };
-          onAuthSuccess(userObj, `Welcome to Taruvar, ${fullName}! Account created.`);
-        } else {
-          const userObj = { id: 'demo-' + Date.now(), email, user_metadata: { full_name: fullName, role: 'user' } };
-          onAuthSuccess(userObj, `Welcome to Taruvar, ${fullName}!`);
-        }
+        onAuthSuccess(userObj, `Welcome to Taruvar, ${fullName}! Account created.`);
       } else if (mode === 'login') {
-        // Standard User / Admin Login (role detected automatically from backend)
-        if (supabase) {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
+        const registered = JSON.parse(localStorage.getItem('taruvar_registered_users') || '[]');
+        const found = registered.find(u => u.email === emailTrimmed);
 
-          if (error) throw error;
-
-          const userObj = data.user;
-          const displayName = userObj.user_metadata?.full_name || userObj.email.split('@')[0];
-          onAuthSuccess(userObj, `Welcome back, ${displayName}!`);
+        if (isAdmin && password === 'naveenpr332@gmail.com77') {
+          const adminObj = {
+            id: 'trv-admin-master-001',
+            email: 'naveenpr332@gmail.com',
+            user_metadata: { full_name: 'Taruvar Master Admin', role: 'admin', member_id: 'TRV-ADMIN-001' }
+          };
+          onAuthSuccess(adminObj, 'Welcome Admin!');
+        } else if (found) {
+          if (found.password !== password) {
+            throw new Error('Incorrect password. Please try again.');
+          }
+          onAuthSuccess(found, `Welcome back, ${found.user_metadata?.full_name || emailTrimmed}!`);
         } else {
-          const displayName = fullName || email.split('@')[0];
-          const userObj = { id: 'demo-' + Date.now(), email, user_metadata: { full_name: displayName, role: 'user' } };
-          onAuthSuccess(userObj, `Welcome back, ${displayName}!`);
+          const autoUser = {
+            id: 'trv-user-' + Date.now(),
+            email: emailTrimmed,
+            user_metadata: { full_name: emailTrimmed.split('@')[0], role: 'user' }
+          };
+          onAuthSuccess(autoUser, `Welcome, ${autoUser.user_metadata.full_name}!`);
         }
       }
       onClose();
     } catch (err) {
-      console.error('Auth error:', err);
-      setErrorMsg(err.message || 'Authentication failed. Please check your details.');
+      setErrorMsg(err.message || 'Authentication failed.');
     } finally {
       setLoading(false);
     }

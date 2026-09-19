@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Send, CheckCircle2, ShieldCheck, Heart, Sparkles, Users, GraduationCap, Building2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { supabase } from '../lib/supabase';
 
 export default function GetInvolvedPage({ showToast, initialTab = 'volunteer' }) {
   const [activeTab, setActiveTab] = useState(initialTab); // 'volunteer' | 'student' | 'leader' | 'green-shakti' | 'partner'
@@ -51,27 +50,16 @@ export default function GetInvolvedPage({ showToast, initialTab = 'volunteer' })
 
     setLoading(true);
 
-    // If Supabase credentials exist, save record directly to database
-    if (supabase) {
-      try {
-        const { error } = await supabase.from('applications').insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            city: formData.city,
-            state: formData.state,
-            pathway: activeTab,
-            area_of_interest: formData.areaOfInterest,
-            message: formData.message
-          }
-        ]);
-        if (error) {
-          console.error('Supabase application submission error:', error);
-        }
-      } catch (err) {
-        console.error('Supabase error:', err);
-      }
+    try {
+      const existing = JSON.parse(localStorage.getItem('taruvar_applications') || '[]');
+      existing.unshift({
+        ...formData,
+        pathway: activeTab,
+        date: new Date().toLocaleDateString('en-GB')
+      });
+      localStorage.setItem('taruvar_applications', JSON.stringify(existing));
+    } catch (e) {
+      console.error(e);
     }
 
     setLoading(false);

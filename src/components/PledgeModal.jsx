@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { X, Sprout, Heart, ShieldCheck, Share2, Sparkles, Check, UserCheck, Lock, Camera, AlertCircle, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { supabase } from '../lib/supabase';
 import { saveCloudPendingAdoption } from '../lib/cloudDb';
 import { compressImage } from '../lib/imageCompressor';
 
@@ -68,28 +67,6 @@ export default function PledgeModal({ isOpen, onClose, currentUser, onOpenAuth, 
     }
 
     setLoading(true);
-
-    try {
-      if (supabase && currentUser) {
-        const { error } = await supabase.from('pledges').insert([
-          { 
-            name: userName, 
-            email: userEmail, 
-            tree_type: treeType,
-            tree_name: treeNickname || `${treeType} Sapling`,
-            location: location || 'Community Neighborhood',
-            plantation_photo: photoPreview,
-            status: 'pending',
-            user_id: currentUser.id
-          }
-        ]);
-        if (error) {
-          console.warn('Supabase insert notice:', error.message);
-        }
-      }
-    } catch (err) {
-      console.warn('Adoption submission note:', err);
-    }
 
     // Save to local storage for instant frontend and admin reflection
     try {

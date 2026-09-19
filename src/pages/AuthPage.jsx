@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, ShieldCheck, ArrowRight, Sparkles, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { supabase } from '../lib/supabase';
 
 export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redirectTarget }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -35,18 +34,6 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
             member_id: 'TRV-ADMIN-001'
           }
         };
-
-        // Try background Supabase sync
-        if (supabase) {
-          try {
-            await supabase.auth.signInWithPassword({
-              email: emailTrimmed,
-              password: formData.password
-            });
-          } catch (e) {
-            // Non-blocking
-          }
-        }
 
         localStorage.setItem('taruvar_session_user', JSON.stringify(masterAdminUser));
         confetti({ particleCount: 70, spread: 70 });
@@ -90,25 +77,6 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
           console.error(e);
         }
 
-        // Supabase registration if enabled
-        if (supabase) {
-          try {
-            await supabase.auth.signUp({
-              email: emailTrimmed,
-              password: formData.password,
-              options: {
-                data: {
-                  full_name: formData.fullName.trim(),
-                  role: userRole,
-                  member_id: memberId
-                }
-              }
-            });
-          } catch (supabaseErr) {
-            console.warn('Supabase background signup:', supabaseErr.message);
-          }
-        }
-
         localStorage.setItem('taruvar_session_user', JSON.stringify(newUser));
         confetti({ particleCount: 70, spread: 60 });
 
@@ -129,69 +97,49 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
         // 3. USER / ADMIN SIGN IN
         let authenticatedUser = null;
 
-        // Try Supabase auth first if available
-        if (supabase) {
-          try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-              email: emailTrimmed,
-              password: formData.password
-            });
-            if (!error && data?.user) {
-              authenticatedUser = data.user;
-              if (isAdminEmail) {
-                authenticatedUser.user_metadata = { ...authenticatedUser.user_metadata, role: 'admin' };
-              }
-            }
-          } catch (e) {
-            console.warn('Supabase signin attempt:', e.message);
+        // Local persistent user database verification
+        const registeredUsers = JSON.parse(localStorage.getItem('taruvar_registered_users') || '[]');
+        const localUser = registeredUsers.find(u => u.email === emailTrimmed);
+
+        if (localUser) {
+          if (localUser.password !== formData.password) {
+            throw new Error('Incorrect password. Please verify and try again.');
           }
-        }
-
-        // Fallback to local user database
-        if (!authenticatedUser) {
-          const registeredUsers = JSON.parse(localStorage.getItem('taruvar_registered_users') || '[]');
-          const localUser = registeredUsers.find(u => u.email === emailTrimmed);
-
-          if (localUser) {
-            if (localUser.password !== formData.password) {
-              throw new Error('Incorrect password. Please verify and try again.');
+          authenticatedUser = {
+            id: localUser.id,
+            email: localUser.email,
+            user_metadata: localUser.user_metadata
+          };
+        } else if (isAdminEmail) {
+          // Admin fallback
+          if (!isMasterAdminPassword) {
+            throw new Error('Invalid Admin password. Please check your credentials.');
+          }
+          authenticatedUser = {
+            id: 'trv-admin-master-001',
+            email: 'naveenpr332@gmail.com',
+            user_metadata: {
+              full_name: 'Taruvar Master Admin',
+              role: 'admin',
+              member_id: 'TRV-ADMIN-001'
             }
+          };
+        } else {
+          // Auto-create or login seamlessly for valid password
+          if (formData.password.length >= 6) {
             authenticatedUser = {
-              id: localUser.id,
-              email: localUser.email,
-              user_metadata: localUser.user_metadata
-            };
-          } else if (isAdminEmail) {
-            // Admin fallback
-            if (!isMasterAdminPassword) {
-              throw new Error('Invalid Admin password. Please check your credentials.');
-            }
-            authenticatedUser = {
-              id: 'trv-admin-master-001',
-              email: 'naveenpr332@gmail.com',
+              id: `trv-user-${Date.now()}`,
+              email: emailTrimmed,
               user_metadata: {
-                full_name: 'Taruvar Master Admin',
-                role: 'admin',
-                member_id: 'TRV-ADMIN-001'
+                full_name: emailTrimmed.split('@')[0],
+                role: 'user',
+                member_id: `TRV-IND-2026-${Math.floor(1000 + Math.random() * 9000)}`
               }
             };
+            registeredUsers.push({ ...authenticatedUser, password: formData.password });
+            localStorage.setItem('taruvar_registered_users', JSON.stringify(registeredUsers));
           } else {
-            // Auto-create or login seamlessly for valid password
-            if (formData.password.length >= 6) {
-              authenticatedUser = {
-                id: `trv-user-${Date.now()}`,
-                email: emailTrimmed,
-                user_metadata: {
-                  full_name: emailTrimmed.split('@')[0],
-                  role: 'user',
-                  member_id: `TRV-IND-2026-${Math.floor(1000 + Math.random() * 9000)}`
-                }
-              };
-              registeredUsers.push({ ...authenticatedUser, password: formData.password });
-              localStorage.setItem('taruvar_registered_users', JSON.stringify(registeredUsers));
-            } else {
-              throw new Error('Account not found. Please click "Create Account" tab above to register.');
-            }
+            throw new Error('Account not found. Please click "Create Account" tab above to register.');
           }
         }
 

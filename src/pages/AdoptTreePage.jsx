@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Sprout, Camera, Check, ArrowRight, ShieldCheck, Sparkles, MapPin, Heart, QrCode, Printer, AlertCircle, RefreshCw, Building2, Users, User, TreePine, Layers } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { supabase } from '../lib/supabase';
 import { saveCloudPendingAdoption } from '../lib/cloudDb';
 import { compressImage } from '../lib/imageCompressor';
 import GuardianIdCard from '../components/GuardianIdCard';
@@ -116,31 +115,6 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
       ? `TRV-ORG-2026-${cleanOrgCode}-${memberSerial}` 
       : `TRV-IND-2026-${memberSerial}`;
 
-    // Save to Supabase if connected
-    if (supabase) {
-      try {
-        await supabase.from('pledges').insert([
-          {
-            user_id: currentUser?.id || null,
-            name: isBulk ? `${formData.orgName} (${formData.name})` : formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            tree_type: isBulk ? `${count} Trees (${formData.speciesMix})` : formData.treeType,
-            tree_name: isBulk ? `${formData.orgName} Green Drive` : (formData.treeName || formData.treeType.split(' ')[0] + ' Guardian'),
-            location: formData.location || (isBulk ? `${formData.orgName} Campus` : 'Community Area'),
-            plantation_photo: formData.photo,
-            status: 'pending',
-            verified_months: 1,
-            tree_id_code: generatedTreeId,
-            member_id_code: generatedMemberId
-          }
-        ]);
-      } catch (err) {
-        console.error('Database pledge insert error:', err);
-      }
-    }
-
-    setLoading(false);
     confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
 
     const newRecord = {

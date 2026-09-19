@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Check, X, Eye, Camera, Clock, Award, KeyRound, Lock, AlertCircle, User, Mail, UserPlus, LogIn, RefreshCw } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { supabase } from '../lib/supabase';
 import { 
   getCloudPendingAdoptions, 
   getCloudApprovedAdoptions, 
@@ -125,59 +124,9 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
         console.warn('Cloud load notice:', err);
       }
       
+      // Merge and update UI states cleanly
       setPendingTrees([...mergedPending]);
       setApprovedTrees([...localApproved]);
-
-      // 3. Load from Supabase pledges table if available
-      if (supabase) {
-        const { data, error } = await supabase.from('pledges').select('*').order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) {
-          const supabasePending = data.filter(d => d.status === 'pending').map(d => ({
-            id: d.id,
-            adopter_name: d.name,
-            adopter_email: d.email,
-            tree_name: d.tree_name,
-            species: d.tree_type,
-            location: d.location,
-            plantation_photo: d.plantation_photo,
-            treeId: d.tree_id_code || `TRV-TREE-${d.id}`,
-            memberId: d.member_id_code,
-            isBulk: d.name?.includes('(') || false,
-            date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-          }));
-
-          const combinedPending = [...mergedPending];
-          supabasePending.forEach(sp => {
-            if (!combinedPending.some(p => p.id === sp.id || p.treeId === sp.treeId)) {
-              combinedPending.push(sp);
-            }
-          });
-          setPendingTrees(combinedPending);
-
-          const supabaseApproved = data.filter(d => d.status === 'approved').map(d => ({
-            id: d.id,
-            adopter_name: d.name,
-            adopter_email: d.email,
-            tree_name: d.tree_name,
-            species: d.tree_type,
-            location: d.location,
-            plantation_photo: d.plantation_photo,
-            treeId: d.tree_id_code || `TRV-TREE-${d.id}`,
-            memberId: d.member_id_code,
-            isBulk: d.name?.includes('(') || false,
-            verified_months: d.verified_months || 1,
-            date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-          }));
-
-          const combinedApproved = [...localApproved];
-          supabaseApproved.forEach(sa => {
-            if (!combinedApproved.some(a => a.id === sa.id || a.treeId === sa.treeId)) {
-              combinedApproved.push(sa);
-            }
-          });
-          setApprovedTrees(combinedApproved);
-        }
-      }
     } catch (err) {
       console.warn('Admin load data note:', err);
     } finally {
@@ -205,11 +154,12 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
 
     if (passkeyInput === 'TARUVAR_ADMIN_2026' || passkeyInput === 'taruvar2026' || passkeyInput === 'admin2026') {
       setLocalIsAdmin(true);
-      if (supabase && currentUser) {
-        // Permanently set role: 'admin' in Supabase user metadata
-        await supabase.auth.updateUser({
-          data: { role: 'admin' }
-        });
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
+          user_metadata: { ...(currentUser.user_metadata || {}), role: 'admin' }
+        };
+        localStorage.setItem('taruvar_session_user', JSON.stringify(updatedUser));
       }
       confetti({ particleCount: 60, spread: 60 });
       if (showToast) showToast('Admin Role Activated Permanently!');
@@ -231,37 +181,18 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
     }
 
     try {
-      if (supabase) {
-        // Try sign in
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: adminEmail,
-          password: adminPassword
-        });
-
-        if (error) {
-          // Try sign up if user doesn't exist
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: adminEmail,
-            password: adminPassword,
-            options: {
-              data: { full_name: 'Taruvar Admin', role: 'admin' }
-            }
-          });
-          if (signUpError) throw signUpError;
-          setLocalIsAdmin(true);
-          if (showToast) showToast('Admin Account Created & Activated!');
-        } else {
-          // Upgrade to admin role permanently
-          await supabase.auth.updateUser({
-            data: { role: 'admin' }
-          });
-          setLocalIsAdmin(true);
-          if (showToast) showToast('Welcome Admin! Approval desk unlocked.');
+      const adminUser = {
+        id: 'trv-admin-master-001',
+        email: adminEmail.trim().toLowerCase(),
+        user_metadata: {
+          full_name: 'Taruvar Admin',
+          role: 'admin',
+          member_id: 'TRV-ADMIN-001'
         }
-      } else {
-        setLocalIsAdmin(true);
-        if (showToast) showToast('Admin Access Unlocked!');
-      }
+      };
+      localStorage.setItem('taruvar_session_user', JSON.stringify(adminUser));
+      setLocalIsAdmin(true);
+      if (showToast) showToast('Welcome Admin! Approval desk unlocked.');
       confetti({ particleCount: 70, spread: 70 });
     } catch (err) {
       setPasskeyError(err.message || 'Authentication error.');
@@ -310,12 +241,6 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
       approveCloudAdoption(treeId, newApprovedItem).catch(e => console.warn('Cloud approve error:', e));
     }
 
-    if (supabase) {
-      try {
-        await supabase.from('pledges').update({ status: 'approved' }).eq('id', treeId);
-      } catch (e) {}
-    }
-
     confetti({ particleCount: 50, spread: 50 });
     if (showToast) {
       showToast(`Adoption approved for ${adopterName}! Verified and active in Planted Directory.`);
@@ -341,12 +266,6 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
       localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedAdoptions));
     } catch (e) {
       console.error(e);
-    }
-
-    if (supabase) {
-      try {
-        await supabase.from('pledges').update({ status: 'rejected' }).eq('id', treeId);
-      } catch (e) {}
     }
 
     if (showToast) {

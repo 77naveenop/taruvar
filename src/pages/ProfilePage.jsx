@@ -3,7 +3,6 @@ import {
   User, ShieldCheck, Heart, Award, Camera, Upload, CheckCircle2, Clock, 
   Sparkles, ThumbsUp, MapPin, Calendar, Plus, ChevronRight, Layers, Lock, Flame, LogOut
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import confetti from 'canvas-confetti';
 
 import GuardianIdCard from '../components/GuardianIdCard';
