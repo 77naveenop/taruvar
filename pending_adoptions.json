@@ -1,14 +1,1 @@
-[
-  {
-    "id": "TRV-TREE-8888",
-    "treeId": "TRV-TREE-8888",
-    "adopter_name": "Test Adopter",
-    "adopter_email": "test@example.com",
-    "tree_name": "Sacred Banyan",
-    "species": "Banyan Tree (Ficus benghalensis)",
-    "location": "Delhi",
-    "plantation_photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-    "status": "pending",
-    "date": "19 Sep 2026"
-  }
-]
+[]
