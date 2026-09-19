@@ -14,6 +14,7 @@ import ProfilePage from './pages/ProfilePage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdoptTreePage from './pages/AdoptTreePage';
 import AuthPage from './pages/AuthPage';
+import ExplorePage from './pages/ExplorePage';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
@@ -203,6 +204,15 @@ export default function App() {
             currentUser={currentUser}
             showToast={showToast}
             onOpenAuth={() => navigateToAuth('admin')}
+          />
+        )}
+
+        {activePage === 'explore' && (
+          <ExplorePage 
+            currentUser={currentUser}
+            showToast={showToast}
+            onOpenPledge={navigateToAdopt}
+            onOpenAuth={() => navigateToAuth('explore')}
           />
         )}
       </main>

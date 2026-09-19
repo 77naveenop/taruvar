@@ -14,7 +14,7 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
   const [adminPassword, setAdminPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Live pending tree adoptions awaiting admin confirmation (no dummy data)
+  // Live pending tree adoptions awaiting admin confirmation
   const [pendingTrees, setPendingTrees] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
@@ -23,7 +23,7 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
     }
   });
 
-  // Live pending monthly growth reports awaiting admin verification (no dummy data)
+  // Live pending monthly growth reports awaiting admin verification
   const [pendingReports, setPendingReports] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('taruvar_pending_reports') || '[]');
@@ -32,14 +32,25 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
     }
   });
 
+  // Live database of all approved and planted trees in frontend
+  const [approvedTrees, setApprovedTrees] = useState(() => {
+    try {
+      const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      return all.filter(t => t.status === 'approved' || !t.status);
+    } catch {
+      return [];
+    }
+  });
+
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
 
   // Load from Supabase in background if available
   React.useEffect(() => {
     if (!supabase) return;
-    supabase.from('pledges').select('*').eq('status', 'pending').then(({ data }) => {
+    supabase.from('pledges').select('*').then(({ data }) => {
       if (data && data.length > 0) {
-        const mapped = data.map(d => ({
+        const pending = data.filter(d => d.status === 'pending').map(d => ({
           id: d.id,
           adopter_name: d.name,
           adopter_email: d.email,
@@ -47,9 +58,28 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
           species: d.tree_type,
           location: d.location,
           plantation_photo: d.plantation_photo,
+          treeId: d.tree_id_code || `TRV-TREE-${d.id}`,
+          memberId: d.member_id_code,
+          isBulk: d.name?.includes('(') || false,
           date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         }));
-        setPendingTrees(mapped);
+        setPendingTrees(pending);
+
+        const approved = data.filter(d => d.status === 'approved').map(d => ({
+          id: d.id,
+          adopter_name: d.name,
+          adopter_email: d.email,
+          tree_name: d.tree_name,
+          species: d.tree_type,
+          location: d.location,
+          plantation_photo: d.plantation_photo,
+          treeId: d.tree_id_code || `TRV-TREE-${d.id}`,
+          memberId: d.member_id_code,
+          isBulk: d.name?.includes('(') || false,
+          verified_months: d.verified_months || 1,
+          date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        }));
+        setApprovedTrees(approved);
       }
     }).catch(() => {});
   }, []);
@@ -329,8 +359,12 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
 
         <div className="flex items-center gap-3 bg-white/10 p-3 rounded-2xl border border-white/10">
           <div className="text-center px-3 border-r border-white/10">
-            <p className="text-2xl font-black text-taruvar-accent">{pendingTrees.length}</p>
-            <p className="text-[10px] text-white/80 uppercase">Pending Adoptions</p>
+            <p className="text-2xl font-black text-amber-300">{pendingTrees.length}</p>
+            <p className="text-[10px] text-white/80 uppercase">Pending Review</p>
+          </div>
+          <div className="text-center px-3 border-r border-white/10">
+            <p className="text-2xl font-black text-taruvar-accent">{approvedTrees.length}</p>
+            <p className="text-[10px] text-white/80 uppercase">Planted Trees</p>
           </div>
           <div className="text-center px-3">
             <p className="text-2xl font-black text-white">{pendingReports.length}</p>
@@ -343,26 +377,38 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
       <div className="flex items-center gap-2 border-b border-taruvar-border pb-4 overflow-x-auto">
         <button
           onClick={() => setActiveTab('pending-trees')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'pending-trees'
-              ? 'bg-taruvar-secondary text-white shadow'
+              ? 'bg-amber-600 text-white shadow'
               : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
           }`}
         >
-          <Clock className="w-4 h-4 text-taruvar-accent" />
+          <Clock className="w-4 h-4 text-amber-200" />
           <span>Pending Adoptions ({pendingTrees.length})</span>
         </button>
 
         <button
+          onClick={() => setActiveTab('planted-directory')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+            activeTab === 'planted-directory'
+              ? 'bg-taruvar-secondary text-white shadow'
+              : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-taruvar-accent" />
+          <span>Planted Trees Directory ({approvedTrees.length})</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('pending-reports')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'pending-reports'
               ? 'bg-taruvar-secondary text-white shadow'
               : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
           }`}
         >
           <Camera className="w-4 h-4 text-taruvar-accent" />
-          <span>Pending Monthly Reports ({pendingReports.length})</span>
+          <span>Pending Growth Reports ({pendingReports.length})</span>
         </button>
       </div>
 
@@ -373,40 +419,48 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
             <div className="bg-white p-12 rounded-3xl border border-taruvar-border text-center space-y-3">
               <Check className="w-12 h-12 text-taruvar-primary mx-auto" />
               <h3 className="text-xl font-bold text-taruvar-dark">All Tree Adoptions Reviewed!</h3>
-              <p className="text-xs text-taruvar-muted">No pending tree adoption submissions right now.</p>
+              <p className="text-xs text-taruvar-muted">
+                No pending tree adoption submissions awaiting review right now.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {pendingTrees.map((item) => (
-                <div key={item.id} className="bg-white p-6 rounded-3xl border border-taruvar-border shadow-card space-y-4">
-                  
-                  <div className="aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border relative group">
+                <div key={item.id} className="bg-white p-6 rounded-3xl border-2 border-amber-300 shadow-card space-y-4 relative">
+                  <span className="absolute top-4 right-4 px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-extrabold rounded-full uppercase tracking-wider">
+                    ⏳ Pending Admin Approval
+                  </span>
+
+                  <div className="aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border relative group mt-3">
                     <img src={item.plantation_photo} alt={item.tree_name} className="w-full h-full object-cover" />
                     <button
                       onClick={() => setSelectedPhotoModal(item.plantation_photo)}
                       className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs gap-1"
                     >
-                      <Eye className="w-4 h-4" /> View Plantation Photo Proof
+                      <Eye className="w-4 h-4" /> View Full Plantation Photo Proof
                     </button>
                   </div>
 
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-taruvar-secondary">{item.species}</span>
                     <h3 className="text-xl font-extrabold text-taruvar-dark">{item.tree_name}</h3>
-                    <p className="text-xs text-taruvar-dark font-semibold">Adopter: {item.adopter_name} ({item.adopter_email})</p>
+                    <p className="text-xs text-taruvar-dark font-semibold">Adopter / Coordinator: {item.adopter_name} ({item.adopter_email})</p>
                     <p className="text-[11px] text-taruvar-muted">Location: {item.location} • Submitted: {item.date}</p>
+                    {item.treeId && (
+                      <p className="text-[10px] font-mono text-emerald-700 font-bold">Assigned Tree ID: {item.treeId}</p>
+                    )}
                   </div>
 
                   <div className="flex gap-3 pt-2 border-t border-taruvar-border">
                     <button
                       onClick={() => handleApproveTree(item.id, item.adopter_name)}
-                      className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-all"
+                      className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
-                      <Check className="w-4 h-4" /> Approve Adoption
+                      <Check className="w-4 h-4" /> Approve & Certify Tree
                     </button>
                     <button
                       onClick={() => handleRejectTree(item.id)}
-                      className="py-3 px-4 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 font-bold text-xs rounded-xl transition-all"
+                      className="py-3 px-4 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"
                     >
                       Reject
                     </button>
@@ -419,7 +473,114 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
         </div>
       )}
 
-      {/* TAB 2: PENDING MONTHLY REPORTS */}
+      {/* TAB 2: PLANTED TREES DIRECTORY (DATABASE OF ALL APPROVED TREES) */}
+      {activeTab === 'planted-directory' && (
+        <div className="space-y-6">
+          
+          {/* Search Bar & Summary Bar */}
+          <div className="bg-white p-6 rounded-3xl border border-taruvar-border shadow-card flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="w-full sm:max-w-md">
+              <label className="block text-xs font-bold text-taruvar-muted uppercase tracking-wider mb-1.5">
+                Search Planted Trees Database
+              </label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by Adopter, Tree ID, Species, or Organization..."
+                className="w-full px-4 py-2.5 rounded-xl border border-taruvar-border text-xs focus:ring-2 focus:ring-taruvar-primary"
+              />
+            </div>
+
+            <div className="flex items-center gap-4 text-xs">
+              <div className="px-4 py-2 bg-taruvar-bg rounded-xl border border-taruvar-border text-center">
+                <p className="font-extrabold text-taruvar-dark text-lg">{approvedTrees.length}</p>
+                <p className="text-[10px] text-taruvar-muted uppercase font-bold">Approved Trees</p>
+              </div>
+              <div className="px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                <p className="font-extrabold text-emerald-800 text-lg">
+                  {approvedTrees.reduce((acc, t) => acc + (t.treeCount || 1), 0)}
+                </p>
+                <p className="text-[10px] text-emerald-700 uppercase font-bold">Total Saplings</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Directory Listings */}
+          {approvedTrees.length === 0 ? (
+            <div className="bg-white p-12 rounded-3xl border border-taruvar-border text-center space-y-3">
+              <span className="text-4xl">🌳</span>
+              <h3 className="text-xl font-bold text-taruvar-dark">No Approved Planted Trees Yet</h3>
+              <p className="text-xs text-taruvar-muted max-w-sm mx-auto">
+                When you approve submitted tree adoptions from the "Pending Adoptions" tab, they will be archived here permanently in the Taruvar Planted Registry.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {approvedTrees
+                .filter(t => {
+                  if (!searchQuery.trim()) return true;
+                  const q = searchQuery.toLowerCase();
+                  return (
+                    t.tree_name?.toLowerCase().includes(q) ||
+                    t.adopter_name?.toLowerCase().includes(q) ||
+                    t.adopter_email?.toLowerCase().includes(q) ||
+                    t.species?.toLowerCase().includes(q) ||
+                    t.treeId?.toLowerCase().includes(q) ||
+                    t.location?.toLowerCase().includes(q)
+                  );
+                })
+                .map((tree) => (
+                  <div key={tree.id || tree.treeId} className="bg-white rounded-3xl border border-taruvar-border shadow-card overflow-hidden flex flex-col justify-between p-5 space-y-4">
+                    
+                    <div className="space-y-3">
+                      <div className="aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border relative group">
+                        <img 
+                          src={tree.plantation_photo || tree.photoUrl || '/logo.jpg'} 
+                          alt={tree.tree_name} 
+                          className="w-full h-full object-cover" 
+                        />
+                        <span className="absolute top-2 left-2 px-2.5 py-0.5 bg-emerald-600 text-white text-[10px] font-black rounded-full shadow-sm flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Certified Planted
+                        </span>
+                        {tree.plantation_photo && (
+                          <button
+                            onClick={() => setSelectedPhotoModal(tree.plantation_photo)}
+                            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs gap-1"
+                          >
+                            <Eye className="w-4 h-4" /> View Full Photo
+                          </button>
+                        )}
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-taruvar-secondary">{tree.species}</span>
+                          <span className="text-[10px] font-mono font-bold text-gray-500">{tree.treeId || tree.id}</span>
+                        </div>
+                        <h4 className="text-base font-extrabold text-taruvar-dark">{tree.tree_name}</h4>
+                        <p className="text-xs text-taruvar-dark font-medium mt-0.5">Guardian: {tree.adopter_name || tree.guardianName}</p>
+                        <p className="text-[11px] text-taruvar-muted">{tree.location} • Planted {tree.plantedDate || tree.planted_date || tree.date}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-taruvar-border flex items-center justify-between text-xs">
+                      <span className="px-2.5 py-1 bg-taruvar-light text-taruvar-secondary rounded-lg font-bold text-[10px]">
+                        {tree.isBulk ? `🏢 Bulk (${tree.treeCount || 1} Trees)` : '👤 Individual'}
+                      </span>
+                      <span className="text-emerald-700 font-bold text-[11px]">
+                        {tree.verified_months || 1}/5 Mo Verified
+                      </span>
+                    </div>
+
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: PENDING MONTHLY REPORTS */}
       {activeTab === 'pending-reports' && (
         <div className="space-y-6">
           {pendingReports.length === 0 ? (
@@ -453,7 +614,7 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
 
                   <button
                     onClick={() => handleVerifyReport(rep.id, rep.month, rep.adopter_name)}
-                    className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-all"
+                    className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                   >
                     <ShieldCheck className="w-4 h-4" /> Verify Month {rep.month} Report & Unlock Progress
                   </button>

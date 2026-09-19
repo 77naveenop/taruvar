@@ -55,6 +55,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
 
   const desktopNavLinks = [
     { id: 'home', label: 'Home' },
+    { id: 'explore', label: 'Explore Reels 🎥' },
     { id: 'about', label: 'Our Mission' },
     { id: 'tree-journey', label: 'Tree Journey' },
     { id: 'initiatives', label: 'Initiatives' },
@@ -110,7 +111,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             })}
           </nav>
 
-          {/* 3. RIGHT: Action Buttons (Install + Adopt Tree + Profile / Log In) */}
+          {/* 3. RIGHT: Action Buttons (Install + Explore / Reels Button + Profile / Log In) */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             
             {/* PWA Install Button */}
@@ -125,14 +126,14 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
               </button>
             )}
 
-            {/* Prominent Adopt Button (With Logo) */}
+            {/* Prominent Explore / Reels Button in place of Adopt Button */}
             <button
-              onClick={() => handleNavClick('adopt')}
-              className="px-3.5 py-2 sm:px-5 sm:py-2.5 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-black text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2 cursor-pointer border border-taruvar-primary/30"
-              title="Grow / Adopt Your Tree"
+              onClick={() => handleNavClick('explore')}
+              className="px-3.5 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2 cursor-pointer border border-emerald-500/30"
+              title="Explore Tree Reels & Adoption Stories"
             >
-              <img src="/logo.jpg" alt="Logo" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover bg-white shadow-xs" />
-              <span>Adopt Tree</span>
+              <Compass className="w-4 h-4 text-taruvar-accent" />
+              <span>Explore / एक्सप्लोर</span>
             </button>
 
             {/* Account / Login Button */}

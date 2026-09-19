@@ -73,16 +73,16 @@ export default function BottomNav({ activePage, setActivePage, onOpenPledge, cur
           <span className="text-[10px] mt-0.5 tracking-tight">{currentUser ? 'Profile' : 'Log In'}</span>
         </button>
 
-        {/* 5. Initiatives / Explore Tab */}
+        {/* 5. Explore Reels Feed Tab */}
         <button
-          onClick={() => handleNav('initiatives')}
+          onClick={() => handleNav('explore')}
           className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all ${
-            activePage === 'initiatives' || activePage === 'get-involved'
+            activePage === 'explore'
               ? 'text-taruvar-secondary font-extrabold scale-105'
               : 'text-taruvar-muted hover:text-taruvar-dark font-medium'
           }`}
         >
-          <Layers className={`w-5 h-5 ${activePage === 'initiatives' || activePage === 'get-involved' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
+          <Compass className={`w-5 h-5 ${activePage === 'explore' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
           <span className="text-[10px] mt-0.5 tracking-tight">Explore</span>
         </button>
 

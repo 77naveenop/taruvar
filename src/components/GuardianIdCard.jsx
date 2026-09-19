@@ -12,7 +12,8 @@ export default function GuardianIdCard({
   photoUrl = null,
   isBulk = false,
   orgName = null,
-  treeCount = 1
+  treeCount = 1,
+  treeStatus = 'approved'
 }) {
   const [showBack, setShowBack] = useState(false);
 
@@ -142,11 +143,13 @@ export default function GuardianIdCard({
 
             </div>
 
-            {/* Bottom Footer: Verification Level */}
+            {/* Bottom Footer: Verification Level & Admin Status */}
             <div className="flex items-center justify-between border-t border-white/20 pt-2.5 text-[8px] sm:text-[10px] text-white/80">
               <div className="flex items-center gap-1.5 font-sans">
                 <span className="font-bold text-taruvar-accent">Status:</span>
-                <span>{verifiedMonths}/5 Months Verified ({verifiedMonths >= 5 ? '★ Level 5 Champion' : `Level ${verifiedMonths} Guardian`})</span>
+                <span className={treeStatus === 'pending' ? 'text-amber-300 font-bold' : 'text-emerald-300 font-bold'}>
+                  {treeStatus === 'pending' ? '⏳ Pending Admin Review' : `✓ Certified (${verifiedMonths}/5 Mo)`}
+                </span>
               </div>
               <span className="font-mono text-[7px] sm:text-[9px] text-white/60 uppercase">SECURE PASSPORT • TRV-2026</span>
             </div>

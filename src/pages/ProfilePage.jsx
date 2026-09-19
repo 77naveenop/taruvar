@@ -283,14 +283,24 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
                   <div className="lg:col-span-5 space-y-4">
                     <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border">
                       <img src={tree.plantation_photo} alt={tree.tree_name} className="w-full h-full object-cover" />
-                      <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
                         tree.status === 'approved' 
-                          ? 'bg-emerald-600 text-white shadow' 
-                          : 'bg-amber-500 text-white shadow'
+                          ? 'bg-emerald-600 text-white shadow-md' 
+                          : 'bg-amber-500 text-white shadow-md'
                       }`}>
-                        {tree.status === 'approved' ? '✅ Admin Confirmed' : '⏳ Pending Admin Approval'}
+                        {tree.status === 'approved' ? '✅ Admin Verified' : '⏳ Pending Admin Review'}
                       </span>
                     </div>
+
+                    {tree.status === 'pending' && (
+                      <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl text-xs flex items-start gap-2.5">
+                        <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold">Adoption Submitted & Pending Verification</p>
+                          <p className="text-[11px] text-amber-700 mt-0.5">Your tree plantation photo is in the Taruvar verification queue. Once approved by the team, your official certificate badge will activate.</p>
+                        </div>
+                      </div>
+                    )}
 
                     <div>
                       <span className="text-xs font-bold text-taruvar-secondary uppercase tracking-wider">{tree.species}</span>
@@ -428,6 +438,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, show
             isBulk={myTrees[0]?.isBulk}
             orgName={myTrees[0]?.orgName}
             treeCount={myTrees[0]?.treeCount}
+            treeStatus={myTrees[0]?.status || 'pending'}
           />
         </div>
       )}
