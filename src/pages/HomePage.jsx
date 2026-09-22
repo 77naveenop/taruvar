@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   Sprout, Droplets, Camera, TreePine, Heart, ArrowRight, Sparkles, 
   Users, Award, BookOpen, ShieldCheck, CheckCircle2, ChevronRight,
-  Globe, Compass, Check, UserPlus, Play
+  Globe, Compass, Check, UserPlus, Play, Waves, Mountain
 } from 'lucide-react';
 import TreeJourneySandbox from '../components/TreeJourneySandbox';
 import TreeGrowthHeroBackground from '../components/TreeGrowthHeroBackground';
@@ -16,7 +16,7 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
       icon: '🌱',
       title: 'ONE PERSON. ONE TREE.',
       subtitle: 'एक व्यक्ति, एक पेड़',
-      desc: 'Take personal responsibility for at least one tree from plantation to full growth.',
+      desc: 'Take personal responsibility for at least one tree from plantation to verified full growth.',
       badge: 'Core Movement'
     },
     {
@@ -24,7 +24,7 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
       icon: '👩',
       title: 'TARUVAR GREEN SHAKTI',
       subtitle: 'महिला नेतृत्व',
-      desc: 'Empowering women leadership in neighborhood greening and sapling care circles.',
+      desc: 'Empowering women leadership in neighborhood greening, sapling care circles, and vermicomposting.',
       badge: 'Community Power'
     },
     {
@@ -32,34 +32,28 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
       icon: '🎓',
       title: 'YOUTH & CAMPUS NETWORK',
       subtitle: 'युवा शक्ति',
-      desc: 'Students lead local drives, gain verified environmental experience, and build leadership skills.',
+      desc: 'Students lead local drives, gain verified environmental credentials, and build leadership skills.',
       badge: 'Campus Drive'
     },
     {
       id: 'tree-journey-digital',
       icon: '📱',
-      title: 'TREE JOURNEY TRACKER',
-      subtitle: 'डिजिटल ट्रैकर',
-      desc: 'Document growth milestones with photos and track tree survival over months and years.',
+      title: 'TREE JOURNEY & CITIZEN CARE',
+      subtitle: 'डिजिटल ट्रैकर व स्वच्छता',
+      desc: 'Document growth milestones with photos, monitor wellness, and log river and trail cleanups.',
       badge: 'Tech Enabled'
     }
   ];
 
-  const handleJoinClick = () => {
-    if (currentUser) {
-      setActivePage('profile');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (onOpenAuth) {
-      onOpenAuth();
-    } else if (onNavigateGetInvolved) {
-      onNavigateGetInvolved('volunteer');
-    }
+  const handleBeAPartClick = () => {
+    setActivePage('be-a-part');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <div className="space-y-20 md:space-y-28 pb-16">
       
-      {/* SECTION 1 — HERO WITH DYNAMIC GROWING TREE FROM BEGINNING TO BIG */}
+      {/* SECTION 1 — HERO WITH DYNAMIC GROWING TREE ANIMATION */}
       <section className="relative min-h-[620px] sm:min-h-[700px] flex items-center justify-center text-white overflow-hidden bg-taruvar-dark">
         
         {/* Dynamic Tree Growth Animation & Nature Background Engine */}
@@ -80,15 +74,15 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
             <span className="text-taruvar-accent">Nurture It For Life.</span>
           </h1>
 
-          {/* Bilingual Friendly Subtitle */}
+          {/* Clear, Impactful Vision Subtitle */}
           <p className="text-base sm:text-xl text-gray-200 leading-relaxed max-w-2xl mx-auto font-normal">
-            Planting is only day one. Join a movement focused on continuous tree care (<strong>Paalna / देखभाल</strong>), photo growth tracking, and genuine survival.
+            Planting is only Day 1. Join India's citizen-led movement for ongoing tree care (<strong>Paalna / देखभाल</strong>), verified photo tracking, and environmental stewardship.
           </p>
 
           {/* Primary & Secondary Hero Action Buttons */}
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto">
             
-            {/* 1. Main Button: Grow / Adopt Your Tree (with Taruvar Logo) */}
+            {/* 1. Main Button: Grow / Adopt Your Tree */}
             <button
               onClick={onOpenPledge}
               className="w-full sm:w-auto px-8 py-4 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-extrabold text-base rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-2.5 group cursor-pointer"
@@ -98,13 +92,13 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
 
-            {/* 2. Join as a User / Register Button (100% Functional) */}
+            {/* 2. Be a Part Button */}
             <button
-              onClick={handleJoinClick}
-              className="w-full sm:w-auto px-8 py-4 bg-white/20 hover:bg-white/30 text-white font-bold text-base rounded-2xl border border-white/40 backdrop-blur-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              onClick={handleBeAPartClick}
+              className="w-full sm:w-auto px-8 py-4 bg-white/20 hover:bg-white/30 text-white font-bold text-base rounded-2xl border border-white/40 backdrop-blur-md transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-105"
             >
-              <UserPlus className="w-5 h-5 text-taruvar-accent" />
-              <span>{currentUser ? 'My Tree Journey / प्रोफाइल' : 'Join as a User / रजिस्टर करें'}</span>
+              <Users className="w-5 h-5 text-taruvar-accent" />
+              <span>Be a Part / शामिल हों</span>
             </button>
 
           </div>
@@ -128,17 +122,71 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
         </div>
       </section>
 
-      {/* SECTION 2 — THE 5-STEP CARE PHILOSOPHY (PAALNA) */}
+      {/* SECTION 2 — CLEAR MOVEMENT VISION & PURPOSE */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center space-y-3 max-w-2xl mx-auto mb-12">
+        <div className="bg-white p-8 sm:p-12 rounded-3xl border border-taruvar-border shadow-card grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          <div className="lg:col-span-7 space-y-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-taruvar-light text-taruvar-secondary text-xs font-bold rounded-full uppercase tracking-wider">
+              Our Vision • हमारा उद्देश्य
+            </span>
+
+            <h2 className="text-3xl sm:text-4xl font-black text-taruvar-dark tracking-tight">
+              Why Traditional Drives Fail — And How Taruvar Changes It
+            </h2>
+
+            <p className="text-sm sm:text-base text-taruvar-dark/90 leading-relaxed">
+              Every monsoon, millions of saplings are planted across India in single-day photo events. But without follow-up care, over <strong>80% die within months</strong>.
+            </p>
+
+            <p className="text-sm sm:text-base text-taruvar-dark/90 leading-relaxed">
+              Taruvar replaces mass unmonitored planting with <strong>Personal Guardianship (Paalna)</strong>: One person takes accountability for one sapling, provides continuous water, organic nutrients, and logs verified growth over 5 months.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="p-3.5 bg-taruvar-bg rounded-2xl border border-taruvar-border text-xs text-taruvar-dark font-bold flex items-center gap-2">
+                <Check className="w-4 h-4 text-taruvar-secondary shrink-0" />
+                <span>95%+ Sapling Survival Rate</span>
+              </div>
+              <div className="p-3.5 bg-taruvar-bg rounded-2xl border border-taruvar-border text-xs text-taruvar-dark font-bold flex items-center gap-2">
+                <Check className="w-4 h-4 text-taruvar-secondary shrink-0" />
+                <span>Verified Digital Certificates</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5">
+            <div className="bg-gradient-to-br from-taruvar-light to-emerald-50 p-7 rounded-3xl border border-taruvar-border text-center space-y-4 shadow-sm">
+              <span className="text-4xl">🌱</span>
+              <h4 className="font-extrabold text-taruvar-dark text-xl">The Power of One</h4>
+              <p className="text-xs text-taruvar-muted leading-relaxed">
+                "If 1,000 citizens each adopt and nurture just 1 tree, 1,000 real trees survive and grow into full green canopies."
+              </p>
+              <div className="pt-2">
+                <button
+                  onClick={onOpenPledge}
+                  className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all"
+                >
+                  Adopt Your 1 Tree Today
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* SECTION 3 — THE 5-STEP TREE JOURNEY PIPELINE */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center space-y-3 max-w-2xl mx-auto mb-10">
           <span className="text-xs font-bold uppercase tracking-widest text-taruvar-secondary bg-taruvar-light px-3.5 py-1 rounded-full">
-            The Taruvar Framework
+            The 5-Step Journey
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-taruvar-dark">
-            The 5-Step Journey of Every Tree
+            How a Tree's Life Unfolds on Taruvar
           </h2>
           <p className="text-taruvar-muted text-sm">
-            Moving beyond one-day photo ops to real, long-term nurturing.
+            From the first sapling in the soil to a verified shade-giving canopy.
           </p>
         </div>
 
@@ -161,19 +209,19 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
               step: '📸',
               name: '3. Document',
               hindi: 'तस्वीर व लॉग',
-              desc: 'Upload monthly photo updates to verify progress.'
+              desc: 'Upload 1-15 day growth and wellness updates.'
             },
             {
               step: '🌿',
               name: '4. Grow',
               hindi: 'निरंतर विकास',
-              desc: 'Track height, health, and 5-month milestones.'
+              desc: 'Advance through verified 5-month milestones.'
             },
             {
               step: '🤝',
               name: '5. Inspire',
-              hindi: 'दूसरों को प्रेरित करें',
-              desc: 'Inspire family, friends, and campus chapters.'
+              hindi: 'प्रेरणा देना',
+              desc: 'Share verified reels & inspire your community.'
             }
           ].map((s) => (
             <div 
@@ -191,72 +239,17 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
         </div>
       </section>
 
-      {/* SECTION 3 — ONE PERSON. ONE TREE. */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-br from-taruvar-bg via-white to-taruvar-light p-8 md:p-12 rounded-3xl border border-taruvar-border shadow-card grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          
-          <div className="lg:col-span-7 space-y-5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-taruvar-secondary text-white text-xs font-bold rounded-full">
-              Core Philosophy • एक व्यक्ति, एक पेड़
-            </span>
-
-            <h2 className="text-3xl sm:text-4xl font-black text-taruvar-dark tracking-tight">
-              One Person. One Tree.
-            </h2>
-
-            <p className="text-base sm:text-lg text-taruvar-dark leading-relaxed font-normal">
-              You do not need to plant hundreds of saplings. Take responsibility for <strong>just one tree</strong> and nurture it into a strong, shade-giving canopy.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="p-3 bg-white rounded-2xl border border-taruvar-border text-xs text-taruvar-dark font-medium flex items-center gap-2">
-                <Check className="w-4 h-4 text-taruvar-secondary" /> Personal Tree Guardian
-              </div>
-              <div className="p-3 bg-white rounded-2xl border border-taruvar-border text-xs text-taruvar-dark font-medium flex items-center gap-2">
-                <Check className="w-4 h-4 text-taruvar-secondary" /> 5-Month Growth Badge
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={onOpenPledge}
-                className="px-8 py-3.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold rounded-2xl shadow-lg transition-all flex items-center gap-2 text-sm"
-              >
-                <span>Grow / Adopt Your Tree</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5">
-            <div className="bg-white p-6 rounded-3xl border border-taruvar-border shadow-card text-center space-y-4">
-              <div className="p-5 bg-taruvar-light rounded-2xl space-y-2">
-                <span className="text-4xl">🌳</span>
-                <h4 className="font-extrabold text-taruvar-dark text-lg">The Power of One</h4>
-                <p className="text-xs text-taruvar-muted leading-relaxed">
-                  If 1,000 citizens adopt and protect 1 tree each, 1,000 trees grow to maturity with a 95%+ survival rate.
-                </p>
-              </div>
-              <p className="text-xs font-bold text-taruvar-secondary">
-                taruvar.org • Tree Care Movement
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* SECTION 4 — TREE JOURNEY DIGITAL DEMO */}
+      {/* SECTION 4 — INTERACTIVE TREE JOURNEY SIMULATOR */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <span className="text-xs font-bold uppercase tracking-widest text-taruvar-secondary bg-taruvar-light px-3.5 py-1 rounded-full">
-            Interactive Growth Tracker
+            Interactive Prototype
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-taruvar-dark">
-            How Tree Journey Works
+            Explore the Tree Journey Tracker
           </h2>
           <p className="text-taruvar-muted text-sm">
-            Experience how adopters submit monthly progress photos, receive admin verification, and earn badges.
+            Experience how tree caretakers submit progress photos, receive verification, and earn badges.
           </p>
         </div>
 
@@ -305,13 +298,10 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
               </div>
 
               <button
-                onClick={() => {
-                  setActivePage('initiatives');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="pt-3 border-t border-taruvar-border flex items-center justify-between text-taruvar-secondary hover:text-taruvar-hover font-bold text-xs group"
+                onClick={handleBeAPartClick}
+                className="pt-3 border-t border-taruvar-border flex items-center justify-between text-taruvar-secondary hover:text-taruvar-hover font-bold text-xs group cursor-pointer"
               >
-                <span>Explore Initiative</span>
+                <span>Join / Support This Initiative</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -319,17 +309,17 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
         </div>
       </section>
 
-      {/* SECTION 6 — GET INVOLVED (DIRECT PATHWAYS) */}
+      {/* SECTION 6 — JOIN PATHWAYS (BE A PART) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <span className="text-xs font-bold uppercase tracking-widest text-taruvar-secondary bg-taruvar-light px-3.5 py-1 rounded-full">
-            Join Taruvar • जुड़ें
+            Be a Part • जुड़ें
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-taruvar-dark">
-            Choose Your Pathway
+            Ways You Can Contribute
           </h2>
           <p className="text-taruvar-muted text-sm">
-            Select how you would like to participate and submit your details.
+            Select your pathway to join India's active community of eco-guardians.
           </p>
         </div>
 
@@ -338,25 +328,25 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
             {
               title: 'PLANT & ADOPT',
               subtitle: 'पौधा अपनाएं',
-              desc: 'Adopt a sapling, upload photo proof, and start your 5-month care log.',
+              desc: 'Adopt a sapling, upload photo proof, and log 1-15 day wellness care.',
               cta: 'Adopt a Tree',
               action: onOpenPledge,
               icon: '🌱'
             },
             {
-              title: 'VOLUNTEER',
+              title: 'LOCAL VOLUNTEER',
               subtitle: 'स्वयंसेवक बनें',
-              desc: 'Join local weekend watering and plantation drives in your city.',
-              cta: 'Apply as Volunteer',
-              action: () => onNavigateGetInvolved ? onNavigateGetInvolved('volunteer') : setActivePage('get-involved'),
+              desc: 'Join weekend tree watering circles, river cleaning, and waste drives.',
+              cta: 'Join as Volunteer',
+              action: handleBeAPartClick,
               icon: '🤝'
             },
             {
               title: 'STUDENT NETWORK',
               subtitle: 'विद्यार्थी पोर्टल',
               desc: 'Lead campus drives, earn verified work hours, and build leadership skills.',
-              cta: 'Student Portal',
-              action: () => onNavigateGetInvolved ? onNavigateGetInvolved('student') : setActivePage('get-involved'),
+              cta: 'Campus Ambassador',
+              action: handleBeAPartClick,
               icon: '🎓'
             },
             {
@@ -364,7 +354,7 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
               subtitle: 'सामुदायिक नेतृत्व',
               desc: 'Organize greening initiatives for your neighborhood, society, or village.',
               cta: 'Become a Leader',
-              action: () => onNavigateGetInvolved ? onNavigateGetInvolved('leader') : setActivePage('get-involved'),
+              action: handleBeAPartClick,
               icon: '📢'
             }
           ].map((card) => (
@@ -381,7 +371,7 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
 
               <button
                 onClick={card.action}
-                className="w-full py-3 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>{card.cta}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -412,17 +402,18 @@ export default function HomePage({ setActivePage, onOpenPledge, showToast, onNav
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <button
               onClick={onOpenPledge}
-              className="w-full sm:w-auto px-8 py-4 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-extrabold rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 text-sm"
+              className="w-full sm:w-auto px-8 py-4 bg-taruvar-primary hover:bg-taruvar-accent text-taruvar-dark font-extrabold rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 text-sm cursor-pointer hover:scale-105"
             >
               <Sprout className="w-5 h-5" />
               <span>Grow / Adopt Your Tree</span>
             </button>
 
             <button
-              onClick={() => onNavigateGetInvolved ? onNavigateGetInvolved('volunteer') : setActivePage('get-involved')}
-              className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 transition-all text-sm"
+              onClick={handleBeAPartClick}
+              className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 transition-all text-sm cursor-pointer hover:scale-105"
             >
-              Join Movement / शामिल हों
+              <Users className="w-4 h-4 text-taruvar-accent" />
+              <span>Be a Part / शामिल हों</span>
             </button>
           </div>
 

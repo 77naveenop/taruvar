@@ -8,6 +8,7 @@ import { saveCloudPendingAdoption } from './lib/cloudDb';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import TreeJourneyPage from './pages/TreeJourneyPage';
+import BeAPartPage from './pages/BeAPartPage';
 import InitiativesPage from './pages/InitiativesPage';
 import GetInvolvedPage from './pages/GetInvolvedPage';
 import ProfilePage from './pages/ProfilePage';
@@ -139,6 +140,15 @@ export default function App() {
           <TreeJourneyPage 
             showToast={showToast} 
             onOpenPledge={navigateToAdopt} 
+          />
+        )}
+
+        {activePage === 'be-a-part' && (
+          <BeAPartPage 
+            showToast={showToast} 
+            onOpenPledge={navigateToAdopt} 
+            currentUser={currentUser}
+            onOpenAuth={() => navigateToAuth('be-a-part')}
           />
         )}
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Compass, Sprout, User, ShieldCheck } from 'lucide-react';
+import { Home, Compass, Sprout, User, ShieldCheck, Users } from 'lucide-react';
 
 export default function BottomNav({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth }) {
   const handleNav = (pageId) => {
@@ -26,17 +26,17 @@ export default function BottomNav({ activePage, setActivePage, onOpenPledge, cur
           <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate">Home</span>
         </button>
 
-        {/* 2. Tree Journey Tab */}
+        {/* 2. Be a Part Tab */}
         <button
-          onClick={() => handleNav('tree-journey')}
+          onClick={() => handleNav('be-a-part')}
           className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer ${
-            activePage === 'tree-journey'
+            activePage === 'be-a-part'
               ? 'text-taruvar-secondary font-extrabold scale-105'
               : 'text-taruvar-muted hover:text-taruvar-dark font-medium'
           }`}
         >
-          <Compass className={`w-5 h-5 shrink-0 ${activePage === 'tree-journey' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
-          <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate">Journey</span>
+          <Users className={`w-5 h-5 shrink-0 ${activePage === 'be-a-part' ? 'text-taruvar-secondary stroke-[2.5]' : ''}`} />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight truncate">Be a Part</span>
         </button>
 
         {/* 3. Center Raised Action Button: Grow / Adopt a Tree (Taruvar Logo) */}

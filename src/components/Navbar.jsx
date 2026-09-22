@@ -83,7 +83,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
   const desktopNavLinks = [
     { id: 'home', label: 'Home' },
     { id: 'about', label: 'Our Mission' },
-    { id: 'tree-journey', label: 'Tree Journey' },
+    { id: 'be-a-part', label: 'Be a Part' },
     { id: 'initiatives', label: 'Initiatives' },
     { id: 'get-involved', label: 'Get Involved' },
     ...(isAdmin ? [{ id: 'admin', label: 'Admin Desk 🔒' }] : [])

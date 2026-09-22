@@ -106,7 +106,7 @@ export default function Footer({ setActivePage, onOpenPledge, onNavigateGetInvol
                 <button onClick={() => navigateTo('about')} className="text-gray-300 hover:text-taruvar-primary transition-colors">Our Mission (उद्देश्य)</button>
               </li>
               <li>
-                <button onClick={() => navigateTo('tree-journey')} className="text-gray-300 hover:text-taruvar-primary transition-colors">Tree Journey (पेड़ का सफर)</button>
+                <button onClick={() => navigateTo('be-a-part')} className="text-gray-300 hover:text-taruvar-primary transition-colors">Be a Part (हिस्सा बनें)</button>
               </li>
               <li>
                 <button onClick={() => navigateTo('profile')} className="text-gray-300 hover:text-taruvar-primary transition-colors">My Profile (मेरी प्रोफाइल)</button>
