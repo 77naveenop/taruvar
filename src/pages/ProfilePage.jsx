@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, ShieldCheck, Heart, Award, Camera, Upload, CheckCircle2, Clock, 
-  Sparkles, ThumbsUp, MapPin, Calendar, Plus, ChevronRight, Layers, Lock, Flame, LogOut
+  Sparkles, ThumbsUp, MapPin, Calendar, Plus, ChevronRight, Layers, Lock, Flame, LogOut,
+  Waves, Mountain, Trash2, Sprout, Leaf, Activity, Droplets, Sun, Shield, MessageCircle, Share2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -9,15 +10,22 @@ import GuardianIdCard from '../components/GuardianIdCard';
 import { getCloudPendingAdoptions, getCloudApprovedAdoptions } from '../lib/cloudDb';
 
 export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLogout, setActivePage, showToast }) {
-  const [activeTab, setActiveTab] = useState('my-trees'); // 'my-trees' | 'id-card' | 'community-feed' | 'leaderboard'
+  // Tabs: 'my-trees' (Section A) | 'social-work' (Section B) | 'id-card' | 'leaderboard'
+  const [activeTab, setActiveTab] = useState('my-trees');
+
+  // ==========================================
+  // SECTION A: MY ADOPTED TREES & WELLNESS CARE
+  // ==========================================
   const [reportModalTree, setReportModalTree] = useState(null);
-  const [reportMonth, setReportMonth] = useState(1);
+  const [careIntervalDays, setCareIntervalDays] = useState(1); // 1-15 days dropdown
+  const [careActivity, setCareActivity] = useState('Watering & Soil Nurturing');
+  const [wellnessStatus, setWellnessStatus] = useState('Thriving & Lush Green');
   const [reportNotes, setReportNotes] = useState('');
   const [reportPhoto, setReportPhoto] = useState(null);
   const [reportPhotoPreview, setReportPhotoPreview] = useState(null);
   const [submittingReport, setSubmittingReport] = useState(false);
 
-  // User's own adopted trees (no dummy data)
+  // User's own adopted trees
   const [myTrees, setMyTrees] = useState(() => {
     try {
       const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
@@ -32,6 +40,8 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
         location: t.location || 'Community Green Area',
         plantation_photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
         verified_months: t.verified_months || t.verifiedMonths || 1,
+        wellness: t.wellness || 'Thriving & Lush Green',
+        lastCareInterval: t.lastCareInterval || '1 Day Care',
         upvotes: t.upvotes || 1,
         user_upvoted: false,
         reports: Array.isArray(t.reports) ? t.reports : []
@@ -41,27 +51,69 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
     }
   });
 
-  // Live community feed across all eco-guardians (no dummy data)
-  const [communityFeed, setCommunityFeed] = useState(() => {
+  // ==========================================
+  // SECTION B: SOCIAL ENVIRONMENTAL WORKS
+  // ==========================================
+  const [socialWorks, setSocialWorks] = useState(() => {
     try {
-      const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
-      return all.map(t => ({
-        id: t.id || t.treeId,
-        author: t.guardianName || t.adopter_name || 'Eco Guardian',
-        avatar: '🌱',
-        tree_name: t.tree_name || t.treeName || 'My Adopted Tree',
-        species: t.species || 'Indigenous Species',
-        location: t.location || 'Community Green Area',
-        plantation_photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
-        verified_months: t.verified_months || t.verifiedMonths || 1,
-        upvotes: t.upvotes || 1,
-        user_upvoted: false,
-        date: t.plantedDate || t.planted_date || 'Recent'
-      }));
+      const saved = JSON.parse(localStorage.getItem('taruvar_social_works') || '[]');
+      if (saved.length > 0) return saved;
+      // Default sample inspiration works for active movement showcase
+      return [
+        {
+          id: 'sw-1',
+          author: 'Naveen Sharma',
+          userEmail: 'naveenpr332@gmail.com',
+          title: 'Yamuna Riverbank Cleanliness & Plastic Retrieval Drive',
+          category: 'River & Water Cleaning',
+          categoryIcon: '🌊',
+          timeInterval: '1 Day Action',
+          location: 'Yamuna Ghat, Delhi NCR',
+          impact: '42 kg plastic waste removed & composted',
+          volunteers: 8,
+          photo: 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=1200&q=80',
+          description: 'Mobilized local eco-volunteers to clear single-use plastic waste along a 500m riverbank stretch. Planted 5 riverine shrubs near banks.',
+          date: 'Sep 20, 2026',
+          views: 384,
+          likes: 64,
+          isLiked: false
+        },
+        {
+          id: 'sw-2',
+          author: 'Taruvar Eco Guardians',
+          userEmail: 'teamtaruvar@gmail.com',
+          title: 'Aravalli Hills Ridge Trek & Plastic Waste Clearing',
+          category: 'Mountain & Forest Care',
+          categoryIcon: '🏔️',
+          timeInterval: '3 Days Campaign',
+          location: 'Aravalli Biodiversity Trail, Haryana',
+          impact: '68 kg non-biodegradable trash collected',
+          volunteers: 14,
+          photo: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80',
+          description: 'Cleared tourist litter from hiking trails and distributed 200 indigenous neem & peepal seedballs across barren rocky patches.',
+          date: 'Sep 16, 2026',
+          views: 512,
+          likes: 92,
+          isLiked: false
+        }
+      ];
     } catch {
       return [];
     }
   });
+
+  const [showSocialModal, setShowSocialModal] = useState(false);
+  const [socialForm, setSocialForm] = useState({
+    title: '',
+    category: 'River & Water Cleaning',
+    timeInterval: '1 Day Action',
+    location: '',
+    impact: '',
+    description: '',
+    photo: null,
+    photoPreview: null
+  });
+  const [submittingSocial, setSubmittingSocial] = useState(false);
 
   // Sync with Cloud database in background
   useEffect(() => {
@@ -72,44 +124,30 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
           getCloudApprovedAdoptions()
         ]);
         const allCloud = [...(cloudApproved || []), ...(cloudPending || [])];
-        if (allCloud.length > 0) {
-          if (currentUser?.email) {
-            const userEmailLower = currentUser.email.toLowerCase();
-            const userTrees = allCloud
-              .filter(d => 
-                (d.adopter_email && d.adopter_email.toLowerCase() === userEmailLower) ||
-                (d.user_email && d.user_email.toLowerCase() === userEmailLower)
-              )
-              .map(d => ({
-                ...d,
-                id: d.id || d.treeId || `tree-${Date.now()}`,
-                tree_name: d.tree_name || d.treeName || 'My Adopted Tree',
-                species: d.species || 'Indigenous Tree',
-                location: d.location || 'Community Green Area',
-                plantation_photo: d.plantation_photo || d.photoUrl || '/logo.jpg',
-                verified_months: d.verified_months || d.verifiedMonths || 1,
-                upvotes: d.upvotes || 1,
-                user_upvoted: false,
-                reports: Array.isArray(d.reports) ? d.reports : []
-              }));
-            if (userTrees.length > 0) {
-              setMyTrees(userTrees);
-            }
+        if (allCloud.length > 0 && currentUser?.email) {
+          const userEmailLower = currentUser.email.toLowerCase();
+          const userTrees = allCloud
+            .filter(d => 
+              (d.adopter_email && d.adopter_email.toLowerCase() === userEmailLower) ||
+              (d.user_email && d.user_email.toLowerCase() === userEmailLower)
+            )
+            .map(d => ({
+              ...d,
+              id: d.id || d.treeId || `tree-${Date.now()}`,
+              tree_name: d.tree_name || d.treeName || 'My Adopted Tree',
+              species: d.species || 'Indigenous Tree',
+              location: d.location || 'Community Green Area',
+              plantation_photo: d.plantation_photo || d.photoUrl || '/logo.jpg',
+              verified_months: d.verified_months || d.verifiedMonths || 1,
+              wellness: d.wellness || 'Thriving & Lush Green',
+              lastCareInterval: d.lastCareInterval || '1 Day Care',
+              upvotes: d.upvotes || 1,
+              user_upvoted: false,
+              reports: Array.isArray(d.reports) ? d.reports : []
+            }));
+          if (userTrees.length > 0) {
+            setMyTrees(userTrees);
           }
-
-          setCommunityFeed(allCloud.map(d => ({
-            id: d.id || d.treeId,
-            author: d.adopter_name || d.guardianName || 'Eco Guardian',
-            avatar: '🌱',
-            tree_name: d.tree_name || d.treeName || 'Adopted Tree',
-            species: d.species || 'Indigenous Tree',
-            location: d.location || 'Community Area',
-            plantation_photo: d.plantation_photo || d.photoUrl || '/logo.jpg',
-            verified_months: d.verified_months || d.verifiedMonths || 1,
-            upvotes: 1,
-            user_upvoted: false,
-            date: d.plantedDate || d.planted_date || 'Recent'
-          })));
         }
       } catch (e) {
         console.warn('Profile cloud sync note:', e);
@@ -122,34 +160,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   const userEmail = currentUser?.email || 'teamtaruvar@gmail.com';
   const isAdmin = currentUser?.user_metadata?.role === 'admin' || currentUser?.email?.toLowerCase() === 'naveenpr332@gmail.com';
 
-  const handleUpvote = (treeId, isCommunity = false) => {
-    if (isCommunity) {
-      setCommunityFeed(prev => prev.map(t => {
-        if (t.id === treeId) {
-          const newUpvoted = !t.user_upvoted;
-          return {
-            ...t,
-            user_upvoted: newUpvoted,
-            upvotes: newUpvoted ? t.upvotes + 1 : t.upvotes - 1
-          };
-        }
-        return t;
-      }));
-    } else {
-      setMyTrees(prev => prev.map(t => {
-        if (t.id === treeId) {
-          const newUpvoted = !t.user_upvoted;
-          return {
-            ...t,
-            user_upvoted: newUpvoted,
-            upvotes: newUpvoted ? t.upvotes + 1 : t.upvotes - 1
-          };
-        }
-        return t;
-      }));
-    }
-  };
-
+  // Photo Select for Tree Care Report
   const handlePhotoSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -162,32 +173,43 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
     }
   };
 
-  const submitMonthlyReport = (e) => {
+  // Submit Section A: Tree Care & Wellness Update
+  const submitTreeCareUpdate = (e) => {
     e.preventDefault();
     if (!reportPhotoPreview) {
-      alert('Please upload a progress photo for your monthly report.');
+      alert('Please upload a progress / wellness photo for your tree.');
       return;
     }
 
     setSubmittingReport(true);
 
     const newReport = {
-      month: reportMonth,
+      id: `report-${Date.now()}`,
+      intervalDays: careIntervalDays,
+      activity: careActivity,
+      wellness: wellnessStatus,
       photo: reportPhotoPreview,
-      notes: reportNotes || `Month ${reportMonth} progress update photo submitted.`,
-      status: 'pending', // Pending admin verification
+      notes: reportNotes || `Logged ${careIntervalDays}-day wellness update: ${careActivity}. Tree status: ${wellnessStatus}`,
+      status: 'pending',
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     };
 
-    setMyTrees(prev => prev.map(t => {
+    const updatedTrees = myTrees.map(t => {
       if (t.id === reportModalTree.id) {
         return {
           ...t,
+          wellness: wellnessStatus,
+          lastCareInterval: `${careIntervalDays} Days`,
           reports: [...(t.reports || []), newReport]
         };
       }
       return t;
-    }));
+    });
+
+    setMyTrees(updatedTrees);
+    try {
+      localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedTrees));
+    } catch {}
 
     setSubmittingReport(false);
     setReportModalTree(null);
@@ -196,8 +218,100 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
     
     confetti({ particleCount: 50, spread: 50 });
     if (showToast) {
-      showToast(`Month ${reportMonth} growth report submitted! Pending team verification.`);
+      showToast(`${careIntervalDays}-Day Tree Wellness Update logged & synced to Explore feed! 🌱`);
     }
+  };
+
+  // Photo Select for Social Work
+  const handleSocialPhotoSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSocialForm(prev => ({
+          ...prev,
+          photo: reader.result,
+          photoPreview: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Submit Section B: Social Environmental Work
+  const submitSocialWork = (e) => {
+    e.preventDefault();
+    if (!socialForm.title.trim() || !socialForm.photoPreview) {
+      alert('Please provide a title and photo proof for your environmental care work.');
+      return;
+    }
+
+    setSubmittingSocial(true);
+
+    const categoryIcons = {
+      'River & Water Cleaning': '🌊',
+      'Mountain & Forest Care': '🏔️',
+      'Neighborhood & Park Waste Cleanup': '🧹',
+      'Plantation & Seedballs': '🪴',
+      'Eco Wellness & Awareness': '🧘',
+      'Plastic Free Drive': '♻️'
+    };
+
+    const newWork = {
+      id: `sw-${Date.now()}`,
+      author: displayName,
+      userEmail: currentUser?.email || 'user@taruvar.org',
+      title: socialForm.title.trim(),
+      category: socialForm.category,
+      categoryIcon: categoryIcons[socialForm.category] || '🌍',
+      timeInterval: socialForm.timeInterval,
+      location: socialForm.location || 'Local Community Environment',
+      impact: socialForm.impact || 'Community Environmental Action',
+      description: socialForm.description || `Undertook ${socialForm.category} action under Taruvar Environmental Movement.`,
+      photo: socialForm.photoPreview,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      views: 1,
+      likes: 1,
+      isLiked: true
+    };
+
+    const updatedWorks = [newWork, ...socialWorks];
+    setSocialWorks(updatedWorks);
+    try {
+      localStorage.setItem('taruvar_social_works', JSON.stringify(updatedWorks));
+    } catch {}
+
+    setSubmittingSocial(false);
+    setShowSocialModal(false);
+    setSocialForm({
+      title: '',
+      category: 'River & Water Cleaning',
+      timeInterval: '1 Day Action',
+      location: '',
+      impact: '',
+      description: '',
+      photo: null,
+      photoPreview: null
+    });
+
+    confetti({ particleCount: 70, spread: 60 });
+    if (showToast) {
+      showToast('Environmental Care Work logged & shared to Explore feed! 🌍');
+    }
+  };
+
+  const handleLikeSocialWork = (id) => {
+    setSocialWorks(prev => prev.map(w => {
+      if (w.id === id) {
+        const nextLiked = !w.isLiked;
+        return {
+          ...w,
+          isLiked: nextLiked,
+          likes: nextLiked ? w.likes + 1 : w.likes - 1
+        };
+      }
+      return w;
+    }));
   };
 
   if (!currentUser) {
@@ -208,11 +322,11 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
         </div>
         <h2 className="text-3xl font-extrabold text-taruvar-dark">Your Taruvar Eco-Profile</h2>
         <p className="text-sm text-taruvar-muted leading-relaxed">
-          Log in or register to track your adopted trees, submit 5-month growth verification reports, and climb the community eco-leaderboard!
+          Log in or register to track your adopted trees, log 1-15 day growth & wellness care, upload environmental social works, and earn verified badges!
         </p>
         <button
           onClick={onOpenAuth}
-          className="px-8 py-3.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold rounded-2xl shadow-lg transition-all"
+          className="px-8 py-3.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold rounded-2xl shadow-lg transition-all cursor-pointer"
         >
           Log In / Register Now
         </button>
@@ -221,9 +335,9 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   }
 
   return (
-    <div className="space-y-12 pb-16 pt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="space-y-8 pb-16 pt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
-      {/* Profile Header Banner */}
+      {/* 1. PROFILE HEADER BANNER */}
       <div className="bg-gradient-to-r from-taruvar-secondary via-[#1F5435] to-taruvar-dark text-white p-6 sm:p-10 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left z-10">
           <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur border-2 border-white/20 flex items-center justify-center text-4xl shadow-lg shrink-0">
@@ -243,21 +357,19 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
           </div>
         </div>
 
-        {/* Right Action & Stats Summary */}
+        {/* Right Stats & Actions */}
         <div className="flex flex-col sm:flex-row items-center gap-3 z-10">
-          {/* Stats Summary */}
           <div className="flex items-center gap-3 bg-white/10 backdrop-blur p-3 rounded-2xl border border-white/10">
             <div className="text-center px-3 border-r border-white/10">
               <p className="text-2xl font-black text-taruvar-accent">{myTrees.length}</p>
               <p className="text-[10px] text-white/80 uppercase">Trees Adopted</p>
             </div>
             <div className="text-center px-3">
-              <p className="text-2xl font-black text-white">{myTrees.reduce((acc, t) => acc + t.upvotes, 0)}</p>
-              <p className="text-[10px] text-white/80 uppercase">Upvotes Received</p>
+              <p className="text-2xl font-black text-white">{socialWorks.length}</p>
+              <p className="text-[10px] text-white/80 uppercase">Eco Actions</p>
             </div>
           </div>
 
-          {/* Admin Desk & Logout Action Buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
             {isAdmin && (
               <button
@@ -266,7 +378,6 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="px-3.5 py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-taruvar-dark font-black text-xs rounded-2xl shadow-lg hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer border border-amber-300/40"
-                title="Open Admin Approval Desk"
               >
                 <ShieldCheck className="w-4 h-4 text-taruvar-dark stroke-[2.5]" />
                 <span>Admin Desk</span>
@@ -277,7 +388,6 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
               <button
                 onClick={onLogout}
                 className="px-3.5 py-2.5 bg-white/15 hover:bg-red-600 text-white font-bold text-xs rounded-2xl border border-white/20 shadow-sm hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
-                title="Sign Out of Account"
               >
                 <LogOut className="w-4 h-4 text-red-300" />
                 <span>Log Out</span>
@@ -287,19 +397,19 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
         </div>
       </div>
 
-      {/* Tab Controls */}
+      {/* 2. SECTION TAB CONTROLS */}
       <div className="flex items-center justify-between border-b border-taruvar-border pb-4 overflow-x-auto gap-2">
         <div className="flex items-center gap-2">
           {[
-            { id: 'my-trees', label: 'My Adopted Trees', icon: '🌳' },
+            { id: 'my-trees', label: 'Section A: My Trees & Wellness', icon: '🌳' },
+            { id: 'social-work', label: 'Section B: Environmental Care Work', icon: '🌊' },
             { id: 'id-card', label: 'My Eco-Guardian Card', icon: '🪪' },
-            { id: 'community-feed', label: 'Community Feed', icon: '🌍' },
             { id: 'leaderboard', label: 'Eco Leaderboard', icon: '🏆' }
           ].map((t) => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+              className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeTab === t.id
                   ? 'bg-taruvar-secondary text-white shadow-md'
                   : 'bg-white text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
@@ -311,157 +421,155 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
           ))}
         </div>
 
-        <button
-          onClick={onOpenAdopt}
-          className="px-4 py-2.5 bg-taruvar-primary text-taruvar-dark font-extrabold text-xs rounded-2xl shadow hover:bg-taruvar-accent transition-all flex items-center gap-1.5 shrink-0"
-        >
-          <Plus className="w-4 h-4" /> Adopt Another Tree
-        </button>
+        {activeTab === 'my-trees' ? (
+          <button
+            onClick={onOpenAdopt}
+            className="px-4 py-2.5 bg-taruvar-primary text-taruvar-dark font-extrabold text-xs rounded-2xl shadow hover:bg-taruvar-accent transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Adopt Another Tree
+          </button>
+        ) : activeTab === 'social-work' ? (
+          <button
+            onClick={() => setShowSocialModal(true)}
+            className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs rounded-2xl shadow hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Log Environmental Work
+          </button>
+        ) : null}
       </div>
 
-      {/* TAB 1: MY ADOPTED TREES */}
+      {/* ============================================================== */}
+      {/* TAB 1: SECTION A — MY ADOPTED TREES & FLEXIBLE 1-15 DAY CARE   */}
+      {/* ============================================================== */}
       {activeTab === 'my-trees' && (
-        <div className="space-y-8">
+        <div className="space-y-6">
+          
+          <div className="bg-emerald-50/70 border border-emerald-200 rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="font-extrabold text-emerald-950 text-sm sm:text-base flex items-center gap-2">
+                <Sprout className="w-4 h-4 text-emerald-700" />
+                <span>Tree Adoption & Flexible Wellness Monitoring</span>
+              </h3>
+              <p className="text-xs text-emerald-800/80">
+                Log nurturing updates according to your preferred schedule (select 1 to 15 days interval from the dropdown).
+              </p>
+            </div>
+            <button
+              onClick={onOpenAdopt}
+              className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl cursor-pointer shrink-0"
+            >
+              + Adopt New Sapling
+            </button>
+          </div>
+
           {myTrees.length === 0 ? (
             <div className="bg-white p-12 rounded-3xl border border-taruvar-border text-center space-y-4">
               <span className="text-4xl">🌱</span>
-              <h3 className="text-xl font-bold text-taruvar-dark">No Trees Adopted Yet</h3>
+              <h3 className="text-xl font-bold text-taruvar-dark">No Adopted Trees Yet</h3>
               <p className="text-xs text-taruvar-muted max-w-sm mx-auto">
-                Start your environmental journey today by adopting a tree with plantation photo proof!
+                Join the #OnePersonOneTree movement by adopting your first sapling, pledging 365-day care, and tracking its wellness updates!
               </p>
-              <button onClick={onOpenAdopt} className="px-6 py-3 bg-taruvar-secondary text-white font-bold text-xs rounded-xl">
-                Adopt Your First Tree
+              <button
+                onClick={onOpenAdopt}
+                className="px-6 py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold text-xs rounded-2xl shadow cursor-pointer"
+              >
+                Adopt Your First Tree Now
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="space-y-6">
               {myTrees.map((tree) => (
-                <div key={tree.id} className="lg:col-span-12 bg-white rounded-3xl border border-taruvar-border shadow-card overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 md:p-8">
+                <div key={tree.id} className="bg-white p-6 sm:p-8 rounded-3xl border border-taruvar-border shadow-card grid grid-cols-1 lg:grid-cols-12 gap-6">
                   
                   {/* Left Column: Tree Photo & Details */}
                   <div className="lg:col-span-5 space-y-4">
-                    <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border">
+                    <div className="relative aspect-video sm:aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border">
                       <img src={tree.plantation_photo} alt={tree.tree_name} className="w-full h-full object-cover" />
-                      <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                        tree.status === 'approved' 
-                          ? 'bg-emerald-600 text-white shadow-md' 
-                          : 'bg-amber-500 text-white shadow-md'
-                      }`}>
-                        {tree.status === 'approved' ? '✅ Admin Verified' : '⏳ Pending Admin Review'}
-                      </span>
-                    </div>
-
-                    {tree.status === 'pending' && (
-                      <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl text-xs flex items-start gap-2.5">
-                        <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-bold">Adoption Submitted & Pending Verification</p>
-                          <p className="text-[11px] text-amber-700 mt-0.5">Your tree plantation photo is in the Taruvar verification queue. Once approved by the team, your official certificate badge will activate.</p>
-                        </div>
+                      <div className="absolute top-3 left-3 bg-taruvar-dark/70 backdrop-blur-md text-white px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold">
+                        ID: {tree.id}
                       </div>
-                    )}
+                      <div className="absolute bottom-3 right-3 bg-emerald-950/80 backdrop-blur-md text-emerald-300 px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 border border-emerald-500/30">
+                        <Activity className="w-3 h-3 text-emerald-400" />
+                        <span>{tree.wellness || 'Thriving'}</span>
+                      </div>
+                    </div>
 
                     <div>
                       <span className="text-xs font-bold text-taruvar-secondary uppercase tracking-wider">{tree.species}</span>
                       <h3 className="text-2xl font-extrabold text-taruvar-dark">{tree.tree_name}</h3>
                       <p className="text-xs text-taruvar-muted flex items-center gap-1 mt-1">
-                        <MapPin className="w-3.5 h-3.5 text-taruvar-primary" /> {tree.location} • Planted {tree.planted_date}
+                        <MapPin className="w-3.5 h-3.5 text-taruvar-primary" /> {tree.location} • Planted {tree.planted_date || 'Recent'}
                       </p>
                     </div>
 
-                    {/* Upvote & Share Actions */}
-                    <div className="flex items-center gap-3 pt-2">
-                      <button
-                        onClick={() => handleUpvote(tree.id)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                          tree.user_upvoted 
-                            ? 'bg-taruvar-secondary text-white' 
-                            : 'bg-taruvar-bg text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
-                        }`}
-                      >
-                        <ThumbsUp className="w-3.5 h-3.5" />
-                        <span>{tree.upvotes} Upvotes</span>
-                      </button>
-
-                      {tree.verified_months >= 5 && (
-                        <span className="px-3 py-1.5 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold rounded-xl flex items-center gap-1">
-                          <Award className="w-4 h-4 text-amber-600" /> 5-Month Verified Badge!
-                        </span>
-                      )}
+                    {/* Wellness Details Pill */}
+                    <div className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-taruvar-muted font-bold">Care Cadence:</span>
+                        <span className="font-extrabold text-taruvar-secondary">{tree.lastCareInterval || 'Flexible 1-15 Days'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-taruvar-muted font-bold">Wellness Status:</span>
+                        <span className="font-bold text-emerald-700">{tree.wellness || 'Thriving & Healthy'}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Right Column: 5-Month Growth Verification Timeline */}
+                  {/* Right Column: 1-15 Day Care & Growth Logs */}
                   <div className="lg:col-span-7 space-y-5 border-t lg:border-t-0 lg:border-l border-taruvar-border pt-6 lg:pt-0 lg:pl-8 flex flex-col justify-between">
                     
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-extrabold text-taruvar-dark text-lg">5-Month Verification Journey</h4>
-                          <p className="text-xs text-taruvar-muted">Submit monthly progress photos for 5 consecutive months to earn your official badge.</p>
+                          <h4 className="font-extrabold text-taruvar-dark text-lg">Tree Wellness & Care Logs</h4>
+                          <p className="text-xs text-taruvar-muted">Update growth measurements, watering, and wellness photos anytime.</p>
                         </div>
                         <span className="text-xs font-mono font-bold px-3 py-1 bg-taruvar-light text-taruvar-secondary rounded-full">
-                          {tree.verified_months} / 5 Verified
+                          {(tree.reports || []).length} Logs Recorded
                         </span>
                       </div>
 
-                      {/* 5 Milestone Circles */}
-                      <div className="grid grid-cols-5 gap-2 text-center pt-2">
-                        {[1, 2, 3, 4, 5].map((monthNum) => {
-                          const report = (tree.reports || []).find(r => r.month === monthNum);
-                          const isVerified = report && report.status === 'verified';
-                          const isPending = report && report.status === 'pending';
-
-                          return (
-                            <div key={monthNum} className="space-y-1">
-                              <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                                isVerified 
-                                  ? 'bg-taruvar-secondary text-white border-taruvar-secondary shadow-sm'
-                                  : isPending
-                                  ? 'bg-amber-100 text-amber-800 border-amber-400'
-                                  : 'bg-gray-50 text-gray-400 border-gray-200'
-                              }`}>
-                                {isVerified ? <CheckCircle2 className="w-5 h-5" /> : `M${monthNum}`}
+                      {/* Care Logs List */}
+                      {(tree.reports || []).length === 0 ? (
+                        <div className="p-6 bg-taruvar-bg rounded-2xl border border-taruvar-border text-center text-xs text-taruvar-muted space-y-2">
+                          <Droplets className="w-6 h-6 text-taruvar-secondary mx-auto" />
+                          <p className="font-bold text-taruvar-dark">No Care Logs Submitted Yet</p>
+                          <p>Record your first watering, organic fertilizing, or wellness update below!</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                          {(tree.reports || []).map((rep, idx) => (
+                            <div key={rep.id || idx} className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-center gap-3 text-xs">
+                              <img src={rep.photo} alt="Care log" className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-taruvar-dark truncate">
+                                    {rep.activity || `Log #${idx + 1}`} ({rep.intervalDays ? `${rep.intervalDays}-Day Cadence` : 'Care Update'})
+                                  </span>
+                                  <span className="text-[10px] text-taruvar-muted shrink-0">{rep.date}</span>
+                                </div>
+                                <p className="text-[11px] text-emerald-700 font-bold mt-0.5">{rep.wellness || 'Status: Thriving'}</p>
+                                <p className="text-taruvar-muted truncate text-[11px]">{rep.notes}</p>
                               </div>
-                              <p className="text-[10px] font-bold text-taruvar-muted">
-                                {isVerified ? 'Verified' : isPending ? 'Pending' : 'Locked'}
-                              </p>
                             </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Submitted Monthly Reports List */}
-                      <div className="space-y-2 pt-2">
-                        {(tree.reports || []).map((rep) => (
-                          <div key={rep.month} className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-center gap-3 text-xs">
-                            <img src={rep.photo} alt={`Month ${rep.month}`} className="w-12 h-12 rounded-xl object-cover shrink-0" />
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-bold text-taruvar-dark">Month {rep.month} Growth Log</span>
-                                <span className="text-[10px] text-taruvar-muted">{rep.date}</span>
-                              </div>
-                              <p className="text-taruvar-muted truncate mt-0.5">{rep.notes}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Action to Submit Next Month Report */}
-                    {tree.verified_months < 5 && (
-                      <div className="pt-4 border-t border-taruvar-border">
-                        <button
-                          onClick={() => {
-                            setReportModalTree(tree);
-                            setReportMonth((tree.reports || []).length + 1);
-                          }}
-                          className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold text-xs rounded-2xl shadow transition-all flex items-center justify-center gap-2"
-                        >
-                          <Camera className="w-4 h-4" /> Submit Month {(tree.reports || []).length + 1} Growth Photo Report
-                        </button>
-                      </div>
-                    )}
+                    {/* Action to Log Careness / Wellness (1-15 Days Dropdown) */}
+                    <div className="pt-4 border-t border-taruvar-border">
+                      <button
+                        onClick={() => {
+                          setReportModalTree(tree);
+                          setReportNotes('');
+                          setReportPhotoPreview(null);
+                        }}
+                        className="w-full py-3.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold text-xs rounded-2xl shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Camera className="w-4 h-4" /> Log Tree Care & Wellness Update (1-15 Days Cadence)
+                      </button>
+                    </div>
 
                   </div>
 
@@ -472,7 +580,117 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
         </div>
       )}
 
-      {/* TAB 2: MY ECO-GUARDIAN ID CARD */}
+      {/* ============================================================== */}
+      {/* TAB 2: SECTION B — ENVIRONMENTAL SOCIAL WORK (RIVERS/MOUNTAINS)*/}
+      {/* ============================================================== */}
+      {activeTab === 'social-work' && (
+        <div className="space-y-6">
+          
+          <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="px-3 py-1 bg-teal-100 text-teal-900 text-[10px] font-black rounded-full uppercase tracking-wider inline-block">
+                Section B: Eco-Stewardship
+              </span>
+              <h3 className="text-lg font-black text-teal-950">Environmental Care & Social Work</h3>
+              <p className="text-xs text-teal-800/80 max-w-2xl">
+                Upload and share other environmental care work you perform — such as river cleaning, mountain trail waste cleanups, neighborhood parks, and eco-wellness drives.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowSocialModal(true)}
+              className="px-5 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-black text-xs rounded-2xl shadow-md cursor-pointer shrink-0 transition-transform hover:scale-105"
+            >
+              + Upload Environmental Work
+            </button>
+          </div>
+
+          {socialWorks.length === 0 ? (
+            <div className="bg-white p-12 rounded-3xl border border-taruvar-border text-center space-y-4">
+              <span className="text-4xl">🌊</span>
+              <h3 className="text-xl font-bold text-taruvar-dark">No Environmental Works Uploaded Yet</h3>
+              <p className="text-xs text-taruvar-muted max-w-md mx-auto">
+                Have you organized or participated in a river cleaning, mountain trail waste clearing, or community planting? Document it here!
+              </p>
+              <button
+                onClick={() => setShowSocialModal(true)}
+                className="px-6 py-3 bg-teal-700 text-white font-bold text-xs rounded-2xl cursor-pointer"
+              >
+                Log Your First Environmental Care Work
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {socialWorks.map((work) => (
+                <div key={work.id} className="bg-white rounded-3xl border border-taruvar-border shadow-card overflow-hidden flex flex-col justify-between">
+                  
+                  <div>
+                    {/* Photo */}
+                    <div className="relative aspect-video w-full bg-gray-900 overflow-hidden">
+                      <img src={work.photo} alt={work.title} className="w-full h-full object-cover" />
+                      <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-white/20">
+                        <span>{work.categoryIcon}</span>
+                        <span>{work.category}</span>
+                      </div>
+                      <div className="absolute bottom-3 right-3 bg-teal-950/80 backdrop-blur-md text-teal-300 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-teal-500/30">
+                        {work.timeInterval}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5 space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between text-xs text-taruvar-muted mb-1">
+                          <span className="font-bold text-taruvar-secondary flex items-center gap-1">
+                            <User className="w-3.5 h-3.5" /> {work.author}
+                          </span>
+                          <span>{work.date}</span>
+                        </div>
+                        <h4 className="font-black text-taruvar-dark text-base">{work.title}</h4>
+                        <p className="text-xs text-taruvar-muted flex items-center gap-1 mt-1">
+                          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" /> {work.location}
+                        </p>
+                      </div>
+
+                      {/* Impact Pill */}
+                      <div className="p-3 bg-teal-50/70 border border-teal-200 rounded-2xl text-xs">
+                        <span className="font-extrabold text-teal-900 block">🌿 Measurable Impact:</span>
+                        <p className="text-teal-800 font-bold mt-0.5">{work.impact}</p>
+                      </div>
+
+                      <p className="text-xs text-taruvar-dark/80 leading-relaxed">
+                        {work.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions & Likes */}
+                  <div className="p-4 bg-taruvar-bg border-t border-taruvar-border flex items-center justify-between text-xs">
+                    <button
+                      onClick={() => handleLikeSocialWork(work.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
+                        work.isLiked ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'text-taruvar-dark hover:bg-taruvar-light'
+                      }`}
+                    >
+                      <Heart className={`w-4 h-4 ${work.isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
+                      <span>{work.likes} Likes</span>
+                    </button>
+
+                    <span className="text-[11px] text-taruvar-muted font-bold">
+                      👁️ {work.views || 45} Views on Explore
+                    </span>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* TAB 3: MY ECO-GUARDIAN ID CARD                                  */}
+      {/* ============================================================== */}
       {activeTab === 'id-card' && (
         <div className="bg-white p-6 sm:p-10 rounded-3xl border border-taruvar-border shadow-card space-y-6 text-center">
           <div className="max-w-xl mx-auto space-y-2">
@@ -502,187 +720,338 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
         </div>
       )}
 
-      {/* TAB 3: COMMUNITY FEED */}
-      {activeTab === 'community-feed' && (
-        <div className="space-y-6">
-          {communityFeed.length === 0 ? (
-            <div className="bg-white p-12 rounded-3xl border border-taruvar-border text-center space-y-4">
-              <span className="text-4xl">🌍</span>
-              <h3 className="text-xl font-bold text-taruvar-dark">No Community Tree Logs Yet</h3>
-              <p className="text-xs text-taruvar-muted max-w-sm mx-auto">
-                As Eco-Guardians across India adopt trees and post monthly growth photos, verified tree progress updates will appear right here!
-              </p>
-              <button onClick={onOpenAdopt} className="px-6 py-3 bg-taruvar-secondary text-white font-bold text-xs rounded-xl">
-                Adopt a Tree & Share First Log
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {communityFeed.map((post) => (
-                <div key={post.id} className="bg-white p-6 rounded-3xl border border-taruvar-border shadow-card space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-2xl">{post.avatar}</span>
-                      <div>
-                        <h4 className="font-bold text-taruvar-dark text-sm">{post.author}</h4>
-                        <p className="text-[10px] text-taruvar-muted">{post.date} • {post.location}</p>
-                      </div>
-                    </div>
-                    <span className="px-3 py-1 bg-taruvar-light text-taruvar-secondary text-[10px] font-bold rounded-full">
-                      {post.verified_months}/5 Months Verified
-                    </span>
-                  </div>
-
-                  <div className="aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border">
-                    <img src={post.plantation_photo} alt={post.tree_name} className="w-full h-full object-cover" />
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-taruvar-secondary">{post.species}</span>
-                      <h3 className="font-extrabold text-taruvar-dark text-base">{post.tree_name}</h3>
-                    </div>
-
-                    <button
-                      onClick={() => handleUpvote(post.id, true)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        post.user_upvoted 
-                          ? 'bg-taruvar-secondary text-white' 
-                          : 'bg-taruvar-bg text-taruvar-dark border border-taruvar-border hover:bg-taruvar-light'
-                      }`}
-                    >
-                      <ThumbsUp className="w-3.5 h-3.5" />
-                      <span>{post.upvotes}</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 4: ECO LEADERBOARD */}
+      {/* ============================================================== */}
+      {/* TAB 4: ECO LEADERBOARD                                          */}
+      {/* ============================================================== */}
       {activeTab === 'leaderboard' && (
         <div className="bg-white p-8 rounded-3xl border border-taruvar-border shadow-card space-y-6">
           <div className="text-center space-y-2 max-w-xl mx-auto">
             <span className="text-xs font-bold text-taruvar-secondary uppercase tracking-widest bg-taruvar-light px-3 py-1 rounded-full">
-              Community Top Nurtured Trees
+              Community Top Nurtured Trees & Eco Actions
             </span>
             <h3 className="text-2xl font-extrabold text-taruvar-dark">Public Tree Ranking Leaderboard</h3>
-            <p className="text-xs text-taruvar-muted">Ranked by community upvotes and 5-month verification progress.</p>
+            <p className="text-xs text-taruvar-muted">Ranked by community upvotes, 1-15 day wellness logs, and environmental social works.</p>
           </div>
 
-          {communityFeed.length === 0 ? (
-            <div className="p-12 text-center space-y-3 bg-taruvar-bg rounded-2xl border border-taruvar-border max-w-2xl mx-auto">
-              <span className="text-4xl">🏆</span>
-              <h4 className="font-bold text-taruvar-dark text-base">Leaderboard Ready For Launch</h4>
-              <p className="text-xs text-taruvar-muted">
-                Rankings will automatically calculate as trees achieve monthly verified milestones and community appreciation.
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+            <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-3xl text-center space-y-3 shadow-md">
+              <span className="text-3xl">🥇</span>
+              <h4 className="font-extrabold text-taruvar-dark text-base">Top Tree Nurturer</h4>
+              <p className="text-xs text-taruvar-muted">Naveen Sharma (Banyan Sanctuary)</p>
+              <span className="px-3 py-1 bg-amber-200 text-amber-900 font-mono font-bold text-xs rounded-full inline-block">
+                142 Upvotes
+              </span>
             </div>
-          ) : (
-            <div className="space-y-3 max-w-2xl mx-auto">
-              {communityFeed.map((rank, idx) => (
-                <div key={rank.id} className="p-4 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white ${
-                      idx === 0 ? 'bg-amber-500' : idx === 1 ? 'bg-gray-400' : 'bg-amber-700'
-                    }`}>
-                      #{idx + 1}
-                    </span>
-                    <div>
-                      <h4 className="font-bold text-taruvar-dark text-sm">{rank.tree_name}</h4>
-                      <p className="text-[11px] text-taruvar-muted">Nurtured by {rank.author} • {rank.species}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-4 text-xs font-bold text-taruvar-secondary">
-                    <span>👍 {rank.upvotes} Upvotes</span>
-                    <span className="px-3 py-1 bg-white rounded-xl border border-taruvar-border text-taruvar-dark">
-                      {rank.verified_months}/5 Verified
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="p-6 bg-gradient-to-br from-gray-50 to-slate-100 border border-gray-300 rounded-3xl text-center space-y-3">
+              <span className="text-3xl">🥈</span>
+              <h4 className="font-extrabold text-taruvar-dark text-base">Top Campus Chapter</h4>
+              <p className="text-xs text-taruvar-muted">Delhi Public School (50 Trees)</p>
+              <span className="px-3 py-1 bg-gray-200 text-gray-800 font-mono font-bold text-xs rounded-full inline-block">
+                289 Upvotes
+              </span>
             </div>
-          )}
+
+            <div className="p-6 bg-gradient-to-br from-amber-50/50 to-amber-100/50 border border-amber-200 rounded-3xl text-center space-y-3">
+              <span className="text-3xl">🥉</span>
+              <h4 className="font-extrabold text-taruvar-dark text-base">Top Green Shakti Circle</h4>
+              <p className="text-xs text-taruvar-muted">Pooja Sundaram (Ward 7 Neem)</p>
+              <span className="px-3 py-1 bg-amber-100 text-amber-900 font-mono font-bold text-xs rounded-full inline-block">
+                318 Upvotes
+              </span>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Monthly Growth Report Submission Modal */}
+      {/* ============================================================== */}
+      {/* MODAL A: LOG TREE CARE & WELLNESS (1-15 DAYS DROPDOWN)          */}
+      {/* ============================================================== */}
       {reportModalTree && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white max-w-md w-full p-6 md:p-8 rounded-3xl shadow-2xl border border-taruvar-border space-y-5 relative">
-            <button
-              onClick={() => setReportModalTree(null)}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center absolute top-4 right-4 text-gray-500 hover:text-dark"
-            >
-              ✕
-            </button>
-
-            <div className="space-y-1">
-              <span className="text-xs font-bold text-taruvar-secondary uppercase tracking-wider">
-                5-Month Verification Log
-              </span>
-              <h3 className="text-2xl font-bold text-taruvar-dark">Month {reportMonth} Growth Report</h3>
-              <p className="text-xs text-taruvar-muted">For {reportModalTree.tree_name}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white text-taruvar-dark w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-taruvar-border space-y-4 max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between border-b border-taruvar-border pb-3">
+              <div className="flex items-center gap-2">
+                <Sprout className="w-5 h-5 text-taruvar-secondary" />
+                <h3 className="font-black text-lg">Log Tree Care & Wellness</h3>
+              </div>
+              <button 
+                onClick={() => setReportModalTree(null)}
+                className="w-8 h-8 rounded-full bg-taruvar-bg flex items-center justify-center text-gray-500 hover:text-taruvar-dark cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
-            <form onSubmit={submitMonthlyReport} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1">
-                  Upload Growth Progress Photo *
-                </label>
+            <form onSubmit={submitTreeCareUpdate} className="space-y-4 text-xs">
+              
+              <div className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-center gap-3">
+                <img src={reportModalTree.plantation_photo} alt="Tree" className="w-12 h-12 rounded-xl object-cover" />
+                <div>
+                  <h4 className="font-extrabold text-taruvar-dark">{reportModalTree.tree_name}</h4>
+                  <p className="text-[10px] text-taruvar-muted">{reportModalTree.species} • {reportModalTree.location}</p>
+                </div>
+              </div>
 
+              {/* 1. Time Interval Dropdown (1 to 15 Days Option) */}
+              <div>
+                <label className="block font-bold uppercase tracking-wider mb-1 text-taruvar-secondary">
+                  ⏱️ Select Care Update Time Interval (1 - 15 Days) *
+                </label>
+                <select
+                  value={careIntervalDays}
+                  onChange={(e) => setCareIntervalDays(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-taruvar-border bg-white font-bold text-taruvar-dark focus:ring-2 focus:ring-taruvar-secondary"
+                >
+                  <option value={1}>1 Day — Daily Care Update</option>
+                  <option value={2}>2 Days — Alternate Day Care</option>
+                  <option value={3}>3 Days — 3-Day Wellness Routine</option>
+                  <option value={4}>4 Days — 4-Day Progress Update</option>
+                  <option value={5}>5 Days — 5-Day Growth Check</option>
+                  <option value={6}>6 Days — 6-Day Log</option>
+                  <option value={7}>7 Days — Weekly Care & Nourishment</option>
+                  <option value={8}>8 Days — 8-Day Progress</option>
+                  <option value={9}>9 Days — 9-Day Progress</option>
+                  <option value={10}>10 Days — 10-Day Growth Milestone</option>
+                  <option value={11}>11 Days — 11-Day Update</option>
+                  <option value={12}>12 Days — 12-Day Update</option>
+                  <option value={13}>13 Days — 13-Day Update</option>
+                  <option value={14}>14 Days — Bi-Weekly Routine</option>
+                  <option value={15}>15 Days — Fortnightly Growth & Wellness</option>
+                </select>
+                <p className="text-[10px] text-taruvar-muted mt-1">Select the exact day cadence you are logging for your tree.</p>
+              </div>
+
+              {/* 2. Care Activity & Wellness Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold uppercase tracking-wider mb-1">Care Activity Performed</label>
+                  <select
+                    value={careActivity}
+                    onChange={(e) => setCareActivity(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-taruvar-border bg-white"
+                  >
+                    <option value="Watering & Soil Nurturing">💧 Watering & Soil Nurturing</option>
+                    <option value="Organic Vermicompost Added">🍂 Organic Vermicompost Added</option>
+                    <option value="Weeding & Pest Defense">🛡️ Weeding & Pest Defense</option>
+                    <option value="Sunlight / Shade Adjustment">☀️ Sunlight / Shade Adjustment</option>
+                    <option value="Growth & Height Measurement">📏 Growth & Height Measurement</option>
+                    <option value="Protective Fencing Maintained">🎋 Protective Fencing Maintained</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold uppercase tracking-wider mb-1">Tree Wellness Status</label>
+                  <select
+                    value={wellnessStatus}
+                    onChange={(e) => setWellnessStatus(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-taruvar-border bg-white font-bold text-emerald-700"
+                  >
+                    <option value="Thriving & Lush Green">🌟 Thriving & Lush Green</option>
+                    <option value="Healthy Steady Growth">🌱 Healthy Steady Growth</option>
+                    <option value="Dry / Needs Water Care">💧 Dry / Needs Water Care</option>
+                    <option value="Recovering from Heat/Frost">🩹 Recovering from Heat/Frost</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 3. Photo Upload */}
+              <div>
+                <label className="block font-bold uppercase tracking-wider mb-1">Progress Photo *</label>
                 <label 
-                  htmlFor="report-photo-input"
-                  className="block border-2 border-dashed border-taruvar-secondary/60 rounded-2xl p-4 text-center cursor-pointer hover:border-taruvar-secondary hover:bg-taruvar-light/40 transition-all bg-taruvar-bg relative z-10"
+                  htmlFor="tree-care-photo"
+                  className="block border-2 border-dashed border-taruvar-secondary/50 rounded-2xl p-4 text-center cursor-pointer hover:bg-taruvar-light/50 transition-all bg-taruvar-bg"
                 >
                   <input 
                     type="file" 
+                    id="tree-care-photo" 
                     accept="image/*" 
                     onChange={handlePhotoSelect} 
                     className="hidden" 
-                    id="report-photo-input" 
                   />
-
                   {reportPhotoPreview ? (
-                    <div className="relative pointer-events-none">
-                      <img src={reportPhotoPreview} alt="Preview" className="h-32 mx-auto object-cover rounded-xl border border-taruvar-border" />
-                      <span className="block text-[10px] text-taruvar-secondary font-bold mt-1">✓ Photo attached! Click anywhere to change.</span>
+                    <div>
+                      <img src={reportPhotoPreview} alt="Preview" className="h-36 mx-auto object-cover rounded-xl border border-taruvar-border" />
+                      <span className="block text-[10px] text-taruvar-secondary font-bold mt-1">✓ Photo attached (tap to change)</span>
                     </div>
                   ) : (
-                    <div className="space-y-1.5 py-2 pointer-events-none">
-                      <Camera className="w-8 h-8 text-taruvar-secondary mx-auto" />
-                      <p className="text-xs font-bold text-taruvar-dark">Tap / Click here to select photo file</p>
-                      <p className="text-[10px] text-taruvar-muted">Shows sapling height & new growth</p>
+                    <div className="space-y-1 py-3">
+                      <Camera className="w-7 h-7 text-taruvar-secondary mx-auto" />
+                      <p className="font-bold">Upload fresh tree progress photo</p>
+                      <p className="text-[10px] text-taruvar-muted">Shows leaves, height, and general wellness</p>
                     </div>
                   )}
                 </label>
               </div>
 
+              {/* 4. Notes */}
               <div>
-                <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1">
-                  Growth Notes / Sapling Observations
-                </label>
+                <label className="block font-bold uppercase tracking-wider mb-1">Care Notes & Observations</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={reportNotes}
                   onChange={(e) => setReportNotes(e.target.value)}
-                  placeholder="e.g. Stem thickened, watered every 3 days, new leaf buds appeared..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                  placeholder="e.g. Watered 5 liters in the evening, added 200g vermicompost, shoots are turning bright green..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-taruvar-border focus:ring-2 focus:ring-taruvar-secondary"
                 ></textarea>
               </div>
 
               <button
                 type="submit"
                 disabled={submittingReport}
-                className="w-full py-3.5 bg-taruvar-secondary text-white font-bold rounded-2xl text-xs shadow-lg transition-all"
+                className="w-full py-3.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-black rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
               >
-                Submit Month {reportMonth} Growth Report
+                <Sprout className="w-4 h-4" />
+                <span>Save {careIntervalDays}-Day Wellness Log</span>
               </button>
             </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL B: UPLOAD ENVIRONMENTAL SOCIAL WORK (CLEANING, RIVERS..) */}
+      {/* ============================================================== */}
+      {showSocialModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white text-taruvar-dark w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-taruvar-border space-y-4 max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between border-b border-taruvar-border pb-3">
+              <div className="flex items-center gap-2">
+                <Waves className="w-5 h-5 text-teal-600" />
+                <h3 className="font-black text-lg">Log Environmental Care Work</h3>
+              </div>
+              <button 
+                onClick={() => setShowSocialModal(false)}
+                className="w-8 h-8 rounded-full bg-taruvar-bg flex items-center justify-center text-gray-500 hover:text-taruvar-dark cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={submitSocialWork} className="space-y-4 text-xs">
+              
+              <div>
+                <label className="block font-bold uppercase tracking-wider mb-1">Title of Environmental Initiative *</label>
+                <input
+                  type="text"
+                  required
+                  value={socialForm.title}
+                  onChange={(e) => setSocialForm({ ...socialForm, title: e.target.value })}
+                  placeholder="e.g. Yamuna Riverbank Cleanliness Drive / Aravalli Hill Trek"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-taruvar-border focus:ring-2 focus:ring-teal-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold uppercase tracking-wider mb-1">Category</label>
+                  <select
+                    value={socialForm.category}
+                    onChange={(e) => setSocialForm({ ...socialForm, category: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl border border-taruvar-border bg-white"
+                  >
+                    <option value="River & Water Cleaning">🌊 River & Water Body Cleaning</option>
+                    <option value="Mountain & Forest Care">🏔️ Mountain & Forest Care</option>
+                    <option value="Neighborhood & Park Waste Cleanup">🧹 Neighborhood & Park Waste Cleanup</option>
+                    <option value="Plantation & Seedballs">🪴 Plantation & Seedballs Drive</option>
+                    <option value="Eco Wellness & Awareness">🧘 Eco Wellness & Workshop</option>
+                    <option value="Plastic Free Drive">♻️ Plastic Free / Zero Waste Drive</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold uppercase tracking-wider mb-1">Duration / Time Cadence</label>
+                  <select
+                    value={socialForm.timeInterval}
+                    onChange={(e) => setSocialForm({ ...socialForm, timeInterval: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl border border-taruvar-border bg-white font-bold"
+                  >
+                    <option value="1 Day Action">1 Day Single Action</option>
+                    <option value="3 Days Campaign">3 Days Campaign</option>
+                    <option value="7 Days Drive">7 Days Drive (1 Week)</option>
+                    <option value="15 Days Initiative">15 Days Initiative</option>
+                    <option value="Ongoing Community Project">Ongoing Project</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold uppercase tracking-wider mb-1">Location / Venue</label>
+                  <input
+                    type="text"
+                    value={socialForm.location}
+                    onChange={(e) => setSocialForm({ ...socialForm, location: e.target.value })}
+                    placeholder="e.g. Ghat #4, Rishikesh / Ridge Forest"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-taruvar-border focus:ring-2 focus:ring-teal-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold uppercase tracking-wider mb-1">Measurable Impact</label>
+                  <input
+                    type="text"
+                    value={socialForm.impact}
+                    onChange={(e) => setSocialForm({ ...socialForm, impact: e.target.value })}
+                    placeholder="e.g. 50 kg plastic cleared, 12 volunteers"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-taruvar-border focus:ring-2 focus:ring-teal-600"
+                  />
+                </div>
+              </div>
+
+              {/* Photo Upload */}
+              <div>
+                <label className="block font-bold uppercase tracking-wider mb-1">Action / Field Photo *</label>
+                <label 
+                  htmlFor="social-photo-input"
+                  className="block border-2 border-dashed border-teal-500/50 rounded-2xl p-4 text-center cursor-pointer hover:bg-teal-50/50 transition-all bg-taruvar-bg"
+                >
+                  <input 
+                    type="file" 
+                    id="social-photo-input" 
+                    accept="image/*" 
+                    onChange={handleSocialPhotoSelect} 
+                    className="hidden" 
+                  />
+                  {socialForm.photoPreview ? (
+                    <div>
+                      <img src={socialForm.photoPreview} alt="Preview" className="h-36 mx-auto object-cover rounded-xl border border-taruvar-border" />
+                      <span className="block text-[10px] text-teal-700 font-bold mt-1">✓ Photo attached (tap to change)</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 py-3">
+                      <Upload className="w-7 h-7 text-teal-600 mx-auto" />
+                      <p className="font-bold">Upload cleanup / environmental proof photo</p>
+                      <p className="text-[10px] text-taruvar-muted">Shows volunteers, before/after, or collection bags</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+
+              <div>
+                <label className="block font-bold uppercase tracking-wider mb-1">Action Description & Highlights</label>
+                <textarea
+                  rows={2}
+                  value={socialForm.description}
+                  onChange={(e) => setSocialForm({ ...socialForm, description: e.target.value })}
+                  placeholder="Describe what you and your community accomplished, materials collected, or lessons learned..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-taruvar-border focus:ring-2 focus:ring-teal-600"
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingSocial}
+                className="w-full py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-black rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
+              >
+                <Waves className="w-4 h-4" />
+                <span>Publish Environmental Work to Explore Feed</span>
+              </button>
+            </form>
+
           </div>
         </div>
       )}

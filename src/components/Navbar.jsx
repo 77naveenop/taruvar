@@ -3,18 +3,35 @@ import { ArrowRight, User, LogOut, LogIn, Download, Sprout, ShieldCheck, Heart, 
 
 export default function Navbar({ activePage, setActivePage, onOpenPledge, currentUser, onOpenAuth, onLogout }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isAppInstalled, setIsAppInstalled] = useState(false);
+  const [isAppInstalled, setIsAppInstalled] = useState(() => {
+    try {
+      return localStorage.getItem('taruvar_pwa_installed') === 'true' ||
+             window.matchMedia('(display-mode: standalone)').matches ||
+             window.navigator.standalone === true ||
+             (typeof document !== 'undefined' && document.referrer.includes('android-app://'));
+    } catch {
+      return false;
+    }
+  });
   const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   // Capture PWA beforeinstallprompt event
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
+      // If already installed, ignore prompt
+      if (localStorage.getItem('taruvar_pwa_installed') === 'true') {
+        setIsAppInstalled(true);
+        return;
+      }
       setDeferredPrompt(e);
     };
 
     const handleAppInstalled = () => {
       setIsAppInstalled(true);
+      try {
+        localStorage.setItem('taruvar_pwa_installed', 'true');
+      } catch {}
       setDeferredPrompt(null);
       setShowInstallGuide(false);
     };
@@ -22,8 +39,15 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+    if (
+      window.matchMedia('(display-mode: standalone)').matches || 
+      window.navigator.standalone === true ||
+      (typeof document !== 'undefined' && document.referrer.includes('android-app://'))
+    ) {
       setIsAppInstalled(true);
+      try {
+        localStorage.setItem('taruvar_pwa_installed', 'true');
+      } catch {}
     }
 
     return () => {
@@ -38,6 +62,9 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
       const choiceResult = await deferredPrompt.userChoice;
       if (choiceResult.outcome === 'accepted') {
         setIsAppInstalled(true);
+        try {
+          localStorage.setItem('taruvar_pwa_installed', 'true');
+        } catch {}
       }
       setDeferredPrompt(null);
     } else {
