@@ -110,18 +110,18 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             })}
           </nav>
 
-          {/* 3. RIGHT: Action Buttons (Explore Reels + Profile/Login) */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {/* 3. RIGHT: Action Buttons (Mobile Install + Explore Reels + Admin + Profile/Login) */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             
-            {/* PWA Install Button */}
+            {/* PWA Install Button (Mobile Only, sleek & non-intrusive) */}
             {!isAppInstalled && (
               <button
                 onClick={handleInstallPWA}
-                className="hidden lg:flex px-2.5 py-1.5 bg-taruvar-bg hover:bg-taruvar-light text-taruvar-dark text-xs font-bold rounded-xl border border-taruvar-border transition-all items-center gap-1.5 shadow-2xs cursor-pointer whitespace-nowrap"
+                className="flex md:hidden items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
                 title="Install Taruvar App"
               >
-                <Download className="w-3.5 h-3.5 text-taruvar-secondary animate-bounce" />
-                <span>Install</span>
+                <Download className="w-3.5 h-3.5 text-emerald-700 animate-bounce" />
+                <span className="text-[11px] font-extrabold">Install</span>
               </button>
             )}
 
