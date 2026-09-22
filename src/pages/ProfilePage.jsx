@@ -52,51 +52,11 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   });
 
   // ==========================================
-  // SECTION B: SOCIAL ENVIRONMENTAL WORKS
+  // SECTION B: SOCIAL ENVIRONMENTAL WORKS (Clean, Zero Dummy Data)
   // ==========================================
   const [socialWorks, setSocialWorks] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('taruvar_social_works') || '[]');
-      if (saved.length > 0) return saved;
-      // Default sample inspiration works for active movement showcase
-      return [
-        {
-          id: 'sw-1',
-          author: 'Naveen Sharma',
-          userEmail: 'naveenpr332@gmail.com',
-          title: 'Yamuna Riverbank Cleanliness & Plastic Retrieval Drive',
-          category: 'River & Water Cleaning',
-          categoryIcon: '🌊',
-          timeInterval: '1 Day Action',
-          location: 'Yamuna Ghat, Delhi NCR',
-          impact: '42 kg plastic waste removed & composted',
-          volunteers: 8,
-          photo: 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=1200&q=80',
-          description: 'Mobilized local eco-volunteers to clear single-use plastic waste along a 500m riverbank stretch. Planted 5 riverine shrubs near banks.',
-          date: 'Sep 20, 2026',
-          views: 384,
-          likes: 64,
-          isLiked: false
-        },
-        {
-          id: 'sw-2',
-          author: 'Taruvar Eco Guardians',
-          userEmail: 'teamtaruvar@gmail.com',
-          title: 'Aravalli Hills Ridge Trek & Plastic Waste Clearing',
-          category: 'Mountain & Forest Care',
-          categoryIcon: '🏔️',
-          timeInterval: '3 Days Campaign',
-          location: 'Aravalli Biodiversity Trail, Haryana',
-          impact: '68 kg non-biodegradable trash collected',
-          volunteers: 14,
-          photo: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80',
-          description: 'Cleared tourist litter from hiking trails and distributed 200 indigenous neem & peepal seedballs across barren rocky patches.',
-          date: 'Sep 16, 2026',
-          views: 512,
-          likes: 92,
-          isLiked: false
-        }
-      ];
+      return JSON.parse(localStorage.getItem('taruvar_social_works') || '[]');
     } catch {
       return [];
     }
@@ -584,44 +544,91 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
       {/* TAB 2: SECTION B — ENVIRONMENTAL SOCIAL WORK (RIVERS/MOUNTAINS)*/}
       {/* ============================================================== */}
       {activeTab === 'social-work' && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           
-          <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <span className="px-3 py-1 bg-teal-100 text-teal-900 text-[10px] font-black rounded-full uppercase tracking-wider inline-block">
-                Section B: Eco-Stewardship
-              </span>
-              <h3 className="text-lg font-black text-teal-950">Environmental Care & Social Work</h3>
-              <p className="text-xs text-teal-800/80 max-w-2xl">
-                Upload and share other environmental care work you perform — such as river cleaning, mountain trail waste cleanups, neighborhood parks, and eco-wellness drives.
-              </p>
-            </div>
-            <button
-              onClick={() => setShowSocialModal(true)}
-              className="px-5 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-black text-xs rounded-2xl shadow-md cursor-pointer shrink-0 transition-transform hover:scale-105"
-            >
-              + Upload Environmental Work
-            </button>
-          </div>
+          {/* Stunning Section B Hero Banner */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-teal-900 via-emerald-900 to-[#0d2a1b] text-white rounded-3xl p-6 sm:p-10 shadow-2xl border border-teal-500/30 space-y-6">
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <span className="px-3.5 py-1 bg-teal-400/20 text-teal-300 text-xs font-black rounded-full uppercase tracking-wider border border-teal-400/30 inline-flex items-center gap-1.5 backdrop-blur-md">
+                  <Sparkles className="w-3.5 h-3.5 text-teal-300" />
+                  <span>Section B • Citizen Eco-Stewardship</span>
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+                  Environmental Care & Social Impact
+                </h3>
+                <p className="text-xs sm:text-sm text-teal-100/80 leading-relaxed font-normal">
+                  Beyond tree care, document and showcase your real-world environmental actions: clean riverbanks, clear mountain trails, organize waste collection, and lead community wellness drives.
+                </p>
+              </div>
 
-          {socialWorks.length === 0 ? (
-            <div className="bg-white p-12 rounded-3xl border border-taruvar-border text-center space-y-4">
-              <span className="text-4xl">🌊</span>
-              <h3 className="text-xl font-bold text-taruvar-dark">No Environmental Works Uploaded Yet</h3>
-              <p className="text-xs text-taruvar-muted max-w-md mx-auto">
-                Have you organized or participated in a river cleaning, mountain trail waste clearing, or community planting? Document it here!
-              </p>
+              {/* Attractive Primary + Add Yours Button */}
               <button
                 onClick={() => setShowSocialModal(true)}
-                className="px-6 py-3 bg-teal-700 text-white font-bold text-xs rounded-2xl cursor-pointer"
+                className="w-full sm:w-auto px-6 py-4 bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-300 hover:from-teal-300 hover:to-emerald-300 text-taruvar-dark font-black text-sm rounded-2xl shadow-xl shadow-teal-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 cursor-pointer shrink-0"
               >
-                Log Your First Environmental Care Work
+                <Plus className="w-5 h-5 stroke-[3]" />
+                <span>+ Add Your Eco Action</span>
+              </button>
+            </div>
+
+            {/* Quick Interactive Category Launch Chips */}
+            <div className="relative z-10 pt-4 border-t border-white/15">
+              <p className="text-[11px] font-bold text-teal-200/70 uppercase tracking-wider mb-2.5">
+                Quick Category Actions (Click to Log):
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                {[
+                  { label: 'River Cleaning', icon: '🌊', cat: 'River & Water Cleaning' },
+                  { label: 'Mountain Care', icon: '🏔️', cat: 'Mountain & Forest Care' },
+                  { label: 'Park Waste', icon: '🧹', cat: 'Neighborhood & Park Waste Cleanup' },
+                  { label: 'Planting Drive', icon: '🪴', cat: 'Plantation & Seedballs' },
+                  { label: 'Eco Wellness', icon: '🧘', cat: 'Eco Wellness & Awareness' },
+                  { label: 'Plastic Free', icon: '♻️', cat: 'Plastic Free Drive' }
+                ].map(chip => (
+                  <button
+                    key={chip.label}
+                    onClick={() => {
+                      setSocialForm(prev => ({ ...prev, category: chip.cat }));
+                      setShowSocialModal(true);
+                    }}
+                    className="p-2.5 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 rounded-2xl text-center space-y-1 transition-all cursor-pointer group"
+                  >
+                    <span className="text-xl block group-hover:scale-110 transition-transform">{chip.icon}</span>
+                    <span className="text-[11px] font-bold text-white block truncate">{chip.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Background Decorative Blur Orbs */}
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-teal-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+          </div>
+
+          {/* Social Works Gallery / Clean Zero-State */}
+          {socialWorks.length === 0 ? (
+            <div className="bg-white p-12 sm:p-16 rounded-3xl border border-taruvar-border text-center space-y-5 shadow-card">
+              <div className="w-20 h-20 bg-teal-50 text-teal-700 rounded-3xl flex items-center justify-center mx-auto text-4xl shadow-inner border border-teal-200">
+                🌊
+              </div>
+              <div className="space-y-1 max-w-md mx-auto">
+                <h3 className="text-xl font-black text-taruvar-dark">No Environmental Works Logged Yet</h3>
+                <p className="text-xs text-taruvar-muted leading-relaxed">
+                  Have you participated in a river cleaning, mountain trail waste cleanup, or neighborhood greening? Be the first to log your action!
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSocialModal(true)}
+                className="px-6 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold text-xs rounded-2xl shadow-md cursor-pointer transition-all hover:scale-105"
+              >
+                + Log Your First Environmental Work
               </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {socialWorks.map((work) => (
-                <div key={work.id} className="bg-white rounded-3xl border border-taruvar-border shadow-card overflow-hidden flex flex-col justify-between">
+                <div key={work.id} className="bg-white rounded-3xl border border-taruvar-border shadow-card hover:shadow-lg transition-all overflow-hidden flex flex-col justify-between">
                   
                   <div>
                     {/* Photo */}
@@ -699,7 +706,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
             </span>
             <h2 className="text-2xl font-black text-taruvar-dark">Your Official Eco-Guardian ID Card</h2>
             <p className="text-xs text-taruvar-muted">
-              Use this digital identity card to verify your adopted tree, show your 5-month care progress, or print a physical PVC card for your wallet/lanyard.
+              Use this digital identity card to verify your adopted tree, show your care progress, or print a physical PVC card for your wallet/lanyard.
             </p>
           </div>
 
@@ -721,46 +728,52 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
       )}
 
       {/* ============================================================== */}
-      {/* TAB 4: ECO LEADERBOARD                                          */}
+      {/* TAB 4: ECO LEADERBOARD (DYNAMIC & CLEAN)                        */}
       {/* ============================================================== */}
       {activeTab === 'leaderboard' && (
         <div className="bg-white p-8 rounded-3xl border border-taruvar-border shadow-card space-y-6">
           <div className="text-center space-y-2 max-w-xl mx-auto">
             <span className="text-xs font-bold text-taruvar-secondary uppercase tracking-widest bg-taruvar-light px-3 py-1 rounded-full">
-              Community Top Nurtured Trees & Eco Actions
+              Live Guardian Ranking
             </span>
-            <h3 className="text-2xl font-extrabold text-taruvar-dark">Public Tree Ranking Leaderboard</h3>
-            <p className="text-xs text-taruvar-muted">Ranked by community upvotes, 1-15 day wellness logs, and environmental social works.</p>
+            <h3 className="text-2xl font-extrabold text-taruvar-dark">Public Tree & Action Leaderboard</h3>
+            <p className="text-xs text-taruvar-muted">Ranked by verified adoptions, community upvotes, and environmental actions.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-            <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-3xl text-center space-y-3 shadow-md">
-              <span className="text-3xl">🥇</span>
-              <h4 className="font-extrabold text-taruvar-dark text-base">Top Tree Nurturer</h4>
-              <p className="text-xs text-taruvar-muted">Naveen Sharma (Banyan Sanctuary)</p>
-              <span className="px-3 py-1 bg-amber-200 text-amber-900 font-mono font-bold text-xs rounded-full inline-block">
-                142 Upvotes
-              </span>
+          {myTrees.length === 0 && socialWorks.length === 0 ? (
+            <div className="p-10 bg-taruvar-bg rounded-3xl border border-taruvar-border text-center space-y-3">
+              <span className="text-3xl">🏆</span>
+              <h4 className="font-bold text-base text-taruvar-dark">No Leaderboard Entries Yet</h4>
+              <p className="text-xs text-taruvar-muted">Adopt a tree or log an environmental action to start climbing the rankings!</p>
             </div>
+          ) : (
+            <div className="space-y-3">
+              {[...myTrees, ...socialWorks]
+                .sort((a, b) => (b.upvotes || b.likes || 0) - (a.upvotes || a.likes || 0))
+                .slice(0, 5)
+                .map((item, idx) => (
+                  <div key={item.id || idx} className="p-4 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-full bg-taruvar-light text-taruvar-secondary font-black text-xs flex items-center justify-center">
+                        #{idx + 1}
+                      </span>
+                      <div>
+                        <h4 className="font-extrabold text-xs sm:text-sm text-taruvar-dark">
+                          {item.tree_name || item.title}
+                        </h4>
+                        <p className="text-[10px] text-taruvar-muted">
+                          {item.species || item.category} • {item.location}
+                        </p>
+                      </div>
+                    </div>
 
-            <div className="p-6 bg-gradient-to-br from-gray-50 to-slate-100 border border-gray-300 rounded-3xl text-center space-y-3">
-              <span className="text-3xl">🥈</span>
-              <h4 className="font-extrabold text-taruvar-dark text-base">Top Campus Chapter</h4>
-              <p className="text-xs text-taruvar-muted">Delhi Public School (50 Trees)</p>
-              <span className="px-3 py-1 bg-gray-200 text-gray-800 font-mono font-bold text-xs rounded-full inline-block">
-                289 Upvotes
-              </span>
+                    <span className="px-3 py-1 bg-white font-mono font-bold text-xs rounded-full border border-taruvar-border text-taruvar-secondary">
+                      {item.upvotes || item.likes || 0} Upvotes
+                    </span>
+                  </div>
+                ))}
             </div>
-
-            <div className="p-6 bg-gradient-to-br from-amber-50/50 to-amber-100/50 border border-amber-200 rounded-3xl text-center space-y-3">
-              <span className="text-3xl">🥉</span>
-              <h4 className="font-extrabold text-taruvar-dark text-base">Top Green Shakti Circle</h4>
-              <p className="text-xs text-taruvar-muted">Pooja Sundaram (Ward 7 Neem)</p>
-              <span className="px-3 py-1 bg-amber-100 text-amber-900 font-mono font-bold text-xs rounded-full inline-block">
-                318 Upvotes
-              </span>
-            </div>
-          </div>
+          )}
         </div>
       )}
 

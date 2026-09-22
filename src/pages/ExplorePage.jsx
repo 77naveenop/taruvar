@@ -91,106 +91,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   });
   const [postLoading, setPostLoading] = useState(false);
 
-  // Default featured initial posts across Tree Care & Environmental Work
-  const defaultFeed = [
-    {
-      id: 'feed-1',
-      author: 'Naveen Sharma',
-      memberId: 'TRV-ADMIN-001',
-      avatar: '🌱',
-      type: 'tree',
-      title: 'Banyan Sanctuary Guardian',
-      category: 'Tree Paalna Care',
-      categoryIcon: '🌳',
-      location: 'Botanical Eco Corridor, Delhi NCR',
-      photo: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80',
-      caption: 'Day 1 of our Banyan tree guardianship. Planted with organic vermicompost and bamboo protective cage! 🌿 #OnePersonOneTree #Paalna #TaruvarIndia',
-      badge: 'Core Founder Tree',
-      likes: 142,
-      views: 1890,
-      isLiked: false,
-      date: '2 DAYS AGO',
-      timestamp: Date.now() - 1000 * 60 * 60 * 48
-    },
-    {
-      id: 'feed-2',
-      author: 'Yamuna Seva Collective',
-      memberId: 'TRV-SOC-2026-YAM-12',
-      avatar: '🌊',
-      type: 'social',
-      title: 'Yamuna Riverbank Cleanliness & Plastic Retrieval',
-      category: 'River & Water Cleaning',
-      categoryIcon: '🌊',
-      location: 'Yamuna Ghat 3, Delhi NCR',
-      photo: 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=1200&q=80',
-      caption: 'Cleared 42 kg of single-use plastic waste from the riverbanks with 8 passionate eco-volunteers. Planted 5 riverine shrubs near banks! 🌊💧 #RiverCare #CleanYamuna',
-      badge: 'River Action Drive',
-      likes: 215,
-      views: 3420,
-      isLiked: false,
-      date: '3 DAYS AGO',
-      timestamp: Date.now() - 1000 * 60 * 60 * 72
-    },
-    {
-      id: 'feed-3',
-      author: 'Delhi Public School Chapter',
-      memberId: 'TRV-ORG-2026-DPS-50',
-      avatar: '🎓',
-      type: 'tree',
-      title: 'DPS Green Shakti Canopy',
-      category: 'Campus Bulk Drive',
-      categoryIcon: '🪴',
-      location: 'Campus Playground Green Boundary',
-      photo: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80',
-      caption: '50 students each took personal responsibility for 1 sapling today! We are monitoring drip irrigation daily. Month 1 growth verified. 🌳🎒 #YouthForEarth',
-      badge: '50 Trees Thriving',
-      likes: 289,
-      views: 4120,
-      isLiked: false,
-      date: '4 DAYS AGO',
-      timestamp: Date.now() - 1000 * 60 * 60 * 96
-    },
-    {
-      id: 'feed-4',
-      author: 'Aravalli Ridge Guardians',
-      memberId: 'TRV-SOC-2026-ARV-08',
-      avatar: '🏔️',
-      type: 'social',
-      title: 'Aravalli Hills Ridge Trek & Plastic Waste Clearing',
-      category: 'Mountain & Forest Care',
-      categoryIcon: '🏔️',
-      location: 'Aravalli Biodiversity Trail, Haryana',
-      photo: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1200&q=80',
-      caption: 'Trek clean-up: Collected 68 kg non-biodegradable waste left by tourists on hiking routes, and dispersed 200 seedballs along rocky ridges! 🏔️✨ #MountainCare',
-      badge: 'Ridge Trail Cleanup',
-      likes: 312,
-      views: 4890,
-      isLiked: false,
-      date: '5 DAYS AGO',
-      timestamp: Date.now() - 1000 * 60 * 60 * 120
-    },
-    {
-      id: 'feed-5',
-      author: 'Pooja Sundaram (Green Shakti)',
-      memberId: 'TRV-GNS-2026-088',
-      avatar: '👩',
-      type: 'tree',
-      title: 'Amrit Neem Care Hub',
-      category: 'Tree Paalna Care',
-      categoryIcon: '🌿',
-      location: 'Community Park Ward 7, Bangalore',
-      photo: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1200&q=80',
-      caption: 'Month 3 update: Our neighborhood women circle watered through peak heat. 14cm height gain with fresh green shoots! 🌿💧 #GreenShakti #Paalna',
-      badge: 'Month 3 • Verified',
-      likes: 318,
-      views: 5120,
-      isLiked: false,
-      date: '1 WEEK AGO',
-      timestamp: Date.now() - 1000 * 60 * 60 * 168
-    }
-  ];
-
-  // Aggregated feed state combining Tree Adoptions + Environmental Social Works + Cloud DB
+  // Clean Aggregated feed state combining real Tree Adoptions + Environmental Social Works + Cloud DB (Zero Dummy Data)
   const [feedList, setFeedList] = useState(() => {
     try {
       const localAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
@@ -209,8 +110,8 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
         caption: t.caption || `Adopted under Taruvar #OnePersonOneTree. Cadence: ${t.lastCareInterval || '1-15 Days'} wellness log. Status: ${t.wellness || 'Thriving'} 🌱`,
         badge: t.isBulk ? 'Organization Drive' : 'Paalna Guardian',
-        likes: t.upvotes || 28,
-        views: (t.upvotes || 28) * 12 + 140,
+        likes: t.upvotes || 1,
+        views: (t.upvotes || 1) * 8 + 12,
         isLiked: false,
         date: t.plantedDate || 'RECENT',
         timestamp: Date.now() - (idx * 1000 * 60 * 60 * 12)
@@ -229,16 +130,16 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         photo: w.photo || '/logo.jpg',
         caption: `${w.description || ''} Impact: ${w.impact || 'Community Action'} 🌿`,
         badge: w.timeInterval || 'Environmental Drive',
-        likes: w.likes || 32,
-        views: w.views || (w.likes || 32) * 15 + 210,
+        likes: w.likes || 1,
+        views: w.views || (w.likes || 1) * 8 + 15,
         isLiked: false,
         date: w.date || 'RECENT',
         timestamp: Date.now() - (idx * 1000 * 60 * 60 * 8)
       }));
 
-      return [...mappedSocial, ...mappedTrees, ...defaultFeed];
+      return [...mappedSocial, ...mappedTrees];
     } catch {
-      return defaultFeed;
+      return [];
     }
   });
 
@@ -462,35 +363,34 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
     <div className="min-h-screen bg-taruvar-bg text-taruvar-dark py-4 sm:py-8 px-3 sm:px-4">
       
       {/* Centered Instagram-Style Feed Container */}
-      <div className="max-w-xl mx-auto w-full space-y-6">
+      <div className="max-w-xl mx-auto w-full space-y-5">
 
-        {/* 1. TOP DISCOVERY & ALGORITHM CONTROLS */}
-        <div className="bg-white rounded-3xl p-4 border border-taruvar-border shadow-xs space-y-3.5">
+        {/* 1. TOP MINIMAL DISCOVERY BAR & + ADD YOURS BUTTON */}
+        <div className="bg-white rounded-3xl p-3.5 sm:p-4 border border-taruvar-border shadow-xs space-y-2.5">
           
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-xl">🌿</span>
-              <div>
-                <h2 className="font-extrabold text-sm sm:text-base text-taruvar-dark leading-tight">Explore Taruvar</h2>
-                <p className="text-[11px] text-taruvar-muted">Trees, rivers, mountains & community cleanups across India</p>
-              </div>
+              <h2 className="font-black text-sm sm:text-base text-taruvar-dark leading-tight">Explore Feed</h2>
             </div>
 
+            {/* Clean + Add Yours Toggle Button */}
             <button
               onClick={() => setShowPostModal(true)}
-              className="px-3.5 py-2 bg-gradient-to-r from-taruvar-secondary to-teal-600 hover:from-taruvar-hover hover:to-teal-700 text-white font-bold text-xs rounded-2xl shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+              className="px-4 py-2 bg-gradient-to-r from-taruvar-secondary via-emerald-600 to-teal-600 hover:opacity-90 text-white font-black text-xs rounded-2xl shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+              title="Share your tree or environmental work"
             >
-              <Camera className="w-3.5 h-3.5" />
-              <span>Share Work</span>
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Add Yours</span>
             </button>
           </div>
 
-          {/* Algorithm Sorting Tabs */}
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-taruvar-border/60">
-            <div className="flex items-center gap-1.5">
+          {/* Compact Algorithm & Category Filters */}
+          <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar pt-1 border-t border-taruvar-border/60">
+            <div className="flex items-center gap-1 shrink-0">
               {[
-                { id: 'trending', label: '🔥 Trending (Algo)', icon: Flame },
-                { id: 'views', label: '👁️ Most Viewed', icon: Eye },
+                { id: 'trending', label: '🔥 Trending', icon: Flame },
+                { id: 'views', label: '👁️ Views', icon: Eye },
                 { id: 'recent', label: '⏱️ Latest', icon: Clock }
               ].map(sort => {
                 const Icon = sort.icon;
@@ -499,56 +399,62 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
                   <button
                     key={sort.id}
                     onClick={() => setSortBy(sort.id)}
-                    className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-xl text-[10.5px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
                       isActive 
                         ? 'bg-taruvar-secondary text-white shadow-2xs' 
                         : 'bg-taruvar-bg text-taruvar-muted hover:text-taruvar-dark'
                     }`}
                   >
-                    <Icon className="w-3 h-3" />
                     <span>{sort.label}</span>
                   </button>
                 );
               })}
             </div>
-          </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">
-            {[
-              { id: 'all', label: '🌟 All Care Works' },
-              { id: 'trees', label: '🌳 Tree Paalna' },
-              { id: 'rivers', label: '🌊 Rivers & Lakes' },
-              { id: 'mountains', label: '🏔️ Mountain Treks' },
-              { id: 'cleanups', label: '🧹 Waste Cleanups' }
-            ].map(filter => (
-              <button
-                key={filter.id}
-                onClick={() => setActiveFilter(filter.id)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  activeFilter === filter.id
-                    ? 'bg-taruvar-light text-taruvar-secondary border border-taruvar-secondary font-black'
-                    : 'bg-taruvar-bg text-taruvar-dark/70 hover:bg-taruvar-light border border-taruvar-border'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
+            <div className="h-4 w-px bg-taruvar-border/80 shrink-0 mx-1"></div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              {[
+                { id: 'all', label: '🌟 All' },
+                { id: 'trees', label: '🌳 Trees' },
+                { id: 'rivers', label: '🌊 Rivers' },
+                { id: 'mountains', label: '🏔️ Mountains' },
+                { id: 'cleanups', label: '🧹 Cleanups' }
+              ].map(filter => (
+                <button
+                  key={filter.id}
+                  onClick={() => setActiveFilter(filter.id)}
+                  className={`px-2.5 py-1 rounded-xl text-[10.5px] font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+                    activeFilter === filter.id
+                      ? 'bg-taruvar-light text-taruvar-secondary font-black border border-taruvar-secondary'
+                      : 'bg-taruvar-bg text-taruvar-dark/70 hover:bg-taruvar-light border border-taruvar-border'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
 
         </div>
 
         {/* 2. CONTINUOUS VERTICAL SCROLL FEED */}
         {filteredAndSortedPosts.length === 0 ? (
-          <div className="bg-white rounded-3xl p-10 border border-taruvar-border text-center space-y-3">
-            <span className="text-4xl">🌱</span>
-            <h3 className="font-bold text-base text-taruvar-dark">No Posts in this Category</h3>
-            <p className="text-xs text-taruvar-muted">Be the first to share an environmental update in this category!</p>
+          <div className="bg-white rounded-3xl p-12 border border-taruvar-border text-center space-y-4 shadow-card">
+            <div className="w-16 h-16 bg-taruvar-light text-taruvar-secondary rounded-2xl flex items-center justify-center mx-auto text-3xl">
+              🌱
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-extrabold text-base text-taruvar-dark">Explore Feed is Live & Clean</h3>
+              <p className="text-xs text-taruvar-muted max-w-xs mx-auto">
+                No mock data. Adopt a tree or share your environmental work to be the first on the live feed!
+              </p>
+            </div>
             <button
-              onClick={() => setActiveFilter('all')}
-              className="px-4 py-2 bg-taruvar-secondary text-white font-bold text-xs rounded-xl cursor-pointer"
+              onClick={() => setShowPostModal(true)}
+              className="px-5 py-2.5 bg-taruvar-secondary text-white font-bold text-xs rounded-xl cursor-pointer hover:bg-taruvar-hover transition-all"
             >
-              View All Feed
+              + Add Yours Now
             </button>
           </div>
         ) : (
