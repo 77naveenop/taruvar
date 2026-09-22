@@ -215,3 +215,226 @@ export async function rejectCloudAdoption(treeId) {
     return false;
   }
 }
+
+// ==========================================
+// INITIATIVES & PROJECTS CLOUD MANAGEMENT
+// ==========================================
+
+export const DEFAULT_INITIATIVES = [
+  {
+    id: 'one-person-one-tree',
+    title: 'ONE PERSON. ONE TREE.',
+    subtitle: 'Public Individual Movement • एक व्यक्ति, एक पेड़',
+    category: 'Citizen Afforestation',
+    icon: '🌱',
+    coverImage: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80',
+    summary: 'A public movement encouraging individuals to take personal responsibility for at least one tree from plantation to full maturity.',
+    points: [
+      'Shift focus from mass unmonitored planting to high survival rate (95%+).',
+      'Encourages personal ownership under the Paalna (nurturing) concept.',
+      'Accessible to every citizen across homes, societies, villages, and streets.',
+      'Simple 5-step framework: Plant → Care → Document → Grow → Inspire.'
+    ],
+    targetGoal: '10,000 Trees Adopted',
+    currentProgress: 1420,
+    progressPercent: 65,
+    status: 'Active',
+    location: 'Pan-India',
+    createdAt: '2026-01-01'
+  },
+  {
+    id: 'green-shakti',
+    title: 'TARUVAR GREEN SHAKTI',
+    subtitle: 'Women Environmental Leadership • महिला नेतृत्व',
+    category: 'Women Leadership',
+    icon: '👩',
+    coverImage: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1200&q=80',
+    summary: 'Empowering women\'s leadership, participation, and environmental guardianship in residential areas, villages, and community self-help circles.',
+    points: [
+      'Mobilizing women as primary guardians of local saplings and community greens.',
+      'Promoting neighborhood tree care circles and rainwater distribution.',
+      'Building leadership networks and environmental stewardship workshops.',
+      'Recognizing women eco-leaders with documented Taruvar Green Shakti honors.'
+    ],
+    targetGoal: '500 Women Green Circles',
+    currentProgress: 110,
+    progressPercent: 55,
+    status: 'Active',
+    location: 'Uttar Pradesh & Bihar',
+    createdAt: '2026-02-15'
+  },
+  {
+    id: 'youth-campus',
+    title: 'TARUVAR YOUTH & CAMPUS NETWORK',
+    subtitle: 'Student Volunteer & Internship Platform • युवा शक्ति',
+    category: 'Campus & Youth',
+    icon: '🎓',
+    coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80',
+    summary: 'Connecting students with real environmental campaigns, leadership opportunities, and documented participation credentials.',
+    points: [
+      'Establish campus chapters in schools, colleges, and universities.',
+      'Hands-on experience in campaign management, tree monitoring, and youth drives.',
+      'Documented volunteer certificates and internship experience based on real work.',
+      'Leadership progression from volunteer to Campus Chapter Coordinator.'
+    ],
+    targetGoal: '100 College Chapters',
+    currentProgress: 32,
+    progressPercent: 40,
+    status: 'Active',
+    location: 'Lucknow, Delhi-NCR, Varanasi',
+    createdAt: '2026-03-01'
+  }
+];
+
+/**
+ * Fetch all initiatives from cloud or local fallback
+ */
+export async function getCloudInitiatives() {
+  try {
+    const res = await fetchGithubJson('initiatives.json');
+    if (Array.isArray(res.data) && res.data.length > 0) {
+      localStorage.setItem('taruvar_initiatives', JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch (e) {
+    console.warn('Could not fetch cloud initiatives:', e);
+  }
+
+  // Local fallback
+  try {
+    const saved = localStorage.getItem('taruvar_initiatives');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+
+  // Save and return default
+  localStorage.setItem('taruvar_initiatives', JSON.stringify(DEFAULT_INITIATIVES));
+  return DEFAULT_INITIATIVES;
+}
+
+/**
+ * Save / Update an initiative to cloud
+ */
+export async function saveCloudInitiative(initiative) {
+  if (!initiative || !initiative.title) return false;
+
+  const itemToSave = {
+    ...initiative,
+    id: initiative.id || `init-${Date.now()}`,
+    updatedAt: new Date().toISOString()
+  };
+
+  // Update local
+  try {
+    const local = JSON.parse(localStorage.getItem('taruvar_initiatives') || '[]');
+    const filtered = local.filter(i => i.id !== itemToSave.id);
+    const updated = [itemToSave, ...filtered];
+    localStorage.setItem('taruvar_initiatives', JSON.stringify(updated));
+  } catch {}
+
+  // Sync with cloud
+  return await putGithubJsonWithRetry('initiatives.json', (currentList) => {
+    const list = Array.isArray(currentList) && currentList.length > 0 ? currentList : DEFAULT_INITIATIVES;
+    const filtered = list.filter(i => i.id !== itemToSave.id);
+    return [itemToSave, ...filtered];
+  });
+}
+
+/**
+ * Delete an initiative from cloud
+ */
+export async function deleteCloudInitiative(initiativeId) {
+  try {
+    const local = JSON.parse(localStorage.getItem('taruvar_initiatives') || '[]');
+    const updated = local.filter(i => i.id !== initiativeId);
+    localStorage.setItem('taruvar_initiatives', JSON.stringify(updated));
+  } catch {}
+
+  return await putGithubJsonWithRetry('initiatives.json', (currentList) => {
+    const list = Array.isArray(currentList) ? currentList : [];
+    return list.filter(i => i.id !== initiativeId);
+  });
+}
+
+// ==========================================
+// ADMIN & SUB-ADMIN HIERARCHY CLOUD MANAGEMENT
+// ==========================================
+
+export const SUPERADMIN_EMAIL = 'naveenpr332@gmail.com';
+
+/**
+ * Fetch all appointed sub-admins under Superadmin
+ */
+export async function getCloudAdminHierarchy() {
+  try {
+    const res = await fetchGithubJson('admin_hierarchy.json');
+    if (Array.isArray(res.data)) {
+      localStorage.setItem('taruvar_admin_hierarchy', JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch (e) {
+    console.warn('Could not fetch cloud admin hierarchy:', e);
+  }
+
+  try {
+    const saved = localStorage.getItem('taruvar_admin_hierarchy');
+    if (saved) return JSON.parse(saved);
+  } catch {}
+
+  return [];
+}
+
+/**
+ * Superadmin adds or updates a sub-admin
+ */
+export async function saveCloudSubAdmin(adminRecord) {
+  if (!adminRecord || !adminRecord.email) return false;
+
+  const leanAdmin = {
+    id: adminRecord.id || `admin-${Date.now()}`,
+    email: adminRecord.email.trim().toLowerCase(),
+    fullName: adminRecord.fullName || 'Taruvar Regional Admin',
+    phone: adminRecord.phone || '',
+    roleLevel: adminRecord.roleLevel || 'regional_admin', // 'superadmin' | 'regional_admin' | 'field_inspector' | 'project_coordinator'
+    roleTitle: adminRecord.roleTitle || 'Regional Admin (क्षेत्रीय प्रशासक)',
+    region: adminRecord.region || 'Lucknow, UP',
+    status: adminRecord.status || 'active', // 'active' | 'suspended'
+    appointedBy: adminRecord.appointedBy || SUPERADMIN_EMAIL,
+    appointedDate: adminRecord.appointedDate || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    passcode: adminRecord.passcode || 'TARUVAR_ADMIN_2026',
+    permissions: adminRecord.permissions || ['approve_trees', 'verify_reports', 'manage_initiatives']
+  };
+
+  // Update local
+  try {
+    const local = JSON.parse(localStorage.getItem('taruvar_admin_hierarchy') || '[]');
+    const filtered = local.filter(a => a.email !== leanAdmin.email && a.id !== leanAdmin.id);
+    const updated = [leanAdmin, ...filtered];
+    localStorage.setItem('taruvar_admin_hierarchy', JSON.stringify(updated));
+  } catch {}
+
+  // Sync to cloud
+  return await putGithubJsonWithRetry('admin_hierarchy.json', (currentList) => {
+    const list = Array.isArray(currentList) ? currentList : [];
+    const filtered = list.filter(a => a.email !== leanAdmin.email && a.id !== leanAdmin.id);
+    return [leanAdmin, ...filtered];
+  });
+}
+
+/**
+ * Superadmin removes a sub-admin
+ */
+export async function deleteCloudSubAdmin(adminEmailOrId) {
+  try {
+    const local = JSON.parse(localStorage.getItem('taruvar_admin_hierarchy') || '[]');
+    const updated = local.filter(a => a.email !== adminEmailOrId && a.id !== adminEmailOrId);
+    localStorage.setItem('taruvar_admin_hierarchy', JSON.stringify(updated));
+  } catch {}
+
+  return await putGithubJsonWithRetry('admin_hierarchy.json', (currentList) => {
+    const list = Array.isArray(currentList) ? currentList : [];
+    return list.filter(a => a.email !== adminEmailOrId && a.id !== adminEmailOrId);
+  });
+}

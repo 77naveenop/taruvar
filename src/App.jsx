@@ -30,8 +30,24 @@ export default function App() {
       const saved = localStorage.getItem('taruvar_session_user');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.email?.toLowerCase() === 'naveenpr332@gmail.com') {
-          parsed.user_metadata = { ...(parsed.user_metadata || {}), role: 'admin' };
+        const emailLower = parsed.email?.toLowerCase();
+        
+        // Superadmin check
+        if (emailLower === 'naveenpr332@gmail.com') {
+          parsed.user_metadata = { ...(parsed.user_metadata || {}), role: 'admin', isSuperadmin: true };
+        } else {
+          // Appointed Sub-Admin check
+          const appointedList = JSON.parse(localStorage.getItem('taruvar_admin_hierarchy') || '[]');
+          const match = appointedList.find(a => a.email === emailLower && a.status === 'active');
+          if (match) {
+            parsed.user_metadata = { 
+              ...(parsed.user_metadata || {}), 
+              role: 'admin', 
+              roleLevel: match.roleLevel,
+              roleTitle: match.roleTitle,
+              region: match.region 
+            };
+          }
         }
         setCurrentUser(parsed);
       }
@@ -61,10 +77,23 @@ export default function App() {
   };
 
   const handleAuthSuccess = (user, msg) => {
-    if (user && user.email?.toLowerCase() === 'naveenpr332@gmail.com') {
-      user.user_metadata = { ...(user.user_metadata || {}), role: 'admin' };
-    }
     if (user) {
+      const emailLower = user.email?.toLowerCase();
+      if (emailLower === 'naveenpr332@gmail.com') {
+        user.user_metadata = { ...(user.user_metadata || {}), role: 'admin', isSuperadmin: true };
+      } else {
+        const appointedList = JSON.parse(localStorage.getItem('taruvar_admin_hierarchy') || '[]');
+        const match = appointedList.find(a => a.email === emailLower && a.status === 'active');
+        if (match) {
+          user.user_metadata = { 
+            ...(user.user_metadata || {}), 
+            role: 'admin', 
+            roleLevel: match.roleLevel,
+            roleTitle: match.roleTitle,
+            region: match.region 
+          };
+        }
+      }
       localStorage.setItem('taruvar_session_user', JSON.stringify(user));
     }
     setCurrentUser(user);

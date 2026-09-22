@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Sprout, Heart, Award, ArrowRight, CheckCircle2, ShieldCheck, 
   MapPin, Sparkles, Send, Waves, Mountain, BookOpen, Building, UserPlus, Check, ChevronRight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { getCloudInitiatives, DEFAULT_INITIATIVES } from '../lib/cloudDb';
 
 export default function BeAPartPage({ showToast, onOpenPledge, currentUser, onOpenAuth }) {
   // Top Switcher: 'join-roles' | 'current-projects'
@@ -24,6 +25,22 @@ export default function BeAPartPage({ showToast, onOpenPledge, currentUser, onOp
   });
   const [submitting, setSubmitting] = useState(false);
   const [submittedRole, setSubmittedRole] = useState(null);
+
+  // Dynamic initiatives from cloud
+  const [liveInitiatives, setLiveInitiatives] = useState(DEFAULT_INITIATIVES);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const inits = await getCloudInitiatives();
+        if (Array.isArray(inits) && inits.length > 0) {
+          setLiveInitiatives(inits);
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    })();
+  }, []);
 
   // Role Definitions
   const rolesList = [
@@ -463,7 +480,7 @@ export default function BeAPartPage({ showToast, onOpenPledge, currentUser, onOp
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {activeProjects.map((proj) => (
+            {liveInitiatives.map((proj) => (
               <div 
                 key={proj.id}
                 className="bg-white rounded-3xl border border-taruvar-border shadow-card p-6 sm:p-8 space-y-5 flex flex-col justify-between hover:shadow-lg transition-all"
@@ -471,51 +488,49 @@ export default function BeAPartPage({ showToast, onOpenPledge, currentUser, onOp
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="w-12 h-12 rounded-2xl bg-taruvar-light border border-taruvar-border flex items-center justify-center text-2xl">
-                      {proj.icon}
+                      {proj.icon || '🌱'}
                     </span>
                     <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-full">
-                      {proj.status}
+                      {proj.status || 'Active'}
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-[11px] font-bold text-taruvar-secondary uppercase tracking-wider">{proj.category}</span>
+                    <span className="text-[11px] font-bold text-taruvar-secondary uppercase tracking-wider">{proj.category || 'Environmental Drive'}</span>
                     <h3 className="text-xl font-black text-taruvar-dark">{proj.title}</h3>
                     <p className="text-xs font-semibold text-taruvar-muted">{proj.subtitle}</p>
                   </div>
 
                   <p className="text-xs text-taruvar-dark/80 leading-relaxed font-normal">
-                    {proj.desc}
+                    {proj.summary || proj.desc}
                   </p>
 
                   <div className="space-y-1.5 pt-1">
                     <div className="flex items-center justify-between text-xs font-bold">
                       <span className="text-taruvar-muted">Movement Target:</span>
-                      <span className="text-taruvar-secondary">{proj.target}</span>
-                    </div>
-                    <div className="w-full h-2.5 bg-taruvar-bg rounded-full overflow-hidden border border-taruvar-border">
-                      <div 
-                        className="h-full bg-gradient-to-r from-taruvar-primary to-taruvar-secondary rounded-full"
-                        style={{ width: `${proj.progress}%` }}
-                      ></div>
+                      <span className="text-taruvar-secondary">{proj.targetGoal || proj.target || 'Community Action'}</span>
                     </div>
                   </div>
 
                   <div className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border text-xs text-taruvar-muted flex items-start gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                    <span><strong>Active In:</strong> {proj.locations}</span>
+                    <span><strong>Active In:</strong> {proj.location || proj.locations || 'Pan-India'}</span>
                   </div>
                 </div>
 
                 <div className="pt-2">
                   <button
                     onClick={() => {
-                      setActiveSection('join-roles');
-                      window.scrollTo({ top: 300, behavior: 'smooth' });
+                      if (proj.id === 'one-person-one-tree' || proj.category === 'Citizen Afforestation') {
+                        onOpenPledge();
+                      } else {
+                        setActiveSection('join-roles');
+                        window.scrollTo({ top: 300, behavior: 'smooth' });
+                      }
                     }}
                     className="w-full py-3 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <span>Join This Project</span>
+                    <span>{proj.id === 'one-person-one-tree' ? 'Adopt a Tree in this Project' : 'Join This Project'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
