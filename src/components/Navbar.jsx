@@ -137,18 +137,18 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             })}
           </nav>
 
-          {/* 3. RIGHT: Action Buttons (Mobile Install + Explore Reels + Admin + Profile/Login) */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* 3. RIGHT: Action Buttons */}
+          <div className="flex items-center gap-2 shrink-0">
             
-            {/* PWA Install Button (Mobile Only, sleek & non-intrusive) */}
+            {/* PWA Install Button (Mobile Only, sleek, compact & aligned) */}
             {!isAppInstalled && (
               <button
                 onClick={handleInstallPWA}
-                className="flex md:hidden items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
+                className="flex md:hidden items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold rounded-xl transition-all cursor-pointer shadow-xs shrink-0 active:scale-95"
                 title="Install Taruvar App"
               >
-                <Download className="w-3.5 h-3.5 text-emerald-700 animate-bounce" />
-                <span className="text-[11px] font-extrabold">Install</span>
+                <Download className="w-3.5 h-3.5 text-emerald-100" />
+                <span>Install</span>
               </button>
             )}
 
@@ -170,7 +170,7 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
             {isAdmin && (
               <button
                 onClick={() => handleNavClick('admin')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap shadow-2xs ${
+                className={`flex items-center gap-1 px-2.5 py-1 sm:px-3.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap shadow-xs ${
                   activePage === 'admin'
                     ? 'bg-amber-700 text-white shadow-sm ring-2 ring-amber-400/40'
                     : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300'
@@ -182,22 +182,22 @@ export default function Navbar({ activePage, setActivePage, onOpenPledge, curren
               </button>
             )}
 
-            {/* Account / Login Button */}
+            {/* Account / Login Button (Desktop Only — on mobile it is in the sticky bottom navigation) */}
             {currentUser ? (
               <button
                 onClick={() => handleNavClick('profile')}
-                className="flex items-center gap-2 px-3 py-1.5 lg:px-3.5 lg:py-2 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary text-xs sm:text-sm font-bold rounded-xl border border-taruvar-border transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                className="hidden md:flex items-center gap-2 px-3.5 py-2 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary text-xs sm:text-sm font-bold rounded-xl border border-taruvar-border transition-all cursor-pointer shadow-2xs whitespace-nowrap"
                 title="View Profile"
               >
                 <div className="w-5 h-5 rounded-full bg-taruvar-secondary text-white flex items-center justify-center text-[10px] font-black shrink-0">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
-                <span className="hidden sm:inline max-w-[100px] truncate">{displayName}</span>
+                <span className="max-w-[100px] truncate">{displayName}</span>
               </button>
             ) : (
               <button
                 onClick={() => handleNavClick('auth')}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-taruvar-bg hover:bg-taruvar-light text-taruvar-dark text-xs sm:text-sm font-bold rounded-xl border border-taruvar-border transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                className="hidden md:flex items-center gap-1.5 px-3.5 py-2 bg-taruvar-bg hover:bg-taruvar-light text-taruvar-dark text-xs sm:text-sm font-bold rounded-xl border border-taruvar-border transition-all cursor-pointer shadow-2xs whitespace-nowrap"
               >
                 <LogIn className="w-4 h-4 text-taruvar-secondary shrink-0" />
                 <span>Log In</span>

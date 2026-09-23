@@ -10,7 +10,7 @@ export default function BottomNav({ activePage, setActivePage, onOpenPledge, cur
   const isAdmin = currentUser?.user_metadata?.role === 'admin' || currentUser?.email?.toLowerCase() === 'naveenpr332@gmail.com';
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-taruvar-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-1.5 sm:px-3 py-1.5 transition-all">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-taruvar-border shadow-[0_-4px_25px_rgba(0,0,0,0.08)] px-1.5 sm:px-3 py-1.5 transition-all">
       <div className="max-w-lg mx-auto flex items-center justify-between relative">
         
         {/* 1. Home Tab */}

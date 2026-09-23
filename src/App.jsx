@@ -133,7 +133,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-taruvar-bg text-taruvar-dark selection:bg-taruvar-primary selection:text-white pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col bg-taruvar-bg text-taruvar-dark selection:bg-taruvar-primary selection:text-white pb-28 md:pb-0">
       {/* Top Header Navigation (Clean, No Toggle Menu) */}
       <Navbar 
         activePage={activePage} 
