@@ -689,6 +689,32 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
           </div>
         )}
 
+        {/* 3. END OF FEED INDICATOR ("That's it") */}
+        {filteredAndSortedPosts.length > 0 && (
+          <div className="py-10 pb-16 text-center space-y-3">
+            <div className="w-14 h-14 bg-white border border-taruvar-border rounded-full flex items-center justify-center mx-auto text-2xl shadow-sm">
+              ✨
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm sm:text-base font-black text-taruvar-dark tracking-tight">
+                That's it! You're all caught up.
+              </h4>
+              <p className="text-xs text-taruvar-muted max-w-xs mx-auto leading-relaxed">
+                You've seen all recent tree stories and community environmental updates.
+              </p>
+            </div>
+            <div className="pt-1">
+              <button
+                onClick={() => setShowPostModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-taruvar-light hover:bg-taruvar-secondary hover:text-white text-taruvar-secondary font-bold text-xs rounded-xl border border-taruvar-border transition-all cursor-pointer shadow-2xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Add Your Work to Feed</span>
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* MODAL 1: Comments Sheet Modal */}

@@ -243,12 +243,14 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <Footer 
-        setActivePage={setActivePage} 
-        onOpenPledge={navigateToAdopt} 
-        onNavigateGetInvolved={navigateToGetInvolved}
-      />
+      {/* Footer (Hidden on Explore Reels section for clean social feed experience) */}
+      {activePage !== 'explore' && (
+        <Footer 
+          setActivePage={setActivePage} 
+          onOpenPledge={navigateToAdopt} 
+          onNavigateGetInvolved={navigateToGetInvolved}
+        />
+      )}
 
       {/* Modern Sticky Bottom Navigation Bar (Mobile only) */}
       <BottomNav
