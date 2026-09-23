@@ -366,15 +366,42 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
       <div className="max-w-xl mx-auto w-full space-y-5">
 
         {/* 1. TOP STICKY DISCOVERY BAR & + ADD YOURS BUTTON */}
-        <div className="sticky top-16 sm:top-20 z-30 bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-taruvar-border shadow-md space-y-2.5 transition-all">
-          
+        <div className="sticky top-16 sm:top-20 z-30 bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 border border-taruvar-border shadow-md transition-all">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🌿</span>
-              <h2 className="font-black text-sm sm:text-base text-taruvar-dark leading-tight">Explore Feed</h2>
+            
+            {/* Left: Feed Title & Algorithm Sort Filter */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-xl">🌿</span>
+                <h2 className="font-black text-sm sm:text-base text-taruvar-dark leading-tight hidden xs:inline">Explore Feed</h2>
+              </div>
+
+              {/* Sorting Pills */}
+              <div className="flex items-center gap-1 shrink-0">
+                {[
+                  { id: 'trending', label: '🔥 Trending' },
+                  { id: 'recent', label: '⏱️ Latest' },
+                  { id: 'views', label: '👁️ Views' }
+                ].map(sort => {
+                  const isActive = sortBy === sort.id;
+                  return (
+                    <button
+                      key={sort.id}
+                      onClick={() => setSortBy(sort.id)}
+                      className={`px-2.5 py-1 rounded-xl text-[10.5px] font-bold transition-all cursor-pointer shrink-0 ${
+                        isActive 
+                          ? 'bg-taruvar-secondary text-white shadow-2xs' 
+                          : 'bg-taruvar-bg text-taruvar-muted hover:text-taruvar-dark'
+                      }`}
+                    >
+                      <span>{sort.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Clean + Add Yours Toggle Button */}
+            {/* Right: Clean + Add Yours Action Button */}
             <button
               onClick={() => setShowPostModal(true)}
               className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-taruvar-secondary via-emerald-600 to-teal-600 hover:opacity-90 text-white font-black text-xs rounded-2xl shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
@@ -384,58 +411,6 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
               <span>Add Yours</span>
             </button>
           </div>
-
-          {/* Compact Algorithm & Category Filters */}
-          <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar pt-1 border-t border-taruvar-border/60">
-            <div className="flex items-center gap-1 shrink-0">
-              {[
-                { id: 'trending', label: '🔥 Trending', icon: Flame },
-                { id: 'views', label: '👁️ Views', icon: Eye },
-                { id: 'recent', label: '⏱️ Latest', icon: Clock }
-              ].map(sort => {
-                const Icon = sort.icon;
-                const isActive = sortBy === sort.id;
-                return (
-                  <button
-                    key={sort.id}
-                    onClick={() => setSortBy(sort.id)}
-                    className={`px-2.5 py-1 rounded-xl text-[10.5px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
-                      isActive 
-                        ? 'bg-taruvar-secondary text-white shadow-2xs' 
-                        : 'bg-taruvar-bg text-taruvar-muted hover:text-taruvar-dark'
-                    }`}
-                  >
-                    <span>{sort.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="h-4 w-px bg-taruvar-border/80 shrink-0 mx-1"></div>
-
-            <div className="flex items-center gap-1 shrink-0">
-              {[
-                { id: 'all', label: '🌟 All' },
-                { id: 'trees', label: '🌳 Trees' },
-                { id: 'rivers', label: '🌊 Rivers' },
-                { id: 'mountains', label: '🏔️ Mountains' },
-                { id: 'cleanups', label: '🧹 Cleanups' }
-              ].map(filter => (
-                <button
-                  key={filter.id}
-                  onClick={() => setActiveFilter(filter.id)}
-                  className={`px-2.5 py-1 rounded-xl text-[10.5px] font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
-                    activeFilter === filter.id
-                      ? 'bg-taruvar-light text-taruvar-secondary font-black border border-taruvar-secondary'
-                      : 'bg-taruvar-bg text-taruvar-dark/70 hover:bg-taruvar-light border border-taruvar-border'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
         </div>
 
         {/* 2. CONTINUOUS VERTICAL SCROLL FEED */}
