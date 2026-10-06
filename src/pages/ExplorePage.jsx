@@ -427,50 +427,25 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
       {/* Centered Instagram-Style Feed Container */}
       <div className="max-w-xl mx-auto w-full space-y-5">
 
-        {/* 1. TOP STICKY DISCOVERY BAR & + ADD YOURS BUTTON */}
-        <div className="sticky top-16 sm:top-20 z-30 bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 border border-taruvar-border shadow-md transition-all">
+        {/* 1. TOP STICKY ADD YOURS BAR */}
+        <div className="sticky top-16 sm:top-20 z-30 bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl px-4 py-3 sm:py-3.5 border border-taruvar-border shadow-md transition-all">
           <div className="flex items-center justify-between gap-2">
             
-            {/* Left: Feed Title & Algorithm Sort Filter */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-xl">🌿</span>
-                <h2 className="font-black text-sm sm:text-base text-taruvar-dark leading-tight hidden xs:inline">Explore Feed</h2>
-              </div>
-
-              {/* Sorting Pills */}
-              <div className="flex items-center gap-1 shrink-0">
-                {[
-                  { id: 'trending', label: '🔥 Trending' },
-                  { id: 'recent', label: '⏱️ Latest' },
-                  { id: 'views', label: '👁️ Views' }
-                ].map(sort => {
-                  const isActive = sortBy === sort.id;
-                  return (
-                    <button
-                      key={sort.id}
-                      onClick={() => setSortBy(sort.id)}
-                      className={`px-2.5 py-1 rounded-xl text-[10.5px] font-bold transition-all cursor-pointer shrink-0 ${
-                        isActive 
-                          ? 'bg-taruvar-secondary text-white shadow-2xs' 
-                          : 'bg-taruvar-bg text-taruvar-muted hover:text-taruvar-dark'
-                      }`}
-                    >
-                      <span>{sort.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Left: Environmental creators */}
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🌿</span>
+              <span className="font-extrabold text-xs sm:text-sm text-taruvar-dark tracking-tight">
+                Environmental creators
+              </span>
             </div>
 
-            {/* Right: Clean + Add Yours Action Button */}
+            {/* Right: Add yours+ Action Button */}
             <button
               onClick={() => setShowPostModal(true)}
-              className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-taruvar-secondary via-emerald-600 to-teal-600 hover:opacity-90 text-white font-black text-xs rounded-2xl shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+              className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-taruvar-secondary via-emerald-600 to-teal-600 hover:opacity-90 text-white font-black text-xs sm:text-sm rounded-2xl shadow-sm flex items-center gap-1 shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
               title="Share your tree or environmental work"
             >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Add Yours</span>
+              <span>Add yours+</span>
             </button>
           </div>
         </div>
