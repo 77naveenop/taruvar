@@ -202,7 +202,7 @@ export async function approveCloudAdoption(treeId, approvedRecord) {
 }
 
 /**
- * Admin rejects adoption in cloud atomically
+ * Admin rejects or deletes adoption in cloud atomically
  */
 export async function rejectCloudAdoption(treeId) {
   try {
@@ -216,8 +216,39 @@ export async function rejectCloudAdoption(treeId) {
   }
 }
 
+/**
+ * Admin permanently deletes an approved plantation/adoption from cloud
+ */
+export async function deleteCloudApprovedAdoption(treeId) {
+  try {
+    return await putGithubJsonWithRetry('approved_adoptions.json', (currentApproved) => {
+      const list = Array.isArray(currentApproved) ? currentApproved : [];
+      return list.filter(t => t.id !== treeId && t.treeId !== treeId);
+    });
+  } catch (e) {
+    console.warn('Cloud delete approved error:', e);
+    return false;
+  }
+}
+
+/**
+ * Admin permanently deletes a plantation / adoption from both pending & approved
+ */
+export async function deleteCloudAdoption(treeId) {
+  try {
+    await Promise.all([
+      rejectCloudAdoption(treeId),
+      deleteCloudApprovedAdoption(treeId)
+    ]);
+    return true;
+  } catch (e) {
+    console.warn('Delete cloud adoption error:', e);
+    return false;
+  }
+}
+
 // ==========================================
-// SOCIAL WORKS & EXPLORE POSTS CLOUD MANAGEMENT
+// SOCIAL WORKS, EXPLORE POSTS & COMMENTS CLOUD MANAGEMENT
 // ==========================================
 
 /**
@@ -280,6 +311,66 @@ export async function saveCloudSocialWork(record) {
     const list = Array.isArray(currentList) ? currentList : [];
     const filtered = list.filter(item => item.id !== leanRecord.id);
     return [leanRecord, ...filtered].slice(0, 200);
+  });
+}
+
+/**
+ * Permanently delete a social work post from cloud
+ */
+export async function deleteCloudSocialWork(postId) {
+  try {
+    return await putGithubJsonWithRetry('social_works.json', (currentList) => {
+      const list = Array.isArray(currentList) ? currentList : [];
+      return list.filter(item => item.id !== postId);
+    });
+  } catch (e) {
+    console.warn('Delete cloud social work error:', e);
+    return false;
+  }
+}
+
+/**
+ * Fetch all comments dictionary from cloud { [postId]: [comments] }
+ */
+export async function getCloudComments() {
+  try {
+    const res = await fetchGithubJson('post_comments.json');
+    if (res.data && typeof res.data === 'object' && !Array.isArray(res.data)) {
+      localStorage.setItem('taruvar_feed_comments', JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch (e) {
+    console.warn('Could not fetch cloud comments:', e);
+  }
+
+  try {
+    const saved = localStorage.getItem('taruvar_feed_comments');
+    if (saved) return JSON.parse(saved);
+  } catch {}
+
+  return {};
+}
+
+/**
+ * Save a new comment to cloud atomically
+ */
+export async function saveCloudComment(postId, newComment) {
+  if (!postId || !newComment) return false;
+
+  try {
+    const local = JSON.parse(localStorage.getItem('taruvar_feed_comments') || '{}');
+    const existing = Array.isArray(local[postId]) ? local[postId] : [];
+    local[postId] = [...existing, newComment];
+    localStorage.setItem('taruvar_feed_comments', JSON.stringify(local));
+  } catch {}
+
+  return await putGithubJsonWithRetry('post_comments.json', (currentDict) => {
+    const dict = (currentDict && typeof currentDict === 'object' && !Array.isArray(currentDict)) ? currentDict : {};
+    const existing = Array.isArray(dict[postId]) ? dict[postId] : [];
+    return {
+      ...dict,
+      [postId]: [...existing, newComment]
+    };
   });
 }
 

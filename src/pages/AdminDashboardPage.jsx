@@ -10,6 +10,8 @@ import {
   getCloudApprovedAdoptions, 
   approveCloudAdoption, 
   rejectCloudAdoption,
+  deleteCloudApprovedAdoption,
+  deleteCloudAdoption,
   getCloudInitiatives,
   saveCloudInitiative,
   deleteCloudInitiative,
@@ -334,6 +336,34 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
 
     if (showToast) {
       showToast(`Adoption submission rejected.`);
+    }
+  };
+
+  // Permanently Delete Plantation / Tree Adoption
+  const handleDeleteTree = async (treeId, treeName) => {
+    if (!window.confirm(`Are you sure you want to permanently delete the plantation "${treeName || treeId}"? This will remove it completely from database.`)) {
+      return;
+    }
+
+    setApprovedTrees(prev => prev.filter(t => t.id !== treeId && t.treeId !== treeId));
+    setPendingTrees(prev => prev.filter(t => t.id !== treeId && t.treeId !== treeId));
+
+    try {
+      const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      const updatedAll = all.filter(t => t.id !== treeId && t.treeId !== treeId);
+      localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedAll));
+
+      const pending = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      const updatedPending = pending.filter(t => t.id !== treeId && t.treeId !== treeId);
+      localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(updatedPending));
+    } catch (e) {
+      console.error(e);
+    }
+
+    deleteCloudAdoption(treeId).catch(e => console.warn('Cloud delete error:', e));
+
+    if (showToast) {
+      showToast(`Plantation "${treeName || treeId}" permanently deleted.`);
     }
   };
 
@@ -825,18 +855,26 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
                     )}
                   </div>
 
-                  <div className="flex gap-3 pt-2 border-t border-taruvar-border">
+                  <div className="flex gap-2 pt-2 border-t border-taruvar-border">
                     <button
                       onClick={() => handleApproveTree(item.id, item.adopter_name)}
-                      className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
-                      <Check className="w-4 h-4" /> Approve & Certify Tree
+                      <Check className="w-4 h-4" /> Approve
                     </button>
                     <button
                       onClick={() => handleRejectTree(item.id)}
-                      className="py-3 px-4 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                      className="py-2.5 px-3 bg-gray-100 hover:bg-amber-50 text-gray-700 hover:text-amber-800 font-bold text-xs rounded-xl transition-all cursor-pointer"
                     >
                       Reject
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTree(item.id, item.tree_name)}
+                      className="py-2.5 px-3 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1"
+                      title="Delete Plantation Record Permanently"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
                     </button>
                   </div>
 
@@ -936,13 +974,25 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-taruvar-border flex items-center justify-between text-xs">
-                      <span className="px-2.5 py-1 bg-taruvar-light text-taruvar-secondary rounded-lg font-bold text-[10px]">
-                        {tree.isBulk ? `🏢 Bulk (${tree.treeCount || 1} Trees)` : '👤 Individual'}
-                      </span>
-                      <span className="text-emerald-700 font-bold text-[11px]">
-                        {tree.verified_months || 1}/5 Mo Verified
-                      </span>
+                    <div className="pt-3 border-t border-taruvar-border flex items-center justify-between text-xs gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 bg-taruvar-light text-taruvar-secondary rounded-lg font-bold text-[10px]">
+                          {tree.isBulk ? `🏢 Bulk (${tree.treeCount || 1} Trees)` : '👤 Individual'}
+                        </span>
+                        <span className="text-emerald-700 font-bold text-[11px]">
+                          {tree.verified_months || 1}/5 Mo Verified
+                        </span>
+                      </div>
+
+                      {/* Admin Delete Plantation Action */}
+                      <button
+                        onClick={() => handleDeleteTree(tree.id || tree.treeId, tree.tree_name)}
+                        className="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                        title="Delete this plantation record from registry"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete Plantation</span>
+                      </button>
                     </div>
                   </div>
                 ))}

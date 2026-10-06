@@ -6,7 +6,14 @@ import {
   Flame, TrendingUp, Clock, Filter, Waves, Mountain, Trash2, Leaf, Activity, Droplets
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { getCloudApprovedAdoptions, getCloudPendingAdoptions, getCloudSocialWorks, saveCloudSocialWork } from '../lib/cloudDb';
+import { 
+  getCloudApprovedAdoptions, 
+  getCloudPendingAdoptions, 
+  getCloudSocialWorks, 
+  saveCloudSocialWork,
+  getCloudComments,
+  saveCloudComment 
+} from '../lib/cloudDb';
 import { compressImage } from '../lib/imageCompressor';
 
 export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOpenAuth }) {
@@ -69,15 +76,41 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
     );
   }
 
-  // Filters & Sorting Algorithm
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'trending' | 'trees' | 'rivers' | 'mountains' | 'cleanups'
-  const [sortBy, setSortBy] = useState('trending'); // 'trending' (algo) | 'recent' | 'views'
+  // Filters & Modal State
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'trees' | 'rivers' | 'mountains' | 'cleanups'
   const [heartAnim, setHeartAnim] = useState(null);
   const [showPostModal, setShowPostModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [activeCommentsPost, setActiveCommentsPost] = useState(null);
   const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState({});
+  
+  // Persistent comments across sessions & cloud
+  const [comments, setComments] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('taruvar_feed_comments') || '{}');
+    } catch {
+      return {};
+    }
+  });
+
+  // Persistent user liked posts mapping { [postId]: true/false }
+  const [userLikes, setUserLikes] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('taruvar_user_likes') || '{}');
+    } catch {
+      return {};
+    }
+  });
+
+  // Persistent likes counters mapping { [postId]: number }
+  const [postLikes, setPostLikes] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('taruvar_post_likes') || '{}');
+    } catch {
+      return {};
+    }
+  });
+
   const [bookmarkedPosts, setBookmarkedPosts] = useState({});
 
   // Tree / Eco Post Modal State
@@ -92,12 +125,14 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   });
   const [postLoading, setPostLoading] = useState(false);
 
-  // Clean Aggregated feed state combining real Tree Adoptions + Environmental Social Works + Cloud DB (Zero Dummy Data)
+  // Clean Aggregated feed state combining real Tree Adoptions + Environmental Social Works + Cloud DB
   const [feedList, setFeedList] = useState(() => {
     try {
       const localAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
       const localPending = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
       const localSocialWorks = JSON.parse(localStorage.getItem('taruvar_social_works') || '[]');
+      const savedUserLikes = JSON.parse(localStorage.getItem('taruvar_user_likes') || '{}');
+      const savedPostLikes = JSON.parse(localStorage.getItem('taruvar_post_likes') || '{}');
       
       const allLocalTrees = [...localAdoptions, ...localPending];
       const seenTreeIds = new Set();
@@ -110,85 +145,33 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         }
       }
 
-      const mappedTrees = uniqueLocalTrees.map((t, idx) => ({
-        id: t.id || t.treeId || `local-tree-${idx}`,
-        author: t.guardianName || t.adopter_name || 'Eco Guardian',
-        memberId: t.memberId || 'TRV-IND-2026-MEMBER',
-        avatar: '🌱',
-        type: 'tree',
-        title: t.tree_name || t.treeName || 'My Adopted Tree',
-        category: 'Tree Paalna Care',
-        categoryIcon: '🌳',
-        location: t.location || 'Community Green Area',
-        photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
-        caption: t.caption || `Adopted under Taruvar #OnePersonOneTree. Cadence: ${t.lastCareInterval || '1-15 Days'} wellness log. Status: ${t.wellness || 'Thriving'} 🌱`,
-        badge: t.isBulk ? 'Organization Drive' : 'Paalna Guardian',
-        likes: t.likes ?? t.upvotes ?? 0,
-        views: t.views ?? 0,
-        isLiked: false,
-        date: t.plantedDate || t.planted_date || 'RECENT',
-        timestamp: Date.now() - (idx * 1000 * 60 * 60 * 12)
-      }));
-
-      const mappedSocial = localSocialWorks.map((w, idx) => ({
-        id: w.id || `local-soc-${idx}`,
-        author: w.author || 'Eco Guardian',
-        memberId: w.memberId || 'TRV-SOC-2026',
-        avatar: w.categoryIcon || '🌊',
-        type: 'social',
-        title: w.title || 'Environmental Care Work',
-        category: w.category || 'Environmental Work',
-        categoryIcon: w.categoryIcon || '🌊',
-        location: w.location || 'Local Community Environment',
-        photo: w.photo || w.photoPreview || '/logo.jpg',
-        caption: w.caption || `${w.description || ''} Impact: ${w.impact || 'Community Action'} 🌿`,
-        badge: w.timeInterval || w.badge || 'Environmental Drive',
-        likes: w.likes ?? 0,
-        views: w.views ?? 0,
-        isLiked: false,
-        date: w.date || 'RECENT',
-        timestamp: w.timestamp || (Date.now() - (idx * 1000 * 60 * 60 * 8))
-      }));
-
-      return [...mappedSocial, ...mappedTrees];
-    } catch {
-      return [];
-    }
-  });
-
-  // Background Cloud Sync
-  useEffect(() => {
-    async function loadCloudData() {
-      try {
-        const [approvedCloud, pendingCloud, cloudSocial] = await Promise.all([
-          getCloudApprovedAdoptions(),
-          getCloudPendingAdoptions(),
-          getCloudSocialWorks()
-        ]);
-
-        const allTrees = [...(approvedCloud || []), ...(pendingCloud || [])];
-        const treePosts = allTrees.map(t => ({
-          id: t.id || t.treeId || `cloud-${Date.now()}`,
-          author: t.adopter_name || t.guardianName || 'Eco Guardian',
+      const mappedTrees = uniqueLocalTrees.map((t, idx) => {
+        const pId = t.id || t.treeId || `local-tree-${idx}`;
+        return {
+          id: pId,
+          author: t.guardianName || t.adopter_name || 'Eco Guardian',
           memberId: t.memberId || 'TRV-IND-2026-MEMBER',
           avatar: '🌱',
           type: 'tree',
-          title: t.tree_name || t.treeName || 'Adopted Tree',
+          title: t.tree_name || t.treeName || 'My Adopted Tree',
           category: 'Tree Paalna Care',
           categoryIcon: '🌳',
           location: t.location || 'Community Green Area',
-          photo: t.plantation_photo || t.photoUrl || '/logo.jpg',
-          caption: t.caption || `Adopted under the Taruvar #OnePersonOneTree movement. Ongoing wellness care and verification in progress! 🌿`,
-          badge: t.isBulk ? 'Campus Drive' : (t.status === 'approved' ? 'Verified Guardian' : 'Paalna Guardian'),
-          likes: t.likes ?? t.upvotes ?? 0,
+          photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
+          caption: t.caption || `Adopted under Taruvar #OnePersonOneTree. Cadence: ${t.lastCareInterval || '1-15 Days'} wellness log. Status: ${t.wellness || 'Thriving'} 🌱`,
+          badge: t.isBulk ? 'Organization Drive' : 'Paalna Guardian',
+          likes: savedPostLikes[pId] !== undefined ? savedPostLikes[pId] : (t.likes ?? t.upvotes ?? 0),
           views: t.views ?? 0,
-          isLiked: false,
+          isLiked: Boolean(savedUserLikes[pId]),
           date: t.plantedDate || t.planted_date || 'RECENT',
-          timestamp: t.timestamp || Date.now() - 1000 * 60 * 60 * 24
-        }));
+          timestamp: t.timestamp || (Date.now() - (idx * 1000 * 60 * 60 * 12))
+        };
+      });
 
-        const socialPosts = (cloudSocial || []).map(w => ({
-          id: w.id || `cloud-sw-${Date.now()}`,
+      const mappedSocial = localSocialWorks.map((w, idx) => {
+        const pId = w.id || `local-soc-${idx}`;
+        return {
+          id: pId,
           author: w.author || 'Eco Guardian',
           memberId: w.memberId || 'TRV-SOC-2026',
           avatar: w.categoryIcon || '🌊',
@@ -200,12 +183,87 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
           photo: w.photo || w.photoPreview || '/logo.jpg',
           caption: w.caption || `${w.description || ''} Impact: ${w.impact || 'Community Action'} 🌿`,
           badge: w.timeInterval || w.badge || 'Environmental Drive',
-          likes: w.likes ?? 0,
+          likes: savedPostLikes[pId] !== undefined ? savedPostLikes[pId] : (w.likes ?? 0),
           views: w.views ?? 0,
-          isLiked: false,
+          isLiked: Boolean(savedUserLikes[pId]),
           date: w.date || 'RECENT',
-          timestamp: w.timestamp || Date.now()
-        }));
+          timestamp: w.timestamp || (Date.now() - (idx * 1000 * 60 * 60 * 8))
+        };
+      });
+
+      return [...mappedSocial, ...mappedTrees];
+    } catch {
+      return [];
+    }
+  });
+
+  // Background Cloud Sync for adoptions, social works, and comments
+  useEffect(() => {
+    async function loadCloudData() {
+      try {
+        const [approvedCloud, pendingCloud, cloudSocial, cloudComments] = await Promise.all([
+          getCloudApprovedAdoptions(),
+          getCloudPendingAdoptions(),
+          getCloudSocialWorks(),
+          getCloudComments()
+        ]);
+
+        if (cloudComments && typeof cloudComments === 'object') {
+          setComments(prev => ({
+            ...cloudComments,
+            ...prev
+          }));
+        }
+
+        const savedUserLikes = JSON.parse(localStorage.getItem('taruvar_user_likes') || '{}');
+        const savedPostLikes = JSON.parse(localStorage.getItem('taruvar_post_likes') || '{}');
+
+        const allTrees = [...(approvedCloud || []), ...(pendingCloud || [])];
+        const treePosts = allTrees.map(t => {
+          const pId = t.id || t.treeId || `cloud-${Date.now()}`;
+          return {
+            id: pId,
+            author: t.adopter_name || t.guardianName || 'Eco Guardian',
+            memberId: t.memberId || 'TRV-IND-2026-MEMBER',
+            avatar: '🌱',
+            type: 'tree',
+            title: t.tree_name || t.treeName || 'Adopted Tree',
+            category: 'Tree Paalna Care',
+            categoryIcon: '🌳',
+            location: t.location || 'Community Green Area',
+            photo: t.plantation_photo || t.photoUrl || '/logo.jpg',
+            caption: t.caption || `Adopted under the Taruvar #OnePersonOneTree movement. Ongoing wellness care and verification in progress! 🌿`,
+            badge: t.isBulk ? 'Campus Drive' : (t.status === 'approved' ? 'Verified Guardian' : 'Paalna Guardian'),
+            likes: savedPostLikes[pId] !== undefined ? savedPostLikes[pId] : (t.likes ?? t.upvotes ?? 0),
+            views: t.views ?? 0,
+            isLiked: Boolean(savedUserLikes[pId]),
+            date: t.plantedDate || t.planted_date || 'RECENT',
+            timestamp: t.timestamp || (Date.now() - 1000 * 60 * 60 * 24)
+          };
+        });
+
+        const socialPosts = (cloudSocial || []).map(w => {
+          const pId = w.id || `cloud-sw-${Date.now()}`;
+          return {
+            id: pId,
+            author: w.author || 'Eco Guardian',
+            memberId: w.memberId || 'TRV-SOC-2026',
+            avatar: w.categoryIcon || '🌊',
+            type: 'social',
+            title: w.title || 'Environmental Care Work',
+            category: w.category || 'Environmental Work',
+            categoryIcon: w.categoryIcon || '🌊',
+            location: w.location || 'Local Community Environment',
+            photo: w.photo || w.photoPreview || '/logo.jpg',
+            caption: w.caption || `${w.description || ''} Impact: ${w.impact || 'Community Action'} 🌿`,
+            badge: w.timeInterval || w.badge || 'Environmental Drive',
+            likes: savedPostLikes[pId] !== undefined ? savedPostLikes[pId] : (w.likes ?? 0),
+            views: w.views ?? 0,
+            isLiked: Boolean(savedUserLikes[pId]),
+            date: w.date || 'RECENT',
+            timestamp: w.timestamp || Date.now()
+          };
+        });
 
         const combinedCloud = [...socialPosts, ...treePosts];
 
@@ -221,21 +279,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
     loadCloudData();
   }, []);
 
-  // Algorithm Ranking Function
-  const calculateAlgoScore = (post) => {
-    const viewsWeight = (post.views || 0) * 0.3;
-    const likesWeight = (post.likes || 0) * 2.0;
-    const commentsCount = (comments[post.id]?.length || 0);
-    const commentsWeight = commentsCount * 3.0;
-    
-    // Recency boost (decay over time)
-    const ageInHours = (Date.now() - (post.timestamp || Date.now())) / (1000 * 60 * 60);
-    const recencyMultiplier = Math.max(0.2, 1 - (ageInHours / 240));
-
-    return (viewsWeight + likesWeight + commentsWeight) * recencyMultiplier;
-  };
-
-  // Filter & Sort Pipeline
+  // Filter & Stable Sort Pipeline (Sorting by static timestamp prevents posts from jumping when liked!)
   const filteredAndSortedPosts = feedList
     .filter(post => {
       if (activeFilter === 'all') return true;
@@ -246,32 +290,46 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
       return true;
     })
     .sort((a, b) => {
-      if (sortBy === 'trending') {
-        return calculateAlgoScore(b) - calculateAlgoScore(a);
-      }
-      if (sortBy === 'views') {
-        return (b.views || 0) - (a.views || 0);
-      }
-      if (sortBy === 'recent') {
-        return (b.timestamp || 0) - (a.timestamp || 0);
-      }
-      return 0;
+      return (b.timestamp || 0) - (a.timestamp || 0);
     });
 
+  // Toggle Like with Instant UI Feedback & Persistent Storage
   const handleToggleLike = (postId) => {
+    const isCurrentlyLiked = Boolean(userLikes[postId]);
+    const nextLiked = !isCurrentlyLiked;
+
+    if (nextLiked) {
+      setHeartAnim(postId);
+      setTimeout(() => setHeartAnim(null), 900);
+      confetti({ particleCount: 35, spread: 50, origin: { y: 0.7 } });
+    }
+
+    // 1. Update userLikes in state & localStorage
+    const updatedUserLikes = { ...userLikes, [postId]: nextLiked };
+    setUserLikes(updatedUserLikes);
+    try {
+      localStorage.setItem('taruvar_user_likes', JSON.stringify(updatedUserLikes));
+    } catch {}
+
+    // 2. Update postLikes count in state & localStorage
+    const targetPost = feedList.find(p => p.id === postId);
+    const currentLikes = postLikes[postId] !== undefined ? postLikes[postId] : (targetPost?.likes || 0);
+    const nextLikesCount = nextLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+    
+    const updatedPostLikes = { ...postLikes, [postId]: nextLikesCount };
+    setPostLikes(updatedPostLikes);
+    try {
+      localStorage.setItem('taruvar_post_likes', JSON.stringify(updatedPostLikes));
+    } catch {}
+
+    // 3. Update in-place feed list without changing list order
     setFeedList(prev => prev.map(post => {
       if (post.id === postId) {
-        const nextLiked = !post.isLiked;
-        if (nextLiked) {
-          setHeartAnim(postId);
-          setTimeout(() => setHeartAnim(null), 1000);
-          confetti({ particleCount: 35, spread: 50, origin: { y: 0.7 } });
-        }
         return {
           ...post,
           isLiked: nextLiked,
-          likes: nextLiked ? post.likes + 1 : post.likes - 1,
-          views: (post.views || 0) + 1 // Viewing/liking increments interaction
+          likes: nextLikesCount,
+          views: (post.views || 0) + 1
         };
       }
       return post;
@@ -279,12 +337,12 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   };
 
   const handleDoubleTap = (postId) => {
-    const post = feedList.find(r => r.id === postId);
-    if (post && !post.isLiked) {
+    const isCurrentlyLiked = Boolean(userLikes[postId]);
+    if (!isCurrentlyLiked) {
       handleToggleLike(postId);
     } else {
       setHeartAnim(postId);
-      setTimeout(() => setHeartAnim(null), 1000);
+      setTimeout(() => setHeartAnim(null), 900);
     }
   };
 
@@ -314,7 +372,8 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
     }
   };
 
-  const handleAddComment = (postId, text) => {
+  // Add Comment with Persistent Storage & Cloud Sync
+  const handleAddComment = async (postId, text) => {
     if (!text || !text.trim()) return;
     const authorName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Eco Supporter';
     const newComment = {
@@ -323,10 +382,21 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
       text: text.trim(),
       time: 'Just now'
     };
-    setComments(prev => ({
-      ...prev,
-      [postId]: [...(prev[postId] || []), newComment]
-    }));
+
+    const updatedComments = {
+      ...comments,
+      [postId]: [...(comments[postId] || []), newComment]
+    };
+
+    setComments(updatedComments);
+    try {
+      localStorage.setItem('taruvar_feed_comments', JSON.stringify(updatedComments));
+      // Sync comment to cloud DB
+      await saveCloudComment(postId, newComment);
+    } catch (err) {
+      console.warn('Cloud comment notice:', err);
+    }
+
     setCommentText('');
     if (showToast) showToast('Cheer & comment posted! 🌱');
   };

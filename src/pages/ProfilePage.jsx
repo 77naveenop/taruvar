@@ -321,17 +321,37 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   };
 
   const handleLikeSocialWork = (id) => {
-    setSocialWorks(prev => prev.map(w => {
-      if (w.id === id) {
-        const nextLiked = !w.isLiked;
-        return {
-          ...w,
-          isLiked: nextLiked,
-          likes: nextLiked ? w.likes + 1 : w.likes - 1
-        };
-      }
-      return w;
-    }));
+    setSocialWorks(prev => {
+      const updated = prev.map(w => {
+        if (w.id === id) {
+          const nextLiked = !w.isLiked;
+          const nextLikes = nextLiked ? (w.likes || 0) + 1 : Math.max(0, (w.likes || 1) - 1);
+          
+          try {
+            const userLikes = JSON.parse(localStorage.getItem('taruvar_user_likes') || '{}');
+            userLikes[id] = nextLiked;
+            localStorage.setItem('taruvar_user_likes', JSON.stringify(userLikes));
+
+            const postLikes = JSON.parse(localStorage.getItem('taruvar_post_likes') || '{}');
+            postLikes[id] = nextLikes;
+            localStorage.setItem('taruvar_post_likes', JSON.stringify(postLikes));
+          } catch {}
+
+          return {
+            ...w,
+            isLiked: nextLiked,
+            likes: nextLikes
+          };
+        }
+        return w;
+      });
+
+      try {
+        localStorage.setItem('taruvar_social_works', JSON.stringify(updated));
+      } catch {}
+
+      return updated;
+    });
   };
 
   if (!currentUser) {
