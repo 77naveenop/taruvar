@@ -1,1 +1,64 @@
-[]
+[
+  {
+    "id": "one-person-one-tree",
+    "title": "ONE PERSON. ONE TREE.",
+    "subtitle": "Taruvar 50",
+    "category": "Citizen Afforestation",
+    "icon": "🌱",
+    "coverImage": "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80",
+    "summary": "A public movement encouraging individuals to take personal responsibility for at least one tree from plantation to full maturity.",
+    "points": [
+      "Shift focus from mass unmonitored planting to high survival rate (95%+).",
+      "Encourages personal ownership under the Paalna (nurturing) concept.",
+      "Accessible to every citizen across homes, societies, villages, and streets."
+    ],
+    "targetGoal": "50",
+    "currentProgress": 2,
+    "status": "Active",
+    "location": "Pan-India",
+    "createdAt": "2026-01-01",
+    "updatedAt": "2026-10-06T18:16:04.097Z"
+  },
+  {
+    "id": "green-shakti",
+    "title": "TARUVAR GREEN SHAKTI",
+    "subtitle": "Women Environmental Leadership • महिला नेतृत्व",
+    "category": "Women Leadership",
+    "icon": "👩",
+    "coverImage": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1200&q=80",
+    "summary": "Empowering women's leadership, participation, and environmental guardianship in residential areas, villages, and community self-help circles.",
+    "points": [
+      "Mobilizing women as primary guardians of local saplings and community greens.",
+      "Promoting neighborhood tree care circles and rainwater distribution.",
+      "Building leadership networks and environmental stewardship workshops.",
+      "Recognizing women eco-leaders with documented Taruvar Green Shakti honors."
+    ],
+    "targetGoal": "500 Women Green Circles",
+    "currentProgress": 110,
+    "progressPercent": 55,
+    "status": "Active",
+    "location": "Uttar Pradesh & Bihar",
+    "createdAt": "2026-02-15"
+  },
+  {
+    "id": "youth-campus",
+    "title": "TARUVAR YOUTH & CAMPUS NETWORK",
+    "subtitle": "Student Volunteer & Internship Platform • युवा शक्ति",
+    "category": "Campus & Youth",
+    "icon": "🎓",
+    "coverImage": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
+    "summary": "Connecting students with real environmental campaigns, leadership opportunities, and documented participation credentials.",
+    "points": [
+      "Establish campus chapters in schools, colleges, and universities.",
+      "Hands-on experience in campaign management, tree monitoring, and youth drives.",
+      "Documented volunteer certificates and internship experience based on real work.",
+      "Leadership progression from volunteer to Campus Chapter Coordinator."
+    ],
+    "targetGoal": "100 College Chapters",
+    "currentProgress": 32,
+    "progressPercent": 40,
+    "status": "Active",
+    "location": "Lucknow, Delhi-NCR, Varanasi",
+    "createdAt": "2026-03-01"
+  }
+]
