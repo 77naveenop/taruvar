@@ -3,19 +3,23 @@ import { Mail, Lock, User, ShieldCheck, ArrowRight, Sparkles, CheckCircle2, Aler
 import confetti from 'canvas-confetti';
 
 export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redirectTarget }) {
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    password: ''
+    password: '',
+    newPassword: '',
+    confirmPassword: ''
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+    setSuccessMsg('');
     setLoading(true);
 
     const emailTrimmed = formData.email.trim().toLowerCase();
@@ -23,7 +27,70 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
     const isMasterAdminPassword = formData.password === 'naveenpr332@gmail.com77';
 
     try {
-      // 1. MASTER ADMIN INSTANT AUTHENTICATION
+      // 1. FORGOT / RESET PASSWORD FLOW
+      if (mode === 'forgot') {
+        if (!emailTrimmed) {
+          throw new Error('Please enter your registered email address.');
+        }
+
+        if (!formData.newPassword || formData.newPassword.length < 6) {
+          throw new Error('Please enter a new password with at least 6 characters.');
+        }
+
+        if (formData.newPassword !== formData.confirmPassword) {
+          throw new Error('New passwords do not match. Please re-enter carefully.');
+        }
+
+        // Check and update registered users database
+        const registeredUsers = JSON.parse(localStorage.getItem('taruvar_registered_users') || '[]');
+        const userIndex = registeredUsers.findIndex(u => u.email === emailTrimmed);
+
+        if (userIndex >= 0) {
+          registeredUsers[userIndex].password = formData.newPassword;
+          localStorage.setItem('taruvar_registered_users', JSON.stringify(registeredUsers));
+        } else if (isAdminEmail) {
+          // Admin account reset
+          registeredUsers.push({
+            id: 'trv-admin-master-001',
+            email: 'naveenpr332@gmail.com',
+            password: formData.newPassword,
+            user_metadata: {
+              full_name: 'Taruvar Master Admin',
+              role: 'admin',
+              member_id: 'TRV-ADMIN-001'
+            }
+          });
+          localStorage.setItem('taruvar_registered_users', JSON.stringify(registeredUsers));
+        } else {
+          // If user wasn't registered yet, create their fresh profile with this password
+          const freshUser = {
+            id: `trv-user-${Date.now()}`,
+            email: emailTrimmed,
+            password: formData.newPassword,
+            user_metadata: {
+              full_name: emailTrimmed.split('@')[0],
+              role: 'user',
+              member_id: `TRV-IND-2026-${Math.floor(1000 + Math.random() * 9000)}`
+            }
+          };
+          registeredUsers.push(freshUser);
+          localStorage.setItem('taruvar_registered_users', JSON.stringify(registeredUsers));
+        }
+
+        setSuccessMsg('Your password has been successfully reset! You can now sign in with your new password.');
+        if (showToast) showToast('Password reset successfully! Please sign in.');
+        confetti({ particleCount: 50, spread: 60 });
+        
+        // Switch back to login mode with prefilled email
+        setTimeout(() => {
+          setFormData(prev => ({ ...prev, password: prev.newPassword, newPassword: '', confirmPassword: '' }));
+          setMode('login');
+        }, 1500);
+
+        return;
+      }
+
+      // 2. MASTER ADMIN INSTANT AUTHENTICATION
       if (isAdminEmail && isMasterAdminPassword) {
         const masterAdminUser = {
           id: 'trv-admin-master-001',
@@ -46,7 +113,7 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
         return;
       }
 
-      // 2. USER REGISTRATION
+      // 3. USER REGISTRATION
       if (mode === 'register') {
         const userRole = isAdminEmail ? 'admin' : 'user';
         const memberId = isAdminEmail 
@@ -94,7 +161,7 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
           setActivePage('profile');
         }
       } else {
-        // 3. USER / ADMIN SIGN IN
+        // 4. USER / ADMIN SIGN IN
         let authenticatedUser = null;
 
         // Local persistent user database verification
@@ -103,7 +170,7 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
 
         if (localUser) {
           if (localUser.password !== formData.password) {
-            throw new Error('Incorrect password. Please verify and try again.');
+            throw new Error('Incorrect password. Please verify your password or use "Forgot password?" below.');
           }
           authenticatedUser = {
             id: localUser.id,
@@ -113,7 +180,7 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
         } else if (isAdminEmail) {
           // Admin fallback
           if (!isMasterAdminPassword) {
-            throw new Error('Invalid Admin password. Please check your credentials.');
+            throw new Error('Invalid Admin password. Please check your credentials or reset password.');
           }
           authenticatedUser = {
             id: 'trv-admin-master-001',
@@ -139,7 +206,7 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
             registeredUsers.push({ ...authenticatedUser, password: formData.password });
             localStorage.setItem('taruvar_registered_users', JSON.stringify(registeredUsers));
           } else {
-            throw new Error('Account not found. Please click "Create Account" tab above to register.');
+            throw new Error('Account not found. Please click "Create Account" tab above or use "Forgot password?" to set a password.');
           }
         }
 
@@ -187,7 +254,11 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
           <span>Taruvar Guardian Network</span>
         </div>
         <h1 className="text-3xl font-black text-taruvar-dark">
-          {mode === 'register' ? 'Join the Movement' : 'Sign In to Taruvar'}
+          {mode === 'register' 
+            ? 'Join the Movement' 
+            : mode === 'forgot'
+              ? 'Reset Your Password'
+              : 'Sign In to Taruvar'}
         </h1>
         <p className="text-xs text-taruvar-muted leading-relaxed">
           {redirectTarget === 'adopt' && (
@@ -202,35 +273,58 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
           )}
           {mode === 'register' 
             ? 'Create your Eco-Guardian account to adopt trees, track 5-month growth logs, and earn verification badges.' 
-            : 'Enter your email and password to access your profile, adopted trees, and verification desk.'}
+            : mode === 'forgot'
+              ? 'Enter your registered email and choose a new password to restore account access.'
+              : 'Enter your email and password to access your profile, adopted trees, and verification desk.'}
         </p>
       </div>
 
-      {/* Clean Mode Switcher Tabs (Only 2 Public Tabs) */}
-      <div className="bg-taruvar-bg p-1.5 rounded-2xl border border-taruvar-border flex items-center mb-6 gap-1">
-        <button
-          type="button"
-          onClick={() => { setMode('login'); setErrorMsg(''); }}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            mode === 'login' 
-              ? 'bg-white text-taruvar-dark shadow-xs font-extrabold' 
-              : 'text-taruvar-muted hover:text-taruvar-dark'
-          }`}
-        >
-          Sign In / प्रवेश
-        </button>
-        <button
-          type="button"
-          onClick={() => { setMode('register'); setErrorMsg(''); }}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            mode === 'register' 
-              ? 'bg-white text-taruvar-dark shadow-xs font-extrabold' 
-              : 'text-taruvar-muted hover:text-taruvar-dark'
-          }`}
-        >
-          Create Account / रजिस्टर
-        </button>
-      </div>
+      {/* Mode Switcher Tabs */}
+      {mode !== 'forgot' ? (
+        <div className="bg-taruvar-bg p-1.5 rounded-2xl border border-taruvar-border flex items-center mb-6 gap-1">
+          <button
+            type="button"
+            onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              mode === 'login' 
+                ? 'bg-white text-taruvar-dark shadow-xs font-extrabold' 
+                : 'text-taruvar-muted hover:text-taruvar-dark'
+            }`}
+          >
+            Sign In / प्रवेश
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode('register'); setErrorMsg(''); setSuccessMsg(''); }}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              mode === 'register' 
+                ? 'bg-white text-taruvar-dark shadow-xs font-extrabold' 
+                : 'text-taruvar-muted hover:text-taruvar-dark'
+            }`}
+          >
+            Create Account / रजिस्टर
+          </button>
+        </div>
+      ) : (
+        <div className="mb-6 flex items-center justify-between bg-taruvar-bg p-2 rounded-2xl border border-taruvar-border">
+          <button
+            type="button"
+            onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+            className="flex items-center gap-1.5 text-xs font-bold text-taruvar-secondary hover:text-taruvar-hover px-3 py-1.5 rounded-xl hover:bg-white transition-all cursor-pointer"
+          >
+            ← Back to Sign In
+          </button>
+          <span className="text-[11px] font-bold text-taruvar-muted pr-3 uppercase">Account Recovery</span>
+        </div>
+      )}
+
+      {/* Success Alert */}
+      {successMsg && (
+        <div className="mb-6 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-2xl flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>{successMsg}</span>
+        </div>
+      )}
 
       {/* Error Alert */}
       {errorMsg && (
@@ -279,23 +373,74 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1.5">
-            Password *
-          </label>
-          <div className="relative">
-            <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Minimum 6 characters"
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
-            />
+        {mode === 'forgot' ? (
+          <>
+            <div>
+              <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1.5">
+                New Password *
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={formData.newPassword}
+                  onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                  placeholder="Enter new password (min 6 characters)"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider mb-1.5">
+                Confirm New Password *
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  placeholder="Re-enter new password"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-taruvar-dark uppercase tracking-wider">
+                Password *
+              </label>
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => { setMode('forgot'); setErrorMsg(''); setSuccessMsg(''); }}
+                  className="text-[11px] font-bold text-taruvar-secondary hover:underline cursor-pointer"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Minimum 6 characters"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-taruvar-border text-xs focus:outline-none focus:ring-2 focus:ring-taruvar-primary/50"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <button
           type="submit"
@@ -305,13 +450,17 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
           {loading ? (
             <>
               <RefreshCw className="w-4 h-4 animate-spin" />
-              <span>Authenticating...</span>
+              <span>Processing...</span>
             </>
           ) : (
             <>
               <ShieldCheck className="w-4 h-4" />
               <span>
-                {mode === 'register' ? 'Register as Eco-Guardian' : 'Sign In'}
+                {mode === 'register' 
+                  ? 'Register as Eco-Guardian' 
+                  : mode === 'forgot'
+                    ? 'Reset Password & Proceed'
+                    : 'Sign In'}
               </span>
               <ArrowRight className="w-4 h-4" />
             </>
@@ -327,10 +476,21 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
             Already have an account?{' '}
             <button
               type="button"
-              onClick={() => { setMode('login'); setErrorMsg(''); }}
+              onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
               className="text-taruvar-secondary font-bold hover:underline cursor-pointer"
             >
               Sign In here
+            </button>
+          </p>
+        ) : mode === 'forgot' ? (
+          <p>
+            Remember your password?{' '}
+            <button
+              type="button"
+              onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+              className="text-taruvar-secondary font-bold hover:underline cursor-pointer"
+            >
+              Sign In
             </button>
           </p>
         ) : (
@@ -338,7 +498,7 @@ export default function AuthPage({ onAuthSuccess, setActivePage, showToast, redi
             New to Taruvar?{' '}
             <button
               type="button"
-              onClick={() => { setMode('register'); setErrorMsg(''); }}
+              onClick={() => { setMode('register'); setErrorMsg(''); setSuccessMsg(''); }}
               className="text-taruvar-secondary font-bold hover:underline cursor-pointer"
             >
               Create an account
