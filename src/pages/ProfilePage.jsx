@@ -42,7 +42,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
         verified_months: t.verified_months || t.verifiedMonths || 1,
         wellness: t.wellness || 'Thriving & Lush Green',
         lastCareInterval: t.lastCareInterval || '1 Day Care',
-        upvotes: t.upvotes || 1,
+        upvotes: t.upvotes ?? 0,
         user_upvoted: false,
         reports: Array.isArray(t.reports) ? t.reports : []
       }));
@@ -101,7 +101,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
               verified_months: d.verified_months || d.verifiedMonths || 1,
               wellness: d.wellness || 'Thriving & Lush Green',
               lastCareInterval: d.lastCareInterval || '1 Day Care',
-              upvotes: d.upvotes || 1,
+              upvotes: d.upvotes ?? 0,
               user_upvoted: false,
               reports: Array.isArray(d.reports) ? d.reports : []
             }));
@@ -230,9 +230,9 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
       description: socialForm.description || `Undertook ${socialForm.category} action under Taruvar Environmental Movement.`,
       photo: socialForm.photoPreview,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      views: 1,
-      likes: 1,
-      isLiked: true
+      views: 0,
+      likes: 0,
+      isLiked: false
     };
 
     const updatedWorks = [newWork, ...socialWorks];
@@ -683,7 +683,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
                     </button>
 
                     <span className="text-[11px] text-taruvar-muted font-bold">
-                      👁️ {work.views || 45} Views on Explore
+                      👁️ {work.views || 0} Views on Explore
                     </span>
                   </div>
 

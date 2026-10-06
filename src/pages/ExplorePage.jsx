@@ -110,8 +110,8 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
         caption: t.caption || `Adopted under Taruvar #OnePersonOneTree. Cadence: ${t.lastCareInterval || '1-15 Days'} wellness log. Status: ${t.wellness || 'Thriving'} 🌱`,
         badge: t.isBulk ? 'Organization Drive' : 'Paalna Guardian',
-        likes: t.upvotes || 1,
-        views: (t.upvotes || 1) * 8 + 12,
+        likes: t.likes ?? t.upvotes ?? 0,
+        views: t.views ?? 0,
         isLiked: false,
         date: t.plantedDate || 'RECENT',
         timestamp: Date.now() - (idx * 1000 * 60 * 60 * 12)
@@ -130,8 +130,8 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         photo: w.photo || '/logo.jpg',
         caption: `${w.description || ''} Impact: ${w.impact || 'Community Action'} 🌿`,
         badge: w.timeInterval || 'Environmental Drive',
-        likes: w.likes || 1,
-        views: w.views || (w.likes || 1) * 8 + 15,
+        likes: w.likes ?? 0,
+        views: w.views ?? 0,
         isLiked: false,
         date: w.date || 'RECENT',
         timestamp: Date.now() - (idx * 1000 * 60 * 60 * 8)
@@ -162,8 +162,8 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
             photo: t.plantation_photo || t.photoUrl || '/logo.jpg',
             caption: t.caption || `Adopted under the Taruvar #OnePersonOneTree movement. Verified by team Taruvar with ongoing wellness care! 🌿`,
             badge: t.isBulk ? 'Campus Drive' : 'Verified Guardian',
-            likes: t.upvotes || 35,
-            views: (t.upvotes || 35) * 18 + 320,
+            likes: t.likes ?? t.upvotes ?? 0,
+            views: t.views ?? 0,
             isLiked: false,
             date: t.plantedDate || t.planted_date || 'RECENT',
             timestamp: Date.now() - 1000 * 60 * 60 * 24
@@ -333,9 +333,9 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
       photo: postFormData.photoPreview,
       caption: postFormData.caption || `${postFormData.title} completed under Taruvar movement. 🌱`,
       badge: postFormData.timeCadence || 'Eco Action',
-      likes: 1,
-      views: 12,
-      isLiked: true,
+      likes: 0,
+      views: 0,
+      isLiked: false,
       date: 'JUST NOW',
       timestamp: Date.now()
     };
@@ -721,32 +721,23 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
 
             {/* Comments List */}
             <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
-              <div className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-taruvar-secondary">@priyasharma</span>
-                  <span className="text-[10px] text-taruvar-muted">2h ago</span>
+              {!(comments[activeCommentsPost.id]?.length > 0) ? (
+                <div className="py-8 text-center space-y-1.5 text-xs text-taruvar-muted">
+                  <span className="text-2xl block">💬</span>
+                  <p className="font-bold text-taruvar-dark">No comments yet</p>
+                  <p className="text-[11px]">Be the first to cheer this eco guardian!</p>
                 </div>
-                <p className="text-taruvar-dark">Incredible environmental dedication! Respect to the team for taking action 👏🌿</p>
-              </div>
-
-              <div className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-taruvar-secondary">@vikram_delhi</span>
-                  <span className="text-[10px] text-taruvar-muted">5h ago</span>
-                </div>
-                <p className="text-taruvar-dark">Great initiative. How can we join the next weekend cleanup or planting session?</p>
-              </div>
-
-              {/* Dynamic user comments */}
-              {(comments[activeCommentsPost.id] || []).map((c) => (
-                <div key={c.id} className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-emerald-800">@{c.author}</span>
-                    <span className="text-[10px] text-emerald-600">{c.time}</span>
+              ) : (
+                (comments[activeCommentsPost.id] || []).map((c) => (
+                  <div key={c.id} className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-emerald-800">@{c.author}</span>
+                      <span className="text-[10px] text-emerald-600">{c.time}</span>
+                    </div>
+                    <p className="text-taruvar-dark">{c.text}</p>
                   </div>
-                  <p className="text-taruvar-dark">{c.text}</p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             {/* Post Comment Input Form */}
