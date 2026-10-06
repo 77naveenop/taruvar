@@ -6,7 +6,8 @@ import {
   Flame, TrendingUp, Clock, Filter, Waves, Mountain, Trash2, Leaf, Activity, Droplets
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { getCloudApprovedAdoptions } from '../lib/cloudDb';
+import { getCloudApprovedAdoptions, getCloudPendingAdoptions, getCloudSocialWorks, saveCloudSocialWork } from '../lib/cloudDb';
+import { compressImage } from '../lib/imageCompressor';
 
 export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOpenAuth }) {
   // If user is not logged in, show auth gate screen
@@ -95,10 +96,22 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   const [feedList, setFeedList] = useState(() => {
     try {
       const localAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      const localPending = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
       const localSocialWorks = JSON.parse(localStorage.getItem('taruvar_social_works') || '[]');
       
-      const mappedTrees = localAdoptions.map((t, idx) => ({
-        id: t.id || `local-tree-${idx}`,
+      const allLocalTrees = [...localAdoptions, ...localPending];
+      const seenTreeIds = new Set();
+      const uniqueLocalTrees = [];
+      for (const t of allLocalTrees) {
+        const id = t.id || t.treeId;
+        if (id && !seenTreeIds.has(id)) {
+          seenTreeIds.add(id);
+          uniqueLocalTrees.push(t);
+        }
+      }
+
+      const mappedTrees = uniqueLocalTrees.map((t, idx) => ({
+        id: t.id || t.treeId || `local-tree-${idx}`,
         author: t.guardianName || t.adopter_name || 'Eco Guardian',
         memberId: t.memberId || 'TRV-IND-2026-MEMBER',
         avatar: '🌱',
@@ -113,28 +126,28 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         likes: t.likes ?? t.upvotes ?? 0,
         views: t.views ?? 0,
         isLiked: false,
-        date: t.plantedDate || 'RECENT',
+        date: t.plantedDate || t.planted_date || 'RECENT',
         timestamp: Date.now() - (idx * 1000 * 60 * 60 * 12)
       }));
 
       const mappedSocial = localSocialWorks.map((w, idx) => ({
         id: w.id || `local-soc-${idx}`,
         author: w.author || 'Eco Guardian',
-        memberId: 'TRV-SOC-2026',
+        memberId: w.memberId || 'TRV-SOC-2026',
         avatar: w.categoryIcon || '🌊',
         type: 'social',
         title: w.title || 'Environmental Care Work',
         category: w.category || 'Environmental Work',
         categoryIcon: w.categoryIcon || '🌊',
         location: w.location || 'Local Community Environment',
-        photo: w.photo || '/logo.jpg',
-        caption: `${w.description || ''} Impact: ${w.impact || 'Community Action'} 🌿`,
-        badge: w.timeInterval || 'Environmental Drive',
+        photo: w.photo || w.photoPreview || '/logo.jpg',
+        caption: w.caption || `${w.description || ''} Impact: ${w.impact || 'Community Action'} 🌿`,
+        badge: w.timeInterval || w.badge || 'Environmental Drive',
         likes: w.likes ?? 0,
         views: w.views ?? 0,
         isLiked: false,
         date: w.date || 'RECENT',
-        timestamp: Date.now() - (idx * 1000 * 60 * 60 * 8)
+        timestamp: w.timestamp || (Date.now() - (idx * 1000 * 60 * 60 * 8))
       }));
 
       return [...mappedSocial, ...mappedTrees];
@@ -147,34 +160,60 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   useEffect(() => {
     async function loadCloudData() {
       try {
-        const approvedCloud = await getCloudApprovedAdoptions();
-        if (Array.isArray(approvedCloud) && approvedCloud.length > 0) {
-          const cloudMapped = approvedCloud.map(t => ({
-            id: t.id || t.treeId || `cloud-${Date.now()}`,
-            author: t.adopter_name || t.guardianName || 'Eco Guardian',
-            memberId: t.memberId || 'TRV-IND-2026-MEMBER',
-            avatar: '🌱',
-            type: 'tree',
-            title: t.tree_name || t.treeName || 'Adopted Tree',
-            category: 'Tree Paalna Care',
-            categoryIcon: '🌳',
-            location: t.location || 'Community Green Area',
-            photo: t.plantation_photo || t.photoUrl || '/logo.jpg',
-            caption: t.caption || `Adopted under the Taruvar #OnePersonOneTree movement. Verified by team Taruvar with ongoing wellness care! 🌿`,
-            badge: t.isBulk ? 'Campus Drive' : 'Verified Guardian',
-            likes: t.likes ?? t.upvotes ?? 0,
-            views: t.views ?? 0,
-            isLiked: false,
-            date: t.plantedDate || t.planted_date || 'RECENT',
-            timestamp: Date.now() - 1000 * 60 * 60 * 24
-          }));
+        const [approvedCloud, pendingCloud, cloudSocial] = await Promise.all([
+          getCloudApprovedAdoptions(),
+          getCloudPendingAdoptions(),
+          getCloudSocialWorks()
+        ]);
 
-          setFeedList(prev => {
-            const existingIds = new Set(prev.map(p => p.id));
-            const newOnes = cloudMapped.filter(p => !existingIds.has(p.id));
-            return [...newOnes, ...prev];
-          });
-        }
+        const allTrees = [...(approvedCloud || []), ...(pendingCloud || [])];
+        const treePosts = allTrees.map(t => ({
+          id: t.id || t.treeId || `cloud-${Date.now()}`,
+          author: t.adopter_name || t.guardianName || 'Eco Guardian',
+          memberId: t.memberId || 'TRV-IND-2026-MEMBER',
+          avatar: '🌱',
+          type: 'tree',
+          title: t.tree_name || t.treeName || 'Adopted Tree',
+          category: 'Tree Paalna Care',
+          categoryIcon: '🌳',
+          location: t.location || 'Community Green Area',
+          photo: t.plantation_photo || t.photoUrl || '/logo.jpg',
+          caption: t.caption || `Adopted under the Taruvar #OnePersonOneTree movement. Ongoing wellness care and verification in progress! 🌿`,
+          badge: t.isBulk ? 'Campus Drive' : (t.status === 'approved' ? 'Verified Guardian' : 'Paalna Guardian'),
+          likes: t.likes ?? t.upvotes ?? 0,
+          views: t.views ?? 0,
+          isLiked: false,
+          date: t.plantedDate || t.planted_date || 'RECENT',
+          timestamp: t.timestamp || Date.now() - 1000 * 60 * 60 * 24
+        }));
+
+        const socialPosts = (cloudSocial || []).map(w => ({
+          id: w.id || `cloud-sw-${Date.now()}`,
+          author: w.author || 'Eco Guardian',
+          memberId: w.memberId || 'TRV-SOC-2026',
+          avatar: w.categoryIcon || '🌊',
+          type: 'social',
+          title: w.title || 'Environmental Care Work',
+          category: w.category || 'Environmental Work',
+          categoryIcon: w.categoryIcon || '🌊',
+          location: w.location || 'Local Community Environment',
+          photo: w.photo || w.photoPreview || '/logo.jpg',
+          caption: w.caption || `${w.description || ''} Impact: ${w.impact || 'Community Action'} 🌿`,
+          badge: w.timeInterval || w.badge || 'Environmental Drive',
+          likes: w.likes ?? 0,
+          views: w.views ?? 0,
+          isLiked: false,
+          date: w.date || 'RECENT',
+          timestamp: w.timestamp || Date.now()
+        }));
+
+        const combinedCloud = [...socialPosts, ...treePosts];
+
+        setFeedList(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const newOnes = combinedCloud.filter(p => !existingIds.has(p.id));
+          return [...newOnes, ...prev];
+        });
       } catch (err) {
         console.warn('Explore cloud sync note:', err);
       }
@@ -293,23 +332,32 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   };
 
   // Photo Select for New Post
-  const handlePhotoSelect = (e) => {
+  const handlePhotoSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      try {
+        const compressed = await compressImage(file, 900, 900, 0.7);
         setPostFormData(prev => ({
           ...prev,
-          photo: reader.result,
-          photoPreview: reader.result
+          photo: compressed,
+          photoPreview: compressed
         }));
-      };
-      reader.readAsDataURL(file);
+      } catch {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPostFormData(prev => ({
+            ...prev,
+            photo: reader.result,
+            photoPreview: reader.result
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
   // Submit New Post directly to Explore
-  const handleCreatePost = (e) => {
+  const handleCreatePost = async (e) => {
     e.preventDefault();
     if (!postFormData.photoPreview || !postFormData.title) {
       alert('Please provide a title and upload a photo to post.');
@@ -323,6 +371,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
     const newPost = {
       id: `feed-user-${Date.now()}`,
       author: authorName,
+      userEmail: (currentUser?.email || '').trim().toLowerCase(),
       memberId: memberId,
       avatar: postFormData.category.includes('River') ? '🌊' : postFormData.category.includes('Mountain') ? '🏔️' : '🌱',
       type: postFormData.category.includes('Tree') ? 'tree' : 'social',
@@ -336,11 +385,24 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
       likes: 0,
       views: 0,
       isLiked: false,
-      date: 'JUST NOW',
+      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       timestamp: Date.now()
     };
 
-    setFeedList([newPost, ...feedList]);
+    setFeedList(prev => [newPost, ...prev]);
+
+    // Save to local storage
+    try {
+      const localSocial = JSON.parse(localStorage.getItem('taruvar_social_works') || '[]');
+      const updatedLocal = [newPost, ...localSocial.filter(p => p.id !== newPost.id)];
+      localStorage.setItem('taruvar_social_works', JSON.stringify(updatedLocal));
+
+      // Permanent Cloud Sync so everyone on the platform sees it across devices!
+      await saveCloudSocialWork(newPost);
+    } catch (err) {
+      console.warn('Cloud sync note for new post:', err);
+    }
+
     setPostLoading(false);
     setShowPostModal(false);
     setPostFormData({
@@ -355,7 +417,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
 
     confetti({ particleCount: 70, spread: 60 });
     if (showToast) {
-      showToast('Your Environmental Work is live on the Explore Feed! 🌿');
+      showToast('Your Environmental Work is live & saved across Taruvar! 🌿');
     }
   };
 

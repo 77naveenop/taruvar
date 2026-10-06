@@ -117,15 +117,18 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
 
     confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
 
+    const cleanEmail = (formData.email || currentUser?.email || '').trim().toLowerCase();
+    const cleanName = (formData.name || currentUser?.user_metadata?.full_name || 'Eco Guardian').trim();
+
     const newRecord = {
       id: generatedTreeId,
       isBulk: isBulk,
       orgName: isBulk ? formData.orgName : null,
       treeCount: count,
-      guardianName: formData.name,
-      user_email: formData.email,
-      adopter_name: isBulk ? `${formData.orgName} (${formData.name})` : formData.name,
-      adopter_email: formData.email,
+      guardianName: cleanName,
+      user_email: cleanEmail,
+      adopter_name: isBulk ? `${formData.orgName} (${cleanName})` : cleanName,
+      adopter_email: cleanEmail,
       memberId: generatedMemberId,
       treeId: generatedTreeId,
       tree_name: isBulk ? `${formData.orgName} Green Drive` : (formData.treeName || formData.treeType.split(' ')[0] + ' Guardian'),
@@ -138,7 +141,9 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
       photoUrl: formData.photoPreview,
       plantation_photo: formData.photoPreview,
       status: 'pending',
-      upvotes: 1,
+      upvotes: 0,
+      likes: 0,
+      views: 0,
       user_upvoted: false,
       reports: []
     };
@@ -146,21 +151,32 @@ export default function AdoptTreePage({ currentUser, showToast, setActivePage, o
     // Save locally for real-time live site use
     try {
       const allAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
-      allAdoptions.unshift(newRecord);
-      localStorage.setItem('taruvar_adoptions', JSON.stringify(allAdoptions));
+      const filteredAll = allAdoptions.filter(t => t.id !== generatedTreeId && t.treeId !== generatedTreeId);
+      filteredAll.unshift(newRecord);
+      localStorage.setItem('taruvar_adoptions', JSON.stringify(filteredAll));
 
       const pendingAdoptions = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
-      pendingAdoptions.unshift({
+      const filteredPending = pendingAdoptions.filter(t => t.id !== generatedTreeId && t.treeId !== generatedTreeId);
+      filteredPending.unshift({
         id: generatedTreeId,
+        treeId: generatedTreeId,
+        memberId: generatedMemberId,
         adopter_name: newRecord.adopter_name,
-        adopter_email: formData.email,
+        guardianName: cleanName,
+        adopter_email: cleanEmail,
+        user_email: cleanEmail,
         tree_name: newRecord.tree_name,
         species: newRecord.species,
         location: newRecord.location,
         plantation_photo: formData.photoPreview,
-        date: newRecord.plantedDate
+        photoUrl: formData.photoPreview,
+        status: 'pending',
+        date: newRecord.plantedDate,
+        plantedDate: newRecord.plantedDate
       });
-      // 3. Save to shared Cloud DB for instant cross-device admin receipt
+      localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(filteredPending));
+
+      // 3. Save to shared Cloud DB for instant cross-device admin receipt & persistence
       try {
         await saveCloudPendingAdoption(newRecord);
       } catch (err) {

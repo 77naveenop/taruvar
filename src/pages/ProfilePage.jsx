@@ -7,7 +7,8 @@ import {
 import confetti from 'canvas-confetti';
 
 import GuardianIdCard from '../components/GuardianIdCard';
-import { getCloudPendingAdoptions, getCloudApprovedAdoptions } from '../lib/cloudDb';
+import { getCloudPendingAdoptions, getCloudApprovedAdoptions, getCloudSocialWorks, saveCloudSocialWork } from '../lib/cloudDb';
+import { compressImage } from '../lib/imageCompressor';
 
 export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLogout, setActivePage, showToast }) {
   // Tabs: 'my-trees' (Section A) | 'social-work' (Section B) | 'id-card' | 'leaderboard'
@@ -28,24 +29,44 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   // User's own adopted trees
   const [myTrees, setMyTrees] = useState(() => {
     try {
-      const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
-      const filtered = currentUser?.email
-        ? all.filter(t => t.user_email === currentUser.email || t.adopter_email === currentUser.email)
-        : all;
-      return filtered.map(t => ({
-        ...t,
-        id: t.id || t.treeId || `tree-${Date.now()}`,
-        tree_name: t.tree_name || t.treeName || 'My Adopted Tree',
-        species: t.species || 'Indigenous Tree',
-        location: t.location || 'Community Green Area',
-        plantation_photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
-        verified_months: t.verified_months || t.verifiedMonths || 1,
-        wellness: t.wellness || 'Thriving & Lush Green',
-        lastCareInterval: t.lastCareInterval || '1 Day Care',
-        upvotes: t.upvotes ?? 0,
-        user_upvoted: false,
-        reports: Array.isArray(t.reports) ? t.reports : []
-      }));
+      const allAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      const pendingAdoptions = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      const combined = [...allAdoptions, ...pendingAdoptions];
+
+      const userEmailLower = (currentUser?.email || '').trim().toLowerCase();
+      const userNameLower = (currentUser?.user_metadata?.full_name || '').trim().toLowerCase();
+
+      const filtered = userEmailLower
+        ? combined.filter(t => {
+            const tEmail = (t.user_email || t.adopter_email || '').trim().toLowerCase();
+            const tName = (t.adopter_name || t.guardianName || '').trim().toLowerCase();
+            return tEmail === userEmailLower || (userNameLower && tName === userNameLower);
+          })
+        : combined;
+
+      const seen = new Set();
+      const unique = [];
+      for (const t of filtered) {
+        const id = t.id || t.treeId || `tree-${Date.now()}`;
+        if (!seen.has(id)) {
+          seen.add(id);
+          unique.push({
+            ...t,
+            id: id,
+            tree_name: t.tree_name || t.treeName || 'My Adopted Tree',
+            species: t.species || 'Indigenous Tree',
+            location: t.location || 'Community Green Area',
+            plantation_photo: t.photoUrl || t.plantation_photo || '/logo.jpg',
+            verified_months: t.verified_months || t.verifiedMonths || 1,
+            wellness: t.wellness || 'Thriving & Lush Green',
+            lastCareInterval: t.lastCareInterval || '1 Day Care',
+            upvotes: t.upvotes ?? 0,
+            user_upvoted: false,
+            reports: Array.isArray(t.reports) ? t.reports : []
+          });
+        }
+      }
+      return unique;
     } catch {
       return [];
     }
@@ -79,18 +100,33 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   useEffect(() => {
     async function loadCloudProfileData() {
       try {
-        const [cloudPending, cloudApproved] = await Promise.all([
+        const [cloudPending, cloudApproved, cloudSocial] = await Promise.all([
           getCloudPendingAdoptions(),
-          getCloudApprovedAdoptions()
+          getCloudApprovedAdoptions(),
+          getCloudSocialWorks()
         ]);
+
+        // 1. Sync Social Works
+        if (Array.isArray(cloudSocial) && cloudSocial.length > 0) {
+          setSocialWorks(prev => {
+            const seen = new Set(prev.map(p => p.id));
+            const newWorks = cloudSocial.filter(w => !seen.has(w.id));
+            return [...newWorks, ...prev];
+          });
+        }
+
+        // 2. Sync User's Adopted Trees (both approved & pending)
         const allCloud = [...(cloudApproved || []), ...(cloudPending || [])];
         if (allCloud.length > 0 && currentUser?.email) {
-          const userEmailLower = currentUser.email.toLowerCase();
-          const userTrees = allCloud
-            .filter(d => 
-              (d.adopter_email && d.adopter_email.toLowerCase() === userEmailLower) ||
-              (d.user_email && d.user_email.toLowerCase() === userEmailLower)
-            )
+          const userEmailLower = currentUser.email.trim().toLowerCase();
+          const userNameLower = (currentUser?.user_metadata?.full_name || '').trim().toLowerCase();
+
+          const userCloudTrees = allCloud
+            .filter(d => {
+              const dEmail = (d.adopter_email || d.user_email || '').trim().toLowerCase();
+              const dName = (d.adopter_name || d.guardianName || '').trim().toLowerCase();
+              return dEmail === userEmailLower || (userNameLower && dName === userNameLower);
+            })
             .map(d => ({
               ...d,
               id: d.id || d.treeId || `tree-${Date.now()}`,
@@ -105,8 +141,13 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
               user_upvoted: false,
               reports: Array.isArray(d.reports) ? d.reports : []
             }));
-          if (userTrees.length > 0) {
-            setMyTrees(userTrees);
+
+          if (userCloudTrees.length > 0) {
+            setMyTrees(prev => {
+              const seen = new Set(prev.map(t => t.id));
+              const freshFromCloud = userCloudTrees.filter(t => !seen.has(t.id));
+              return [...prev, ...freshFromCloud];
+            });
           }
         }
       } catch (e) {
@@ -121,15 +162,20 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   const isAdmin = currentUser?.user_metadata?.role === 'admin' || currentUser?.email?.toLowerCase() === 'naveenpr332@gmail.com';
 
   // Photo Select for Tree Care Report
-  const handlePhotoSelect = (e) => {
+  const handlePhotoSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setReportPhoto(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setReportPhotoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, 900, 900, 0.7);
+        setReportPhotoPreview(compressed);
+      } catch {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setReportPhotoPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -151,7 +197,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
       photo: reportPhotoPreview,
       notes: reportNotes || `Logged ${careIntervalDays}-day wellness update: ${careActivity}. Tree status: ${wellnessStatus}`,
       status: 'pending',
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     };
 
     const updatedTrees = myTrees.map(t => {
@@ -183,23 +229,32 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   };
 
   // Photo Select for Social Work
-  const handleSocialPhotoSelect = (e) => {
+  const handleSocialPhotoSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      try {
+        const compressed = await compressImage(file, 900, 900, 0.7);
         setSocialForm(prev => ({
           ...prev,
-          photo: reader.result,
-          photoPreview: reader.result
+          photo: compressed,
+          photoPreview: compressed
         }));
-      };
-      reader.readAsDataURL(file);
+      } catch {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setSocialForm(prev => ({
+            ...prev,
+            photo: reader.result,
+            photoPreview: reader.result
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
   // Submit Section B: Social Environmental Work
-  const submitSocialWork = (e) => {
+  const submitSocialWork = async (e) => {
     e.preventDefault();
     if (!socialForm.title.trim() || !socialForm.photoPreview) {
       alert('Please provide a title and photo proof for your environmental care work.');
@@ -220,7 +275,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
     const newWork = {
       id: `sw-${Date.now()}`,
       author: displayName,
-      userEmail: currentUser?.email || 'user@taruvar.org',
+      userEmail: (currentUser?.email || 'user@taruvar.org').trim().toLowerCase(),
       title: socialForm.title.trim(),
       category: socialForm.category,
       categoryIcon: categoryIcons[socialForm.category] || '🌍',
@@ -229,17 +284,22 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
       impact: socialForm.impact || 'Community Environmental Action',
       description: socialForm.description || `Undertook ${socialForm.category} action under Taruvar Environmental Movement.`,
       photo: socialForm.photoPreview,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       views: 0,
       likes: 0,
-      isLiked: false
+      isLiked: false,
+      timestamp: Date.now()
     };
 
     const updatedWorks = [newWork, ...socialWorks];
     setSocialWorks(updatedWorks);
     try {
       localStorage.setItem('taruvar_social_works', JSON.stringify(updatedWorks));
-    } catch {}
+      // Cloud persistence for universal cross-device visibility
+      await saveCloudSocialWork(newWork);
+    } catch (err) {
+      console.warn('Cloud sync error for social work:', err);
+    }
 
     setSubmittingSocial(false);
     setShowSocialModal(false);
@@ -256,7 +316,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
 
     confetti({ particleCount: 70, spread: 60 });
     if (showToast) {
-      showToast('Environmental Care Work logged & shared to Explore feed! 🌍');
+      showToast('Environmental Care Work logged & permanently saved to Explore feed! 🌍');
     }
   };
 

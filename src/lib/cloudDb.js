@@ -217,6 +217,73 @@ export async function rejectCloudAdoption(treeId) {
 }
 
 // ==========================================
+// SOCIAL WORKS & EXPLORE POSTS CLOUD MANAGEMENT
+// ==========================================
+
+/**
+ * Fetch all community social works & + Add Yours posts from cloud
+ */
+export async function getCloudSocialWorks() {
+  try {
+    const result = await fetchGithubJson('social_works.json');
+    if (Array.isArray(result.data) && result.data.length > 0) {
+      localStorage.setItem('taruvar_social_works', JSON.stringify(result.data));
+      return result.data;
+    }
+  } catch (e) {
+    console.warn('Could not fetch cloud social works:', e);
+  }
+
+  try {
+    const saved = localStorage.getItem('taruvar_social_works');
+    if (saved) return JSON.parse(saved);
+  } catch {}
+
+  return [];
+}
+
+/**
+ * Save / push a community social work post to cloud atomically
+ */
+export async function saveCloudSocialWork(record) {
+  if (!record || !record.id) return false;
+
+  const leanRecord = {
+    id: record.id,
+    author: record.author || 'Eco Guardian',
+    memberId: record.memberId || 'TRV-SOC-2026',
+    userEmail: (record.userEmail || record.user_email || '').toLowerCase().trim(),
+    title: record.title || 'Environmental Care Action',
+    category: record.category || 'Tree Adoption & Care',
+    categoryIcon: record.categoryIcon || '🌱',
+    timeInterval: record.timeInterval || record.badge || '1 Day Action',
+    location: record.location || 'Local Community Environment',
+    impact: record.impact || 'Community Environmental Action',
+    description: record.description || record.caption || '',
+    photo: record.photo || record.photoPreview || null,
+    likes: Number(record.likes) || 0,
+    views: Number(record.views) || 0,
+    date: record.date || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    timestamp: record.timestamp || Date.now()
+  };
+
+  // Update local storage
+  try {
+    const local = JSON.parse(localStorage.getItem('taruvar_social_works') || '[]');
+    const filtered = local.filter(w => w.id !== leanRecord.id);
+    const updated = [leanRecord, ...filtered];
+    localStorage.setItem('taruvar_social_works', JSON.stringify(updated));
+  } catch {}
+
+  // Sync to cloud
+  return await putGithubJsonWithRetry('social_works.json', (currentList) => {
+    const list = Array.isArray(currentList) ? currentList : [];
+    const filtered = list.filter(item => item.id !== leanRecord.id);
+    return [leanRecord, ...filtered].slice(0, 200);
+  });
+}
+
+// ==========================================
 // INITIATIVES & PROJECTS CLOUD MANAGEMENT
 // ==========================================
 
