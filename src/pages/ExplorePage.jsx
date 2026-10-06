@@ -83,6 +83,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [activeCommentsPost, setActiveCommentsPost] = useState(null);
   const [commentText, setCommentText] = useState('');
+  const [inlineCommentInputs, setInlineCommentInputs] = useState({});
   
   // Persistent comments across sessions & cloud
   const [comments, setComments] = useState(() => {
@@ -736,35 +737,38 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
                 </div>
 
                 {/* INLINE QUICK COMMENT BOX */}
-                <div className="px-4 py-3 border-t border-taruvar-border flex items-center gap-2 bg-taruvar-bg/40">
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const val = inlineCommentInputs[post.id];
+                    if (val && val.trim()) {
+                      handleAddComment(post.id, val.trim());
+                      setInlineCommentInputs(prev => ({ ...prev, [post.id]: '' }));
+                    }
+                  }}
+                  className="px-4 py-3 border-t border-taruvar-border flex items-center gap-2 bg-taruvar-bg/40"
+                >
                   <div className="w-6 h-6 rounded-full bg-taruvar-secondary text-white text-[10px] font-black flex items-center justify-center shrink-0">
                     {currentUser?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <input 
                     type="text"
                     placeholder="Cheer this environmental guardian..."
-                    id={`comment-input-${post.id}`}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleAddComment(post.id, e.target.value);
-                        e.target.value = '';
-                      }
+                    value={inlineCommentInputs[post.id] || ''}
+                    onChange={(e) => {
+                      const text = e.target.value;
+                      setInlineCommentInputs(prev => ({ ...prev, [post.id]: text }));
                     }}
                     className="flex-1 bg-transparent text-xs text-taruvar-dark placeholder:text-taruvar-muted focus:outline-none"
                   />
                   <button
-                    onClick={() => {
-                      const input = document.getElementById(`comment-input-${post.id}`);
-                      if (input && input.value) {
-                        handleAddComment(post.id, input.value);
-                        input.value = '';
-                      }
-                    }}
-                    className="text-xs font-bold text-taruvar-secondary hover:text-taruvar-hover cursor-pointer"
+                    type="submit"
+                    disabled={!inlineCommentInputs[post.id]?.trim()}
+                    className="text-xs font-bold text-taruvar-secondary hover:text-taruvar-hover disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-opacity"
                   >
                     Post
                   </button>
-                </div>
+                </form>
 
               </article>
             ))}
@@ -799,10 +803,10 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
 
       </div>
 
-      {/* MODAL 1: Comments Sheet Modal */}
+      {/* MODAL 1: Comments Sheet Modal (z-[70] sits on top of mobile bottom nav & virtual keyboard) */}
       {showCommentsModal && activeCommentsPost && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-taruvar-border shadow-2xl p-5 space-y-4 max-h-[75vh] flex flex-col justify-between text-taruvar-dark">
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-taruvar-border shadow-2xl p-5 pb-8 sm:pb-5 space-y-4 max-h-[85vh] sm:max-h-[75vh] flex flex-col justify-between text-taruvar-dark">
             
             <div className="flex items-center justify-between border-b border-taruvar-border pb-3">
               <div className="flex items-center gap-2">
@@ -827,7 +831,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
             </div>
 
             {/* Comments List */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs min-h-[140px] max-h-[280px]">
               {!(comments[activeCommentsPost.id]?.length > 0) ? (
                 <div className="py-8 text-center space-y-1.5 text-xs text-taruvar-muted">
                   <span className="text-2xl block">💬</span>
@@ -851,7 +855,10 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
             <form 
               onSubmit={(e) => {
                 e.preventDefault();
-                handleAddComment(activeCommentsPost.id, commentText);
+                if (commentText.trim()) {
+                  handleAddComment(activeCommentsPost.id, commentText);
+                  setCommentText('');
+                }
               }} 
               className="flex gap-2 pt-2 border-t border-taruvar-border"
             >
@@ -860,13 +867,14 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Cheer this environmental guardian..."
-                className="flex-1 px-4 py-2.5 bg-taruvar-bg rounded-xl text-xs text-taruvar-dark placeholder-taruvar-muted focus:outline-none focus:ring-2 focus:ring-taruvar-secondary border border-taruvar-border"
+                className="flex-1 px-4 py-3 bg-taruvar-bg rounded-xl text-xs text-taruvar-dark placeholder-taruvar-muted focus:outline-none focus:ring-2 focus:ring-taruvar-secondary border border-taruvar-border"
               />
               <button
                 type="submit"
-                className="px-4 py-2.5 bg-taruvar-secondary text-white font-black rounded-xl text-xs flex items-center justify-center cursor-pointer hover:bg-taruvar-hover transition-colors"
+                disabled={!commentText.trim()}
+                className="px-4 py-3 bg-taruvar-secondary text-white font-black rounded-xl text-xs flex items-center justify-center cursor-pointer hover:bg-taruvar-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                <Send className="w-3.5 h-3.5" />
+                <Send className="w-4 h-4" />
               </button>
             </form>
 
