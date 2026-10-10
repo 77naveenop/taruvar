@@ -3,7 +3,8 @@ import {
   Heart, MessageCircle, Share2, Compass, Sprout, 
   MapPin, Calendar, Award, CheckCircle2, Sparkles, 
   Plus, Camera, Upload, ShieldCheck, TreePine, Eye, X, Send, Bookmark, MoreHorizontal,
-  Flame, TrendingUp, Clock, Filter, Waves, Mountain, Trash2, Leaf, Activity, Droplets
+  Flame, TrendingUp, Clock, Filter, Waves, Mountain, Trash2, Leaf, Activity, Droplets,
+  ChevronRight, ArrowRight, Shield, Check, Info
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { 
@@ -114,6 +115,24 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
 
   const [bookmarkedPosts, setBookmarkedPosts] = useState({});
 
+  // Tree Growing Journey Modal State
+  const [selectedJourneyTree, setSelectedJourneyTree] = useState(null);
+  const [showJourneyModal, setShowJourneyModal] = useState(false);
+
+  // Environmental Creator Guide Modal State
+  const [showCreatorGuideModal, setShowCreatorGuideModal] = useState(false);
+
+  // Local & Cloud tree directory for looking up complete growing milestones
+  const [treeDirectory, setTreeDirectory] = useState(() => {
+    try {
+      const localAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      const localPending = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      return [...localAdoptions, ...localPending];
+    } catch {
+      return [];
+    }
+  });
+
   // Tree / Eco Post Modal State
   const [postFormData, setPostFormData] = useState({
     title: '',
@@ -150,11 +169,13 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         const pId = t.id || t.treeId || `local-tree-${idx}`;
         return {
           id: pId,
+          treeId: pId,
           author: t.guardianName || t.adopter_name || 'Eco Guardian',
           memberId: t.memberId || 'TRV-IND-2026-MEMBER',
           avatar: '🌱',
           type: 'tree',
           title: t.tree_name || t.treeName || 'My Adopted Tree',
+          species: t.species || 'Indigenous Tree',
           category: 'Tree Paalna Care',
           categoryIcon: '🌳',
           location: t.location || 'Community Green Area',
@@ -165,6 +186,10 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
           views: t.views ?? 0,
           isLiked: Boolean(savedUserLikes[pId]),
           date: t.plantedDate || t.planted_date || 'RECENT',
+          plantedDate: t.plantedDate || t.planted_date || 'RECENT',
+          wellness: t.wellness || 'Thriving & Lush Green',
+          lastCareInterval: t.lastCareInterval || '1-15 Days',
+          reports: Array.isArray(t.reports) ? t.reports : [],
           timestamp: t.timestamp || (Date.now() - (idx * 1000 * 60 * 60 * 12))
         };
       });
@@ -173,6 +198,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         const pId = w.id || `local-soc-${idx}`;
         return {
           id: pId,
+          treeId: w.treeId,
           author: w.author || 'Eco Guardian',
           memberId: w.memberId || 'TRV-SOC-2026',
           avatar: w.categoryIcon || '🌊',
@@ -220,15 +246,28 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         const savedPostLikes = JSON.parse(localStorage.getItem('taruvar_post_likes') || '{}');
 
         const allTrees = [...(approvedCloud || []), ...(pendingCloud || [])];
+        
+        // Update tree directory
+        setTreeDirectory(prev => {
+          const map = new Map();
+          for (const t of [...prev, ...allTrees]) {
+            const id = t.id || t.treeId;
+            if (id) map.set(id, t);
+          }
+          return Array.from(map.values());
+        });
+
         const treePosts = allTrees.map(t => {
           const pId = t.id || t.treeId || `cloud-${Date.now()}`;
           return {
             id: pId,
+            treeId: pId,
             author: t.adopter_name || t.guardianName || 'Eco Guardian',
             memberId: t.memberId || 'TRV-IND-2026-MEMBER',
             avatar: '🌱',
             type: 'tree',
             title: t.tree_name || t.treeName || 'Adopted Tree',
+            species: t.species || 'Indigenous Tree',
             category: 'Tree Paalna Care',
             categoryIcon: '🌳',
             location: t.location || 'Community Green Area',
@@ -239,6 +278,10 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
             views: t.views ?? 0,
             isLiked: Boolean(savedUserLikes[pId]),
             date: t.plantedDate || t.planted_date || 'RECENT',
+            plantedDate: t.plantedDate || t.planted_date || 'RECENT',
+            wellness: t.wellness || 'Thriving & Lush Green',
+            lastCareInterval: t.lastCareInterval || '1-15 Days',
+            reports: Array.isArray(t.reports) ? t.reports : [],
             timestamp: t.timestamp || (Date.now() - 1000 * 60 * 60 * 24)
           };
         });
@@ -247,6 +290,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
           const pId = w.id || `cloud-sw-${Date.now()}`;
           return {
             id: pId,
+            treeId: w.treeId,
             author: w.author || 'Eco Guardian',
             memberId: w.memberId || 'TRV-SOC-2026',
             avatar: w.categoryIcon || '🌊',
@@ -279,6 +323,63 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
     }
     loadCloudData();
   }, []);
+
+  // Tree Directory Lookup & Milestones Helpers
+  const getTreeForPost = (post) => {
+    if (!post) return null;
+    const targetId = post.treeId || post.id;
+    const found = treeDirectory.find(t => (t.id === targetId || t.treeId === targetId));
+    if (found) return found;
+    if (post.type === 'tree') {
+      return {
+        id: post.id,
+        tree_name: post.title,
+        treeName: post.title,
+        species: post.species || 'Indigenous Tree',
+        adopter_name: post.author,
+        guardianName: post.author,
+        location: post.location,
+        plantation_photo: post.photo,
+        photoUrl: post.photo,
+        plantedDate: post.plantedDate || post.date,
+        wellness: post.wellness || 'Thriving & Lush Green',
+        lastCareInterval: post.lastCareInterval || '1-15 Days',
+        reports: Array.isArray(post.reports) ? post.reports : []
+      };
+    }
+    return null;
+  };
+
+  const getTreeMilestoneCount = (post) => {
+    const tree = getTreeForPost(post);
+    if (!tree) return 1;
+    const repCount = Array.isArray(tree.reports) ? tree.reports.length : 0;
+    return repCount + 1; // +1 for Day 0 Sapling
+  };
+
+  const openTreeJourney = (post) => {
+    const tree = getTreeForPost(post);
+    if (tree) {
+      setSelectedJourneyTree(tree);
+      setShowJourneyModal(true);
+    } else {
+      setSelectedJourneyTree({
+        id: post.id || post.treeId || 'tree-journey',
+        tree_name: post.title,
+        treeName: post.title,
+        species: post.species || 'Indigenous Tree',
+        adopter_name: post.author,
+        guardianName: post.author,
+        location: post.location,
+        plantation_photo: post.photo,
+        photoUrl: post.photo,
+        plantedDate: post.date,
+        wellness: post.wellness || 'Thriving & Lush Green',
+        reports: []
+      });
+      setShowJourneyModal(true);
+    }
+  };
 
   // Filter & Stable Sort Pipeline (Sorting by static timestamp prevents posts from jumping when liked!)
   const filteredAndSortedPosts = feedList
@@ -502,13 +603,22 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         <div className="sticky top-16 sm:top-20 z-30 bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl px-4 py-3 sm:py-3.5 border border-taruvar-border shadow-md transition-all">
           <div className="flex items-center justify-between gap-2">
             
-            {/* Left: Environmental creators */}
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🌿</span>
-              <span className="font-extrabold text-xs sm:text-sm text-taruvar-dark tracking-tight">
-                Environmental creators
-              </span>
-            </div>
+            {/* Left: Environmental creators (Click to learn how to become a creator) */}
+            <button
+              onClick={() => setShowCreatorGuideModal(true)}
+              className="flex items-center gap-2 group cursor-pointer text-left transition-transform active:scale-95"
+              title="Click to learn how to become an Environmental Creator"
+            >
+              <span className="text-xl group-hover:scale-110 transition-transform">🌿</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-xs sm:text-sm text-taruvar-dark group-hover:text-taruvar-secondary transition-colors tracking-tight">
+                  Environmental creators
+                </span>
+                <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-black group-hover:bg-emerald-200">
+                  Guide ⓘ
+                </span>
+              </div>
+            </button>
 
             {/* Right: Add yours+ Action Button */}
             <button
@@ -705,6 +815,37 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
                       <span className="text-taruvar-dark/90">{post.caption}</span>
                     </p>
                   </div>
+
+                  {/* CHECK JOURNEY OF THIS TREE BUTTON */}
+                  {(post.type === 'tree' || post.treeId) && (
+                    <div className="pt-2">
+                      <button
+                        onClick={() => openTreeJourney(post)}
+                        className="w-full py-2.5 px-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100 hover:from-emerald-100 hover:to-teal-100 border border-emerald-300/80 rounded-2xl flex items-center justify-between text-xs text-emerald-950 font-bold transition-all shadow-xs hover:shadow-sm cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-sm shadow-sm group-hover:scale-105 transition-transform">
+                            🌱
+                          </div>
+                          <div className="text-left">
+                            <div className="flex items-center gap-1.5 font-black text-emerald-900 text-xs">
+                              <span>Check Journey of this tree</span>
+                              <span className="px-2 py-0.5 bg-emerald-200/90 text-emerald-900 text-[10px] font-black rounded-full">
+                                {getTreeMilestoneCount(post)} Milestones
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-emerald-700/90 font-medium">
+                              Planted sapling → verified 1-15 day growth photos & wellness logs
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-emerald-800 text-xs font-black shrink-0 pl-2">
+                          <span>View</span>
+                          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </button>
+                    </div>
+                  )}
 
                   {/* COMMENTS PREVIEW */}
                   {comments[post.id] && comments[post.id].length > 0 && (
@@ -1007,6 +1148,410 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
                 <span>Publish to Explore Feed</span>
               </button>
             </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL 3: TREE GROWING JOURNEY MODAL */}
+      {/* ======================================================== */}
+      {showJourneyModal && selectedJourneyTree && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col border border-taruvar-border shadow-2xl overflow-hidden animate-scale-up">
+            
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-taruvar-border bg-gradient-to-r from-emerald-50 via-teal-50 to-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-lg shadow-md shadow-emerald-500/20">
+                  🌱
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase tracking-wider">
+                      Tree Growing Journey
+                    </span>
+                    <span className="text-[10px] text-taruvar-muted font-bold">
+                      {selectedJourneyTree.id}
+                    </span>
+                  </div>
+                  <h3 className="font-black text-base sm:text-lg text-taruvar-dark leading-tight mt-0.5">
+                    {selectedJourneyTree.tree_name || selectedJourneyTree.treeName || 'Adopted Tree'}
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowJourneyModal(false);
+                  setSelectedJourneyTree(null);
+                }}
+                className="w-8 h-8 rounded-full bg-taruvar-bg hover:bg-taruvar-border flex items-center justify-center text-taruvar-muted hover:text-taruvar-dark transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Tree Summary Bar */}
+            <div className="px-5 py-3 bg-taruvar-bg/70 border-b border-taruvar-border flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-taruvar-dark flex items-center gap-1">
+                  <span className="text-emerald-600">Guardian:</span>
+                  <span>{selectedJourneyTree.adopter_name || selectedJourneyTree.guardianName || 'Eco Guardian'}</span>
+                </span>
+                <span className="text-taruvar-muted">•</span>
+                <span className="text-taruvar-muted flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-rose-500" />
+                  <span>{selectedJourneyTree.location || 'Community Green Area'}</span>
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 rounded-xl font-bold text-[11px] flex items-center gap-1">
+                  <Activity className="w-3 h-3 text-emerald-700" />
+                  <span>{selectedJourneyTree.wellness || 'Thriving & Lush Green'}</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Scrollable Timeline */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+              {/* Introduction Card */}
+              <div className="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/80 text-emerald-950 flex items-start gap-3">
+                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-black text-xs">Complete Lifecycle & Care Diary</p>
+                  <p className="text-[11px] text-emerald-800 leading-relaxed">
+                    Under Taruvar's <strong>#OnePersonOneTree</strong> Paalna initiative, tree guardians take responsibility for nurturing saplings to maturity. Every milestone photo and wellness log is permanently recorded below.
+                  </p>
+                </div>
+              </div>
+
+              {/* Chronological Milestones List */}
+              <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-3 sm:before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-emerald-500 before:via-teal-400 before:to-emerald-200">
+                
+                {/* Milestone 1: Plantation Day (Day 0) */}
+                <div className="relative">
+                  {/* Timeline Dot */}
+                  <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-black shadow-md border-2 border-white">
+                    1
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-taruvar-border p-4 shadow-xs space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-1">
+                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase">
+                        Milestone 1 • Plantation Day (Day 0)
+                      </span>
+                      <span className="text-[11px] font-bold text-taruvar-muted flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>{selectedJourneyTree.plantedDate || selectedJourneyTree.planted_date || 'Plantation Day'}</span>
+                      </span>
+                    </div>
+
+                    <div className="rounded-xl overflow-hidden border border-taruvar-border bg-gray-900 max-h-56">
+                      <img 
+                        src={selectedJourneyTree.plantation_photo || selectedJourneyTree.photoUrl || selectedJourneyTree.photo || '/logo.jpg'} 
+                        alt="Sapling Plantation" 
+                        className="w-full h-48 sm:h-56 object-cover"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="font-extrabold text-xs text-taruvar-dark flex items-center gap-2">
+                        <span>🌱 Sapling Planted & Pledged</span>
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                          {selectedJourneyTree.species || 'Indigenous Species'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-taruvar-muted leading-relaxed">
+                        Sapling officially registered under Taruvar. Guardian pledged to protect, water, and nurture the tree through regular 1-15 day verification cycles.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Milestones 2+: Growth & Care Reports */}
+                {Array.isArray(selectedJourneyTree.reports) && selectedJourneyTree.reports.length > 0 ? (
+                  selectedJourneyTree.reports.map((report, rIdx) => (
+                    <div key={report.id || rIdx} className="relative">
+                      {/* Timeline Dot */}
+                      <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs font-black shadow-md border-2 border-white">
+                        {rIdx + 2}
+                      </div>
+
+                      <div className="bg-white rounded-2xl border border-taruvar-border p-4 shadow-xs space-y-3">
+                        <div className="flex items-center justify-between flex-wrap gap-1">
+                          <span className="px-2.5 py-0.5 bg-teal-100 text-teal-900 text-[10px] font-black rounded-full uppercase">
+                            Milestone {rIdx + 2} • {report.intervalDays || 1}-Day Care Log
+                          </span>
+                          <span className="text-[11px] font-bold text-taruvar-muted flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{report.date || 'Care Logged'}</span>
+                          </span>
+                        </div>
+
+                        {report.photo && (
+                          <div className="rounded-xl overflow-hidden border border-taruvar-border bg-gray-900 max-h-56">
+                            <img 
+                              src={report.photo} 
+                              alt={`Milestone ${rIdx + 2}`} 
+                              className="w-full h-48 sm:h-56 object-cover"
+                            />
+                          </div>
+                        )}
+
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="px-2 py-0.5 bg-taruvar-light text-taruvar-secondary text-[10px] font-bold rounded-md">
+                              🌿 Activity: {report.activity || 'Tree Nurturing'}
+                            </span>
+                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 text-[10px] font-bold rounded-md border border-emerald-200">
+                              ✓ Status: {report.wellness || 'Thriving'}
+                            </span>
+                          </div>
+                          {report.notes && (
+                            <p className="text-[11px] text-taruvar-dark bg-taruvar-bg/60 p-2.5 rounded-xl border border-taruvar-border leading-relaxed">
+                              "{report.notes}"
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="relative">
+                    <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-amber-400 text-white flex items-center justify-center text-xs font-black shadow-md border-2 border-white">
+                      ⏳
+                    </div>
+                    <div className="bg-amber-50/70 rounded-2xl border border-amber-200 p-4 space-y-1 text-amber-950">
+                      <p className="font-black text-xs">Upcoming Growth Update</p>
+                      <p className="text-[11px] text-amber-900/90 leading-relaxed">
+                        The guardian logs regular 1-15 day growth photos and wellness progress. Next milestone photo will appear here once submitted!
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-taruvar-bg border-t border-taruvar-border flex items-center justify-between gap-2">
+              <button
+                onClick={() => {
+                  setShowJourneyModal(false);
+                  onOpenPledge();
+                }}
+                className="px-4 py-2.5 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-black text-xs rounded-xl shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
+              >
+                <Sprout className="w-3.5 h-3.5" />
+                <span>Adopt a Tree Like This</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: `${selectedJourneyTree.tree_name || 'Adopted Tree'} Journey • Taruvar`,
+                      text: `Check out the growing journey of ${selectedJourneyTree.tree_name} under Taruvar #OnePersonOneTree!`,
+                      url: window.location.href
+                    }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(window.location.href);
+                    if (showToast) showToast('Journey link copied to clipboard!');
+                  }
+                }}
+                className="px-3.5 py-2.5 bg-white hover:bg-taruvar-border border border-taruvar-border text-taruvar-dark font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer transition-all"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Share Journey</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL 4: ENVIRONMENTAL CREATOR PATHWAY & GUIDE MODAL */}
+      {/* ======================================================== */}
+      {showCreatorGuideModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col border border-taruvar-border shadow-2xl overflow-hidden animate-scale-up">
+            
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-taruvar-border bg-gradient-to-r from-teal-50 via-emerald-50 to-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-600 via-emerald-500 to-green-600 text-white flex items-center justify-center text-xl shadow-md shadow-emerald-500/20">
+                  🌿
+                </div>
+                <div>
+                  <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase tracking-wider">
+                    Taruvar Creator Program
+                  </span>
+                  <h3 className="font-black text-base sm:text-lg text-taruvar-dark leading-tight mt-0.5">
+                    How to Become an Environmental Creator
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowCreatorGuideModal(false)}
+                className="w-8 h-8 rounded-full bg-taruvar-bg hover:bg-taruvar-border flex items-center justify-center text-taruvar-muted hover:text-taruvar-dark transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Guide Content */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs">
+              
+              {/* Intro Banner */}
+              <div className="p-4 bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-transparent rounded-2xl border border-emerald-200 space-y-1.5">
+                <p className="font-black text-sm text-taruvar-dark flex items-center gap-2">
+                  <span>Beyond Tree Adoption • Be an Eco Storyteller</span>
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                </p>
+                <p className="text-[11px] text-taruvar-muted leading-relaxed">
+                  Anyone can adopt a tree, but <strong>Environmental Creators</strong> lead ground-level initiatives—cleaning sacred rivers, protecting mountain trails, eliminating plastic waste, and inspiring thousands of citizens across India.
+                </p>
+              </div>
+
+              {/* 4 Core Pillars */}
+              <div>
+                <h4 className="font-black text-xs text-taruvar-dark uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                  <Award className="w-3.5 h-3.5 text-teal-600" />
+                  <span>The 4 Action Pillars for Creators</span>
+                </h4>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="p-3 bg-blue-50/70 rounded-2xl border border-blue-200/80 space-y-1">
+                    <div className="flex items-center gap-1.5 font-black text-blue-900 text-xs">
+                      <span>🌊</span>
+                      <span>River & Water Care</span>
+                    </div>
+                    <p className="text-[10px] text-blue-800 leading-tight">
+                      Ghat cleanups, pond restoration, removing plastic & floral waste from rivers.
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/80 space-y-1">
+                    <div className="flex items-center gap-1.5 font-black text-amber-900 text-xs">
+                      <span>🏔️</span>
+                      <span>Mountain & Treks</span>
+                    </div>
+                    <p className="text-[10px] text-amber-800 leading-tight">
+                      Zero-waste hiking, collecting trash from high-altitude trails, eco-tourism care.
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/80 space-y-1">
+                    <div className="flex items-center gap-1.5 font-black text-teal-900 text-xs">
+                      <span>🧹</span>
+                      <span>Waste Elimination</span>
+                    </div>
+                    <p className="text-[10px] text-teal-800 leading-tight">
+                      Neighborhood cleanup drives, segregation campaigns, anti-littering circles.
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/80 space-y-1">
+                    <div className="flex items-center gap-1.5 font-black text-emerald-900 text-xs">
+                      <span>🌳</span>
+                      <span>Citizen Forestry</span>
+                    </div>
+                    <p className="text-[10px] text-emerald-800 leading-tight">
+                      Seedball dispersal, community nurseries, multi-tree canopy guardianship.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4 Step Process */}
+              <div>
+                <h4 className="font-black text-xs text-taruvar-dark uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>The Step-by-Step Creator Process</span>
+                </h4>
+                
+                <div className="space-y-2.5">
+                  <div className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-taruvar-secondary text-white font-black text-xs flex items-center justify-center shrink-0">
+                      1
+                    </span>
+                    <div>
+                      <h5 className="font-black text-xs text-taruvar-dark">Execute On-Ground Eco Action</h5>
+                      <p className="text-[11px] text-taruvar-muted mt-0.5">
+                        Conduct a cleanup, plantation drive, or conservation activity individually or with your society/college group.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-teal-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                      2
+                    </span>
+                    <div>
+                      <h5 className="font-black text-xs text-taruvar-dark">Capture Proof & Impact Media</h5>
+                      <p className="text-[11px] text-taruvar-muted mt-0.5">
+                        Take clear field photos or videos showing before/after impact, waste collected, or saplings nurtured.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                      3
+                    </span>
+                    <div>
+                      <h5 className="font-black text-xs text-taruvar-dark">Tap "Add yours+" to Publish</h5>
+                      <p className="text-[11px] text-taruvar-muted mt-0.5">
+                        Click the <strong>Add yours+</strong> button in the Explore bar, choose your category, cadence (1, 3, 7, 15 days), upload photo, and post.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-taruvar-bg rounded-2xl border border-taruvar-border flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-amber-500 text-white font-black text-xs flex items-center justify-center shrink-0">
+                      4
+                    </span>
+                    <div>
+                      <h5 className="font-black text-xs text-taruvar-dark">Earn Creator Badge & Official Credentials</h5>
+                      <p className="text-[11px] text-taruvar-muted mt-0.5">
+                        Your work is verified by Taruvar inspectors. You earn the <strong>Verified Eco-Guardian Badge</strong> and an official, verifiable Taruvar Environmental Creator Certificate in your Profile!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Creator Benefits Summary */}
+              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-950 space-y-1.5">
+                <p className="font-extrabold text-xs flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Creator Benefits & Recognition</span>
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-[10px] text-emerald-900 font-semibold pt-1">
+                  <div>✓ Verified Green Creator Checkmark</div>
+                  <div>✓ Pan-India Explore Feed Visibility</div>
+                  <div>✓ Official QR-Verifiable Certificate</div>
+                  <div>✓ Leadership in Taruvar City Chapters</div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-taruvar-bg border-t border-taruvar-border flex items-center justify-between gap-2">
+              <button
+                onClick={() => {
+                  setShowCreatorGuideModal(false);
+                  setShowPostModal(true);
+                }}
+                className="w-full py-3 bg-gradient-to-r from-taruvar-secondary via-emerald-600 to-teal-600 hover:opacity-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Publish My Environmental Action Now (Add yours+)</span>
+              </button>
+            </div>
 
           </div>
         </div>

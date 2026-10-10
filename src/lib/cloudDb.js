@@ -217,6 +217,94 @@ export async function rejectCloudAdoption(treeId) {
 }
 
 /**
+ * Save / sync tree growth & care report to cloud (updates tree records and publishes to public Explore feed)
+ */
+export async function saveCloudTreeCareReport(treeId, newReport, wellnessStatus, careInterval, extraInfo = {}) {
+  if (!treeId || !newReport) return false;
+
+  const leanReport = {
+    id: newReport.id || `rep-${Date.now()}`,
+    intervalDays: newReport.intervalDays || 1,
+    activity: newReport.activity || 'Tree Nurturing Update',
+    wellness: wellnessStatus || newReport.wellness || 'Thriving & Lush Green',
+    photo: newReport.photo || null,
+    notes: newReport.notes || '',
+    date: newReport.date || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    timestamp: Date.now()
+  };
+
+  // 1. Update approved adoptions in cloud
+  try {
+    await putGithubJsonWithRetry('approved_adoptions.json', (currentApproved) => {
+      const list = Array.isArray(currentApproved) ? currentApproved : [];
+      return list.map(t => {
+        if (t.id === treeId || t.treeId === treeId) {
+          const existingReports = Array.isArray(t.reports) ? t.reports : [];
+          return {
+            ...t,
+            wellness: wellnessStatus || t.wellness,
+            lastCareInterval: careInterval || t.lastCareInterval,
+            reports: [...existingReports.filter(r => r.id !== leanReport.id), leanReport]
+          };
+        }
+        return t;
+      });
+    });
+  } catch (err) {
+    console.warn('Sync tree care report to approved adoptions:', err);
+  }
+
+  // 2. Update pending adoptions in cloud if pending
+  try {
+    await putGithubJsonWithRetry('pending_adoptions.json', (currentPending) => {
+      const list = Array.isArray(currentPending) ? currentPending : [];
+      return list.map(t => {
+        if (t.id === treeId || t.treeId === treeId) {
+          const existingReports = Array.isArray(t.reports) ? t.reports : [];
+          return {
+            ...t,
+            wellness: wellnessStatus || t.wellness,
+            lastCareInterval: careInterval || t.lastCareInterval,
+            reports: [...existingReports.filter(r => r.id !== leanReport.id), leanReport]
+          };
+        }
+        return t;
+      });
+    });
+  } catch (err) {
+    console.warn('Sync tree care report to pending adoptions:', err);
+  }
+
+  // 3. Publish public Explore Feed Post so all citizens see the growing update!
+  try {
+    const publicPost = {
+      id: `growth-post-${treeId}-${Date.now()}`,
+      treeId: treeId,
+      author: extraInfo.author || extraInfo.guardianName || 'Tree Guardian',
+      userEmail: extraInfo.userEmail || '',
+      memberId: extraInfo.memberId || 'TRV-IND-2026',
+      title: `${extraInfo.treeName || 'Adopted Tree'} • Growth Update`,
+      category: 'Tree Adoption & Care',
+      categoryIcon: '🌿',
+      timeInterval: `${newReport.intervalDays || 1}-Day Cadence`,
+      location: extraInfo.location || 'Community Green Area',
+      impact: `Wellness Status: ${wellnessStatus || 'Thriving'} 🌱`,
+      description: newReport.notes || `Logged tree care & wellness update: ${newReport.activity}. Status: ${wellnessStatus || 'Thriving'} 🌱`,
+      photo: newReport.photo,
+      likes: 0,
+      views: 0,
+      date: newReport.date || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      timestamp: Date.now()
+    };
+    await saveCloudSocialWork(publicPost);
+  } catch (err) {
+    console.warn('Publish growth report to social feed:', err);
+  }
+
+  return true;
+}
+
+/**
  * Admin permanently deletes an approved plantation/adoption from cloud
  */
 export async function deleteCloudApprovedAdoption(treeId) {

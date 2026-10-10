@@ -7,7 +7,7 @@ import {
 import confetti from 'canvas-confetti';
 
 import GuardianIdCard from '../components/GuardianIdCard';
-import { getCloudPendingAdoptions, getCloudApprovedAdoptions, getCloudSocialWorks, saveCloudSocialWork } from '../lib/cloudDb';
+import { getCloudPendingAdoptions, getCloudApprovedAdoptions, getCloudSocialWorks, saveCloudSocialWork, saveCloudTreeCareReport } from '../lib/cloudDb';
 import { compressImage } from '../lib/imageCompressor';
 
 export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLogout, setActivePage, showToast }) {
@@ -180,7 +180,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
   };
 
   // Submit Section A: Tree Care & Wellness Update
-  const submitTreeCareUpdate = (e) => {
+  const submitTreeCareUpdate = async (e) => {
     e.preventDefault();
     if (!reportPhotoPreview) {
       alert('Please upload a progress / wellness photo for your tree.');
@@ -200,8 +200,9 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
       date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     };
 
+    const targetTree = reportModalTree;
     const updatedTrees = myTrees.map(t => {
-      if (t.id === reportModalTree.id) {
+      if (t.id === targetTree.id) {
         return {
           ...t,
           wellness: wellnessStatus,
@@ -216,6 +217,26 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
     try {
       localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedTrees));
     } catch {}
+
+    // Cloud sync: updates approved/pending tree reports AND publishes public feed post
+    try {
+      await saveCloudTreeCareReport(
+        targetTree.id,
+        newReport,
+        wellnessStatus,
+        `${careIntervalDays} Days`,
+        {
+          treeName: targetTree.tree_name || targetTree.treeName || 'Adopted Tree',
+          author: displayName,
+          guardianName: displayName,
+          location: targetTree.location || 'Community Green Area',
+          userEmail: userEmail,
+          memberId: targetTree.memberId || 'TRV-IND-2026'
+        }
+      );
+    } catch (syncErr) {
+      console.warn('Could not sync report to cloud immediately:', syncErr);
+    }
 
     setSubmittingReport(false);
     setReportModalTree(null);

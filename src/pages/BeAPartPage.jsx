@@ -65,6 +65,16 @@ export default function BeAPartPage({ showToast, onOpenPledge, currentUser, onOp
       color: 'from-teal-500 to-emerald-600'
     },
     {
+      id: 'creator',
+      title: 'Environmental Creator & Storyteller',
+      hindi: 'पर्यावरण क्रिएटर व कहानीकार',
+      icon: '📸',
+      badge: 'Eco Media',
+      desc: 'Document and share river cleanups, mountain treks, zero-waste drives, and tree journeys. Inspire thousands on the Taruvar Explore Feed and earn official creator badges & certificates.',
+      commit: 'Content & Field Storytelling',
+      color: 'from-emerald-500 to-teal-600'
+    },
+    {
       id: 'youth',
       title: 'Youth & Campus Ambassador',
       hindi: 'युवा व विश्वविद्यालय दूत',
