@@ -59,12 +59,12 @@ async function fetchGithubJson(fileName) {
     const decoded = b64DecodeUnicode(json.content);
     const parsed = JSON.parse(decoded);
     return {
-      data: Array.isArray(parsed) ? parsed : [],
+      data: parsed !== null && parsed !== undefined ? parsed : [],
       sha: json.sha
     };
   } catch (err) {
     console.warn(`Cloud fetch error for ${fileName}:`, err);
-    return { data: [], sha: null };
+    return { data: null, sha: null };
   }
 }
 
@@ -122,7 +122,7 @@ async function putGithubJsonWithRetry(fileName, transformFn, maxRetries = 4) {
  */
 export async function getCloudPendingAdoptions() {
   const result = await fetchGithubJson('pending_adoptions.json');
-  return result.data;
+  return Array.isArray(result.data) ? result.data : [];
 }
 
 /**
@@ -130,7 +130,7 @@ export async function getCloudPendingAdoptions() {
  */
 export async function getCloudApprovedAdoptions() {
   const result = await fetchGithubJson('approved_adoptions.json');
-  return result.data;
+  return Array.isArray(result.data) ? result.data : [];
 }
 
 /**
@@ -437,6 +437,49 @@ export async function getCloudComments() {
   } catch {}
 
   return {};
+}
+
+/**
+ * Fetch all likes mapping from cloud { [postId]: number }
+ */
+export async function getCloudLikes() {
+  try {
+    const res = await fetchGithubJson('post_likes.json');
+    if (res.data && typeof res.data === 'object' && !Array.isArray(res.data)) {
+      localStorage.setItem('taruvar_post_likes', JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch (e) {
+    console.warn('Could not fetch cloud likes:', e);
+  }
+
+  try {
+    const saved = localStorage.getItem('taruvar_post_likes');
+    if (saved) return JSON.parse(saved);
+  } catch {}
+
+  return {};
+}
+
+/**
+ * Save / increment / decrement like counter in cloud atomically
+ */
+export async function saveCloudLike(postId, nextCount) {
+  if (!postId) return false;
+
+  try {
+    const local = JSON.parse(localStorage.getItem('taruvar_post_likes') || '{}');
+    local[postId] = nextCount;
+    localStorage.setItem('taruvar_post_likes', JSON.stringify(local));
+  } catch {}
+
+  return await putGithubJsonWithRetry('post_likes.json', (currentDict) => {
+    const dict = (currentDict && typeof currentDict === 'object' && !Array.isArray(currentDict)) ? currentDict : {};
+    return {
+      ...dict,
+      [postId]: nextCount
+    };
+  });
 }
 
 /**

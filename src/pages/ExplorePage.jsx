@@ -13,7 +13,9 @@ import {
   getCloudSocialWorks, 
   saveCloudSocialWork,
   getCloudComments,
-  saveCloudComment 
+  saveCloudComment,
+  getCloudLikes,
+  saveCloudLike
 } from '../lib/cloudDb';
 import { compressImage } from '../lib/imageCompressor';
 
@@ -118,6 +120,8 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   // Tree Growing Journey Modal State
   const [selectedJourneyTree, setSelectedJourneyTree] = useState(null);
   const [showJourneyModal, setShowJourneyModal] = useState(false);
+  const [journeyViewMode, setJourneyViewMode] = useState('timeline'); // 'timeline' | 'gallery'
+  const [previewJourneyPhoto, setPreviewJourneyPhoto] = useState(null);
 
   // Environmental Creator Guide Modal State
   const [showCreatorGuideModal, setShowCreatorGuideModal] = useState(false);
@@ -228,11 +232,12 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   useEffect(() => {
     async function loadCloudData() {
       try {
-        const [approvedCloud, pendingCloud, cloudSocial, cloudComments] = await Promise.all([
+        const [approvedCloud, pendingCloud, cloudSocial, cloudComments, cloudLikes] = await Promise.all([
           getCloudApprovedAdoptions(),
           getCloudPendingAdoptions(),
           getCloudSocialWorks(),
-          getCloudComments()
+          getCloudComments(),
+          getCloudLikes()
         ]);
 
         if (cloudComments && typeof cloudComments === 'object') {
@@ -243,7 +248,9 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         }
 
         const savedUserLikes = JSON.parse(localStorage.getItem('taruvar_user_likes') || '{}');
-        const savedPostLikes = JSON.parse(localStorage.getItem('taruvar_post_likes') || '{}');
+        const localPostLikes = JSON.parse(localStorage.getItem('taruvar_post_likes') || '{}');
+        const savedPostLikes = { ...(cloudLikes || {}), ...localPostLikes };
+        setPostLikes(savedPostLikes);
 
         const allTrees = [...(approvedCloud || []), ...(pendingCloud || [])];
         
@@ -422,6 +429,8 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
     setPostLikes(updatedPostLikes);
     try {
       localStorage.setItem('taruvar_post_likes', JSON.stringify(updatedPostLikes));
+      // Save like count to cloud database
+      saveCloudLike(postId, nextLikesCount).catch(err => console.warn('Cloud like sync notice:', err));
     } catch {}
 
     // 3. Update in-place feed list without changing list order
@@ -1213,125 +1222,244 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
               </div>
             </div>
 
-            {/* Scrollable Timeline */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
-              {/* Introduction Card */}
-              <div className="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/80 text-emerald-950 flex items-start gap-3">
-                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  <p className="font-black text-xs">Complete Lifecycle & Care Diary</p>
-                  <p className="text-[11px] text-emerald-800 leading-relaxed">
-                    Under Taruvar's <strong>#OnePersonOneTree</strong> Paalna initiative, tree guardians take responsibility for nurturing saplings to maturity. Every milestone photo and wellness log is permanently recorded below.
-                  </p>
-                </div>
+            {/* View Mode Switcher Tabs */}
+            <div className="px-5 py-2.5 bg-white border-b border-taruvar-border flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-1.5 p-1 bg-taruvar-bg rounded-2xl border border-taruvar-border">
+                <button
+                  type="button"
+                  onClick={() => setJourneyViewMode('timeline')}
+                  className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                    journeyViewMode === 'timeline'
+                      ? 'bg-taruvar-secondary text-white shadow-xs'
+                      : 'text-taruvar-muted hover:text-taruvar-dark'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Care Timeline</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setJourneyViewMode('gallery')}
+                  className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                    journeyViewMode === 'gallery'
+                      ? 'bg-taruvar-secondary text-white shadow-xs'
+                      : 'text-taruvar-muted hover:text-taruvar-dark'
+                  }`}
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Growth Photos Gallery ({1 + (Array.isArray(selectedJourneyTree.reports) ? selectedJourneyTree.reports.filter(r => r.photo).length : 0)})</span>
+                </button>
               </div>
 
-              {/* Chronological Milestones List */}
-              <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-3 sm:before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-emerald-500 before:via-teal-400 before:to-emerald-200">
-                
-                {/* Milestone 1: Plantation Day (Day 0) */}
-                <div className="relative">
-                  {/* Timeline Dot */}
-                  <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-black shadow-md border-2 border-white">
-                    1
-                  </div>
+              <span className="text-[11px] text-taruvar-muted font-bold hidden sm:inline">
+                Tap photos to zoom 🔍
+              </span>
+            </div>
 
-                  <div className="bg-white rounded-2xl border border-taruvar-border p-4 shadow-xs space-y-3">
-                    <div className="flex items-center justify-between flex-wrap gap-1">
-                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase">
-                        Milestone 1 • Plantation Day (Day 0)
-                      </span>
-                      <span className="text-[11px] font-bold text-taruvar-muted flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>{selectedJourneyTree.plantedDate || selectedJourneyTree.planted_date || 'Plantation Day'}</span>
-                      </span>
-                    </div>
-
-                    <div className="rounded-xl overflow-hidden border border-taruvar-border bg-gray-900 max-h-56">
-                      <img 
-                        src={selectedJourneyTree.plantation_photo || selectedJourneyTree.photoUrl || selectedJourneyTree.photo || '/logo.jpg'} 
-                        alt="Sapling Plantation" 
-                        className="w-full h-48 sm:h-56 object-cover"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="font-extrabold text-xs text-taruvar-dark flex items-center gap-2">
-                        <span>🌱 Sapling Planted & Pledged</span>
-                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                          {selectedJourneyTree.species || 'Indigenous Species'}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-taruvar-muted leading-relaxed">
-                        Sapling officially registered under Taruvar. Guardian pledged to protect, water, and nurture the tree through regular 1-15 day verification cycles.
+            {/* Scrollable Content (Timeline or Gallery) */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+              {journeyViewMode === 'timeline' ? (
+                <>
+                  {/* Introduction Card */}
+                  <div className="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/80 text-emerald-950 flex items-start gap-3">
+                    <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="font-black text-xs">Complete Lifecycle & Care Diary</p>
+                      <p className="text-[11px] text-emerald-800 leading-relaxed">
+                        Under Taruvar's <strong>#OnePersonOneTree</strong> Paalna initiative, tree guardians take responsibility for nurturing saplings to maturity. Every milestone photo and wellness log is permanently recorded below.
                       </p>
                     </div>
                   </div>
-                </div>
 
-                {/* Milestones 2+: Growth & Care Reports */}
-                {Array.isArray(selectedJourneyTree.reports) && selectedJourneyTree.reports.length > 0 ? (
-                  selectedJourneyTree.reports.map((report, rIdx) => (
-                    <div key={report.id || rIdx} className="relative">
+                  {/* Chronological Milestones List */}
+                  <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-3 sm:before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-emerald-500 before:via-teal-400 before:to-emerald-200">
+                    
+                    {/* Milestone 1: Plantation Day (Day 0) */}
+                    <div className="relative">
                       {/* Timeline Dot */}
-                      <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs font-black shadow-md border-2 border-white">
-                        {rIdx + 2}
+                      <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-black shadow-md border-2 border-white">
+                        1
                       </div>
 
                       <div className="bg-white rounded-2xl border border-taruvar-border p-4 shadow-xs space-y-3">
                         <div className="flex items-center justify-between flex-wrap gap-1">
-                          <span className="px-2.5 py-0.5 bg-teal-100 text-teal-900 text-[10px] font-black rounded-full uppercase">
-                            Milestone {rIdx + 2} • {report.intervalDays || 1}-Day Care Log
+                          <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase">
+                            Milestone 1 • Plantation Day (Day 0)
                           </span>
                           <span className="text-[11px] font-bold text-taruvar-muted flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            <span>{report.date || 'Care Logged'}</span>
+                            <span>{selectedJourneyTree.plantedDate || selectedJourneyTree.planted_date || 'Plantation Day'}</span>
                           </span>
                         </div>
 
-                        {report.photo && (
-                          <div className="rounded-xl overflow-hidden border border-taruvar-border bg-gray-900 max-h-56">
-                            <img 
-                              src={report.photo} 
-                              alt={`Milestone ${rIdx + 2}`} 
-                              className="w-full h-48 sm:h-56 object-cover"
-                            />
+                        <div 
+                          onClick={() => setPreviewJourneyPhoto({
+                            url: selectedJourneyTree.plantation_photo || selectedJourneyTree.photoUrl || selectedJourneyTree.photo || '/logo.jpg',
+                            title: 'Milestone 1 • Day 0 Sapling Plantation',
+                            date: selectedJourneyTree.plantedDate || selectedJourneyTree.planted_date || 'Plantation Day'
+                          })}
+                          className="rounded-xl overflow-hidden border border-taruvar-border bg-gray-900 max-h-56 cursor-pointer group relative"
+                        >
+                          <img 
+                            src={selectedJourneyTree.plantation_photo || selectedJourneyTree.photoUrl || selectedJourneyTree.photo || '/logo.jpg'} 
+                            alt="Sapling Plantation" 
+                            className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs gap-1">
+                            <Eye className="w-4 h-4" /> Click to expand
                           </div>
-                        )}
+                        </div>
 
-                        <div className="space-y-1.5">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="px-2 py-0.5 bg-taruvar-light text-taruvar-secondary text-[10px] font-bold rounded-md">
-                              🌿 Activity: {report.activity || 'Tree Nurturing'}
-                            </span>
-                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 text-[10px] font-bold rounded-md border border-emerald-200">
-                              ✓ Status: {report.wellness || 'Thriving'}
+                        <div className="space-y-1">
+                          <div className="font-extrabold text-xs text-taruvar-dark flex items-center gap-2">
+                            <span>🌱 Sapling Planted & Pledged</span>
+                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                              {selectedJourneyTree.species || 'Indigenous Species'}
                             </span>
                           </div>
-                          {report.notes && (
-                            <p className="text-[11px] text-taruvar-dark bg-taruvar-bg/60 p-2.5 rounded-xl border border-taruvar-border leading-relaxed">
-                              "{report.notes}"
-                            </p>
-                          )}
+                          <p className="text-[11px] text-taruvar-muted leading-relaxed">
+                            Sapling officially registered under Taruvar. Guardian pledged to protect, water, and nurture the tree through regular 1-15 day verification cycles.
+                          </p>
                         </div>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="relative">
-                    <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-amber-400 text-white flex items-center justify-center text-xs font-black shadow-md border-2 border-white">
-                      ⏳
-                    </div>
-                    <div className="bg-amber-50/70 rounded-2xl border border-amber-200 p-4 space-y-1 text-amber-950">
-                      <p className="font-black text-xs">Upcoming Growth Update</p>
-                      <p className="text-[11px] text-amber-900/90 leading-relaxed">
-                        The guardian logs regular 1-15 day growth photos and wellness progress. Next milestone photo will appear here once submitted!
-                      </p>
-                    </div>
-                  </div>
-                )}
 
-              </div>
+                    {/* Milestones 2+: Growth & Care Reports */}
+                    {Array.isArray(selectedJourneyTree.reports) && selectedJourneyTree.reports.length > 0 ? (
+                      selectedJourneyTree.reports.map((report, rIdx) => (
+                        <div key={report.id || rIdx} className="relative">
+                          {/* Timeline Dot */}
+                          <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs font-black shadow-md border-2 border-white">
+                            {rIdx + 2}
+                          </div>
+
+                          <div className="bg-white rounded-2xl border border-taruvar-border p-4 shadow-xs space-y-3">
+                            <div className="flex items-center justify-between flex-wrap gap-1">
+                              <span className="px-2.5 py-0.5 bg-teal-100 text-teal-900 text-[10px] font-black rounded-full uppercase">
+                                Milestone {rIdx + 2} • {report.intervalDays || 1}-Day Care Log
+                              </span>
+                              <span className="text-[11px] font-bold text-taruvar-muted flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                <span>{report.date || 'Care Logged'}</span>
+                              </span>
+                            </div>
+
+                            {report.photo && (
+                              <div 
+                                onClick={() => setPreviewJourneyPhoto({
+                                  url: report.photo,
+                                  title: `Milestone ${rIdx + 2} • ${report.intervalDays || 1}-Day Growth Update`,
+                                  date: report.date || 'Care Logged',
+                                  wellness: report.wellness,
+                                  activity: report.activity,
+                                  notes: report.notes
+                                })}
+                                className="rounded-xl overflow-hidden border border-taruvar-border bg-gray-900 max-h-56 cursor-pointer group relative"
+                              >
+                                <img 
+                                  src={report.photo} 
+                                  alt={`Milestone ${rIdx + 2}`} 
+                                  className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs gap-1">
+                                  <Eye className="w-4 h-4" /> Click to expand
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-2 py-0.5 bg-taruvar-light text-taruvar-secondary text-[10px] font-bold rounded-md">
+                                  🌿 Activity: {report.activity || 'Tree Nurturing'}
+                                </span>
+                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 text-[10px] font-bold rounded-md border border-emerald-200">
+                                  ✓ Status: {report.wellness || 'Thriving'}
+                                </span>
+                              </div>
+                              {report.notes && (
+                                <p className="text-[11px] text-taruvar-dark bg-taruvar-bg/60 p-2.5 rounded-xl border border-taruvar-border leading-relaxed">
+                                  "{report.notes}"
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="relative">
+                        <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-amber-400 text-white flex items-center justify-center text-xs font-black shadow-md border-2 border-white">
+                          ⏳
+                        </div>
+                        <div className="bg-amber-50/70 rounded-2xl border border-amber-200 p-4 space-y-1 text-amber-950">
+                          <p className="font-black text-xs">Upcoming Growth Update</p>
+                          <p className="text-[11px] text-amber-900/90 leading-relaxed">
+                            The guardian logs regular 1-15 day growth photos and wellness progress. Next milestone photo will appear here once submitted!
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                </>
+              ) : (
+                /* GALLERY VIEW: Pure Growth Pictures Grid */
+                <div className="space-y-4">
+                  <div className="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-emerald-950">
+                    <p className="font-extrabold text-xs">📸 Verified Milestone Photos Gallery</p>
+                    <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                      All verified growing journey images for this tree, from sapling plantation to subsequent care updates. Tap any photo to view full size.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {/* Day 0 Plantation Photo */}
+                    <div
+                      onClick={() => setPreviewJourneyPhoto({
+                        url: selectedJourneyTree.plantation_photo || selectedJourneyTree.photoUrl || selectedJourneyTree.photo || '/logo.jpg',
+                        title: 'Milestone 1 • Day 0 Sapling Plantation',
+                        date: selectedJourneyTree.plantedDate || selectedJourneyTree.planted_date || 'Plantation Day'
+                      })}
+                      className="group cursor-pointer rounded-2xl overflow-hidden border-2 border-emerald-500/40 bg-gray-900 shadow-sm hover:shadow-md transition-all relative aspect-square"
+                    >
+                      <img
+                        src={selectedJourneyTree.plantation_photo || selectedJourneyTree.photoUrl || selectedJourneyTree.photo || '/logo.jpg'}
+                        alt="Day 0 Sapling"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/85 via-black/50 to-transparent text-white">
+                        <span className="block text-[10px] font-black uppercase text-emerald-400">Day 0 Plantation</span>
+                        <span className="block text-[9px] text-gray-300 truncate">{selectedJourneyTree.plantedDate || selectedJourneyTree.planted_date || 'Planted'}</span>
+                      </div>
+                    </div>
+
+                    {/* Subsequent Milestone Photos */}
+                    {Array.isArray(selectedJourneyTree.reports) && selectedJourneyTree.reports.filter(r => r.photo).map((report, idx) => (
+                      <div
+                        key={report.id || idx}
+                        onClick={() => setPreviewJourneyPhoto({
+                          url: report.photo,
+                          title: `Milestone ${idx + 2} • ${report.intervalDays || 1}-Day Care`,
+                          date: report.date || 'Logged',
+                          wellness: report.wellness,
+                          activity: report.activity,
+                          notes: report.notes
+                        })}
+                        className="group cursor-pointer rounded-2xl overflow-hidden border border-taruvar-border bg-gray-900 shadow-sm hover:shadow-md transition-all relative aspect-square"
+                      >
+                        <img
+                          src={report.photo}
+                          alt={`Milestone ${idx + 2}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/85 via-black/50 to-transparent text-white">
+                          <span className="block text-[10px] font-black uppercase text-teal-300">Milestone {idx + 2}</span>
+                          <span className="block text-[9px] text-gray-300 truncate">{report.date || `${report.intervalDays || 1}-Day Log`}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
@@ -1553,6 +1681,64 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL 5: FULL-SCREEN MILESTONE PHOTO LIGHTBOX */}
+      {/* ======================================================== */}
+      {previewJourneyPhoto && (
+        <div 
+          onClick={() => setPreviewJourneyPhoto(null)}
+          className="fixed inset-0 z-60 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in cursor-zoom-out"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="bg-gray-900 border border-gray-700/60 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col text-white animate-scale-up cursor-default"
+          >
+            <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+              <div>
+                <h4 className="font-black text-sm text-emerald-400">{previewJourneyPhoto.title}</h4>
+                <p className="text-[11px] text-gray-400 mt-0.5">{previewJourneyPhoto.date}</p>
+              </div>
+              <button
+                onClick={() => setPreviewJourneyPhoto(null)}
+                className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-black flex items-center justify-center max-h-[70vh] overflow-hidden">
+              <img 
+                src={previewJourneyPhoto.url} 
+                alt={previewJourneyPhoto.title} 
+                className="w-full h-auto max-h-[70vh] object-contain"
+              />
+            </div>
+
+            {(previewJourneyPhoto.wellness || previewJourneyPhoto.activity || previewJourneyPhoto.notes) && (
+              <div className="p-4 bg-gray-900/90 border-t border-gray-800 text-xs space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  {previewJourneyPhoto.activity && (
+                    <span className="px-2.5 py-0.5 bg-emerald-900/70 text-emerald-300 font-bold rounded-md border border-emerald-700/50 text-[10px]">
+                      Activity: {previewJourneyPhoto.activity}
+                    </span>
+                  )}
+                  {previewJourneyPhoto.wellness && (
+                    <span className="px-2.5 py-0.5 bg-teal-900/70 text-teal-300 font-bold rounded-md border border-teal-700/50 text-[10px]">
+                      Wellness: {previewJourneyPhoto.wellness}
+                    </span>
+                  )}
+                </div>
+                {previewJourneyPhoto.notes && (
+                  <p className="text-gray-300 italic text-[11px] leading-relaxed">
+                    "{previewJourneyPhoto.notes}"
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

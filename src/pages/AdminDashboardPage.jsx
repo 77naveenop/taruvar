@@ -178,6 +178,45 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
         console.warn('Cloud load notice:', err);
       }
       
+      // 3. Extract & Aggregate Growth Reports across all trees (local & cloud)
+      const allTreeList = [...mergedPending, ...localApproved];
+      const aggregatedReports = [];
+      const seenReportIds = new Set();
+
+      allTreeList.forEach(t => {
+        if (Array.isArray(t.reports) && t.reports.length > 0) {
+          t.reports.forEach((rep, idx) => {
+            const repId = rep.id || `${t.id || t.treeId}-rep-${idx}`;
+            if (!seenReportIds.has(repId)) {
+              seenReportIds.add(repId);
+              aggregatedReports.push({
+                id: repId,
+                treeId: t.id || t.treeId,
+                tree_name: t.tree_name || t.treeName || 'Adopted Tree',
+                adopter_name: t.adopter_name || t.guardianName || 'Tree Guardian',
+                month: rep.intervalDays ? `${rep.intervalDays} Days` : (idx + 1),
+                date: rep.date || 'Recent Care Log',
+                growth_photo: rep.photo || rep.growth_photo || t.plantation_photo || '/logo.jpg',
+                notes: rep.notes || `Wellness: ${rep.wellness || t.wellness || 'Thriving'}. Activity: ${rep.activity || 'Care logged'}.`,
+                status: rep.status || 'pending',
+                wellness: rep.wellness || t.wellness || 'Thriving',
+                activity: rep.activity || 'Care & Nurturing'
+              });
+            }
+          });
+        }
+      });
+
+      // Also include any local pending reports from local storage
+      const storedPendingReports = JSON.parse(localStorage.getItem('taruvar_pending_reports') || '[]');
+      storedPendingReports.forEach(rep => {
+        if (!seenReportIds.has(rep.id)) {
+          seenReportIds.add(rep.id);
+          aggregatedReports.push(rep);
+        }
+      });
+
+      setPendingReports(aggregatedReports);
       setPendingTrees([...mergedPending]);
       setApprovedTrees([...localApproved]);
 
@@ -315,27 +354,31 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
 
   // Reject Tree
   const handleRejectTree = async (treeId) => {
-    const updatedPending = pendingTrees.filter(t => t.id !== treeId && t.treeId !== treeId);
-    setPendingTrees(updatedPending);
-    localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(updatedPending));
+    // 1. Immediately update UI state
+    setPendingTrees(prev => prev.filter(t => t.id !== treeId && t.treeId !== treeId));
 
-    rejectCloudAdoption(treeId).catch(e => console.warn('Cloud reject error:', e));
-
+    // 2. Update local storage
     try {
+      const pending = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      const updatedPending = pending.filter(t => t.id !== treeId && t.treeId !== treeId);
+      localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(updatedPending));
+
       const currentAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
-      const updatedAdoptions = currentAdoptions.map(t => {
-        if (t.id === treeId || t.treeId === treeId) {
-          return { ...t, status: 'rejected' };
-        }
-        return t;
-      });
+      const updatedAdoptions = currentAdoptions.filter(t => t.id !== treeId && t.treeId !== treeId);
       localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedAdoptions));
     } catch (e) {
       console.error(e);
     }
 
     if (showToast) {
-      showToast(`Adoption submission rejected.`);
+      showToast(`Adoption submission rejected and removed.`);
+    }
+
+    // 3. Atomically remove from cloud pending & approved
+    try {
+      await deleteCloudAdoption(treeId);
+    } catch (e) {
+      console.warn('Cloud reject error:', e);
     }
   };
 
@@ -345,9 +388,11 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
       return;
     }
 
+    // 1. Immediately update UI state
     setApprovedTrees(prev => prev.filter(t => t.id !== treeId && t.treeId !== treeId));
     setPendingTrees(prev => prev.filter(t => t.id !== treeId && t.treeId !== treeId));
 
+    // 2. Remove from local storage
     try {
       const all = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
       const updatedAll = all.filter(t => t.id !== treeId && t.treeId !== treeId);
@@ -360,21 +405,29 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
       console.error(e);
     }
 
-    deleteCloudAdoption(treeId).catch(e => console.warn('Cloud delete error:', e));
-
     if (showToast) {
       showToast(`Plantation "${treeName || treeId}" permanently deleted.`);
+    }
+
+    // 3. Atomically remove from cloud pending & approved
+    try {
+      await deleteCloudAdoption(treeId);
+    } catch (e) {
+      console.warn('Cloud delete error:', e);
     }
   };
 
   // Verify Growth Report
   const handleVerifyReport = (reportId, monthNum, adopterName) => {
-    const updatedReports = pendingReports.filter(r => r.id !== reportId);
+    const updatedReports = pendingReports.map(r => r.id === reportId ? { ...r, status: 'verified' } : r);
     setPendingReports(updatedReports);
-    localStorage.setItem('taruvar_pending_reports', JSON.stringify(updatedReports));
+    try {
+      localStorage.setItem('taruvar_pending_reports', JSON.stringify(updatedReports));
+    } catch {}
+
     confetti({ particleCount: 60, spread: 60 });
     if (showToast) {
-      showToast(`Month ${monthNum} Growth Report verified for ${adopterName}! Progress updated.`);
+      showToast(`Growth update (${monthNum}) verified for ${adopterName}!`);
     }
   };
 
@@ -1018,29 +1071,49 @@ export default function AdminDashboardPage({ currentUser, showToast, onOpenAuth 
                 <div key={rep.id} className="bg-white p-6 rounded-3xl border border-taruvar-border shadow-card space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="px-3 py-1 bg-amber-100 text-amber-900 text-xs font-bold rounded-full border border-amber-300">
-                      Month {rep.month} Progress Report
+                      {rep.month || 'Growth Update'}
                     </span>
                     <span className="text-xs text-taruvar-muted">{rep.date}</span>
                   </div>
 
-                  <div className="aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-taruvar-border">
-                    <img src={rep.growth_photo} alt={`Month ${rep.month}`} className="w-full h-full object-cover" />
+                  <div className="aspect-video rounded-2xl overflow-hidden bg-gray-900 border border-taruvar-border relative group">
+                    <img src={rep.growth_photo} alt={rep.tree_name} className="w-full h-full object-cover" />
+                    {rep.growth_photo && (
+                      <button
+                        onClick={() => setSelectedPhotoModal(rep.growth_photo)}
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs gap-1 cursor-pointer"
+                      >
+                        <Eye className="w-4 h-4" /> View Full Growth Photo
+                      </button>
+                    )}
                   </div>
 
                   <div className="space-y-1">
-                    <h3 className="text-lg font-bold text-taruvar-dark">{rep.tree_name}</h3>
-                    <p className="text-xs text-taruvar-dark">Caretaker: <strong>{rep.adopter_name}</strong></p>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-taruvar-dark">{rep.tree_name}</h3>
+                      <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">
+                        {rep.treeId}
+                      </span>
+                    </div>
+                    <p className="text-xs text-taruvar-dark">Guardian: <strong>{rep.adopter_name}</strong></p>
                     <p className="text-xs text-taruvar-muted leading-relaxed bg-taruvar-bg p-3 rounded-xl border border-taruvar-border mt-2">
                       "{rep.notes}"
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => handleVerifyReport(rep.id, rep.month, rep.adopter_name)}
-                    className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <ShieldCheck className="w-4 h-4" /> Verify Month {rep.month} Report & Unlock Progress
-                  </button>
+                  {rep.status === 'verified' ? (
+                    <div className="w-full py-2.5 bg-emerald-100 text-emerald-900 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 border border-emerald-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                      <span>Verified Growth Milestone ✓</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleVerifyReport(rep.id, rep.month, rep.adopter_name)}
+                      className="w-full py-3 bg-taruvar-secondary hover:bg-taruvar-hover text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <ShieldCheck className="w-4 h-4" /> Verify {rep.month || 'Growth'} Report & Approve Update
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
