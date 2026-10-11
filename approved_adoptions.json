@@ -20,7 +20,8 @@
     "planted_date": "6 Oct 2026",
     "timestamp": 1791377382862,
     "verified_months": 1,
-    "verifiedMonths": 1
+    "verifiedMonths": 1,
+    "reports": []
   },
   {
     "id": "TRV-ORG-TARU-2",
@@ -43,6 +44,7 @@
     "planted_date": "6 Oct 2026",
     "timestamp": 1791309273688,
     "verified_months": 1,
-    "verifiedMonths": 1
+    "verifiedMonths": 1,
+    "reports": []
   }
 ]
