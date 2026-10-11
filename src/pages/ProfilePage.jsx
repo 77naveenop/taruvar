@@ -144,9 +144,44 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
 
           if (userCloudTrees.length > 0) {
             setMyTrees(prev => {
-              const seen = new Set(prev.map(t => t.id));
-              const freshFromCloud = userCloudTrees.filter(t => !seen.has(t.id));
-              return [...prev, ...freshFromCloud];
+              const map = new Map();
+              for (const t of prev) {
+                const id = t.id || t.treeId;
+                if (id) map.set(id, t);
+              }
+              for (const cloudT of userCloudTrees) {
+                const id = cloudT.id || cloudT.treeId;
+                if (id) {
+                  const existing = map.get(id);
+                  if (existing) {
+                    const repMap = new Map();
+                    (existing.reports || []).forEach(r => repMap.set(r.id || `${r.date}-${r.activity}`, r));
+                    (cloudT.reports || []).forEach(r => repMap.set(r.id || `${r.date}-${r.activity}`, r));
+                    const mergedReports = Array.from(repMap.values());
+                    
+                    // If local had reports not yet in cloud, sync them up
+                    const cloudRepIds = new Set((cloudT.reports || []).map(r => r.id));
+                    const missingInCloud = (existing.reports || []).filter(r => !cloudRepIds.has(r.id));
+                    for (const r of missingInCloud) {
+                      saveCloudTreeCareReport(id, r, existing.wellness, existing.lastCareInterval, {
+                        treeId: id,
+                        treeName: existing.tree_name || cloudT.tree_name,
+                        author: displayName,
+                        userEmail: userEmail
+                      }).catch(() => {});
+                    }
+
+                    map.set(id, {
+                      ...existing,
+                      ...cloudT,
+                      reports: mergedReports
+                    });
+                  } else {
+                    map.set(id, cloudT);
+                  }
+                }
+              }
+              return Array.from(map.values());
             });
           }
         }
@@ -167,7 +202,7 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
     if (file) {
       setReportPhoto(file);
       try {
-        const compressed = await compressImage(file, 900, 900, 0.7);
+        const compressed = await compressImage(file, 640, 640, 0.65);
         setReportPhotoPreview(compressed);
       } catch {
         const reader = new FileReader();
@@ -201,31 +236,82 @@ export default function ProfilePage({ currentUser, onOpenAuth, onOpenAdopt, onLo
     };
 
     const targetTree = reportModalTree;
+    const matchId = targetTree.id || targetTree.treeId;
+    const matchName = (targetTree.tree_name || targetTree.treeName || '').trim().toLowerCase();
+
+    // 1. Update myTrees state
     const updatedTrees = myTrees.map(t => {
-      if (t.id === targetTree.id) {
+      const tId = t.id || t.treeId;
+      const tName = (t.tree_name || t.treeName || '').trim().toLowerCase();
+      if (tId === matchId || (matchName && tName === matchName)) {
         return {
           ...t,
           wellness: wellnessStatus,
           lastCareInterval: `${careIntervalDays} Days`,
-          reports: [...(t.reports || []), newReport]
+          reports: [...(t.reports || []).filter(r => r.id !== newReport.id), newReport]
         };
       }
       return t;
     });
-
     setMyTrees(updatedTrees);
+
+    // 2. Update full taruvar_adoptions in localStorage safely
     try {
-      localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedTrees));
+      const allLocal = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      let matched = false;
+      const updatedAll = allLocal.map(t => {
+        const tId = t.id || t.treeId;
+        const tName = (t.tree_name || t.treeName || '').trim().toLowerCase();
+        if (tId === matchId || (matchName && tName === matchName)) {
+          matched = true;
+          return {
+            ...t,
+            wellness: wellnessStatus,
+            lastCareInterval: `${careIntervalDays} Days`,
+            reports: [...(t.reports || []).filter(r => r.id !== newReport.id), newReport]
+          };
+        }
+        return t;
+      });
+      if (!matched) {
+        updatedAll.push({
+          ...targetTree,
+          wellness: wellnessStatus,
+          lastCareInterval: `${careIntervalDays} Days`,
+          reports: [...(targetTree.reports || []).filter(r => r.id !== newReport.id), newReport]
+        });
+      }
+      localStorage.setItem('taruvar_adoptions', JSON.stringify(updatedAll));
     } catch {}
 
-    // Cloud sync: updates approved/pending tree reports AND publishes public feed post
+    // 3. Update pending adoptions if tree was pending
+    try {
+      const pendingLocal = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      const updatedPending = pendingLocal.map(t => {
+        const tId = t.id || t.treeId;
+        const tName = (t.tree_name || t.treeName || '').trim().toLowerCase();
+        if (tId === matchId || (matchName && tName === matchName)) {
+          return {
+            ...t,
+            wellness: wellnessStatus,
+            lastCareInterval: `${careIntervalDays} Days`,
+            reports: [...(t.reports || []).filter(r => r.id !== newReport.id), newReport]
+          };
+        }
+        return t;
+      });
+      localStorage.setItem('taruvar_pending_adoptions', JSON.stringify(updatedPending));
+    } catch {}
+
+    // 4. Cloud sync: updates approved/pending tree reports AND publishes public feed post
     try {
       await saveCloudTreeCareReport(
-        targetTree.id,
+        matchId,
         newReport,
         wellnessStatus,
         `${careIntervalDays} Days`,
         {
+          treeId: matchId,
           treeName: targetTree.tree_name || targetTree.treeName || 'Adopted Tree',
           author: displayName,
           guardianName: displayName,

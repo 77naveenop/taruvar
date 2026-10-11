@@ -233,18 +233,34 @@ export async function saveCloudTreeCareReport(treeId, newReport, wellnessStatus,
     timestamp: Date.now()
   };
 
+  const matchesTree = (t) => {
+    if (!t) return false;
+    if (t.id === treeId || t.treeId === treeId) return true;
+    if (extraInfo.treeId && (t.id === extraInfo.treeId || t.treeId === extraInfo.treeId)) return true;
+    const matchName = (extraInfo.treeName || '').trim().toLowerCase();
+    const tName = (t.tree_name || t.treeName || '').trim().toLowerCase();
+    if (matchName && tName && (matchName === tName || tName.includes(matchName) || matchName.includes(tName))) return true;
+    return false;
+  };
+
   // 1. Update approved adoptions in cloud
   try {
     await putGithubJsonWithRetry('approved_adoptions.json', (currentApproved) => {
       const list = Array.isArray(currentApproved) ? currentApproved : [];
       return list.map(t => {
-        if (t.id === treeId || t.treeId === treeId) {
+        if (matchesTree(t)) {
           const existingReports = Array.isArray(t.reports) ? t.reports : [];
+          const repMap = new Map();
+          for (const r of existingReports) {
+            repMap.set(r.id || `${r.date}-${r.activity}`, r);
+          }
+          repMap.set(leanReport.id || `${leanReport.date}-${leanReport.activity}`, leanReport);
+
           return {
             ...t,
             wellness: wellnessStatus || t.wellness,
             lastCareInterval: careInterval || t.lastCareInterval,
-            reports: [...existingReports.filter(r => r.id !== leanReport.id), leanReport]
+            reports: Array.from(repMap.values())
           };
         }
         return t;
@@ -259,13 +275,19 @@ export async function saveCloudTreeCareReport(treeId, newReport, wellnessStatus,
     await putGithubJsonWithRetry('pending_adoptions.json', (currentPending) => {
       const list = Array.isArray(currentPending) ? currentPending : [];
       return list.map(t => {
-        if (t.id === treeId || t.treeId === treeId) {
+        if (matchesTree(t)) {
           const existingReports = Array.isArray(t.reports) ? t.reports : [];
+          const repMap = new Map();
+          for (const r of existingReports) {
+            repMap.set(r.id || `${r.date}-${r.activity}`, r);
+          }
+          repMap.set(leanReport.id || `${leanReport.date}-${leanReport.activity}`, leanReport);
+
           return {
             ...t,
             wellness: wellnessStatus || t.wellness,
             lastCareInterval: careInterval || t.lastCareInterval,
-            reports: [...existingReports.filter(r => r.id !== leanReport.id), leanReport]
+            reports: Array.from(repMap.values())
           };
         }
         return t;
@@ -346,7 +368,9 @@ export async function getCloudSocialWorks() {
   try {
     const result = await fetchGithubJson('social_works.json');
     if (Array.isArray(result.data) && result.data.length > 0) {
-      localStorage.setItem('taruvar_social_works', JSON.stringify(result.data));
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try { localStorage.setItem('taruvar_social_works', JSON.stringify(result.data)); } catch {}
+      }
       return result.data;
     }
   } catch (e) {
@@ -354,8 +378,10 @@ export async function getCloudSocialWorks() {
   }
 
   try {
-    const saved = localStorage.getItem('taruvar_social_works');
-    if (saved) return JSON.parse(saved);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('taruvar_social_works');
+      if (saved) return JSON.parse(saved);
+    }
   } catch {}
 
   return [];
@@ -388,10 +414,12 @@ export async function saveCloudSocialWork(record) {
 
   // Update local storage
   try {
-    const local = JSON.parse(localStorage.getItem('taruvar_social_works') || '[]');
-    const filtered = local.filter(w => w.id !== leanRecord.id);
-    const updated = [leanRecord, ...filtered];
-    localStorage.setItem('taruvar_social_works', JSON.stringify(updated));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const local = JSON.parse(localStorage.getItem('taruvar_social_works') || '[]');
+      const filtered = local.filter(w => w.id !== leanRecord.id);
+      const updated = [leanRecord, ...filtered];
+      localStorage.setItem('taruvar_social_works', JSON.stringify(updated));
+    }
   } catch {}
 
   // Sync to cloud

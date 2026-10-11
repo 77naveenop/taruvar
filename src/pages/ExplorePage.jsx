@@ -122,6 +122,14 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   const [showJourneyModal, setShowJourneyModal] = useState(false);
   const [journeyViewMode, setJourneyViewMode] = useState('timeline'); // 'timeline' | 'gallery'
   const [previewJourneyPhoto, setPreviewJourneyPhoto] = useState(null);
+  const journeyScrollRef = useRef(null);
+  const lastTouchTapRef = useRef({});
+
+  useEffect(() => {
+    if (showJourneyModal && journeyScrollRef.current) {
+      journeyScrollRef.current.scrollTop = 0;
+    }
+  }, [showJourneyModal, journeyViewMode]);
 
   // Environmental Creator Guide Modal State
   const [showCreatorGuideModal, setShowCreatorGuideModal] = useState(false);
@@ -254,18 +262,50 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
 
         const allTrees = [...(approvedCloud || []), ...(pendingCloud || [])];
         
-        // Update tree directory
+        // Update tree directory with report merging
         setTreeDirectory(prev => {
           const map = new Map();
-          for (const t of [...prev, ...allTrees]) {
+          for (const t of prev) {
             const id = t.id || t.treeId;
             if (id) map.set(id, t);
+          }
+          for (const incoming of allTrees) {
+            const id = incoming.id || incoming.treeId;
+            if (id) {
+              const existing = map.get(id);
+              if (existing) {
+                const repMap = new Map();
+                (existing.reports || []).forEach(r => repMap.set(r.id || `${r.date}-${r.activity}`, r));
+                (incoming.reports || []).forEach(r => repMap.set(r.id || `${r.date}-${r.activity}`, r));
+                map.set(id, {
+                  ...existing,
+                  ...incoming,
+                  reports: Array.from(repMap.values())
+                });
+              } else {
+                map.set(id, incoming);
+              }
+            }
           }
           return Array.from(map.values());
         });
 
+        // Get local adoptions to ensure reports are not lost when mapping posts
+        let localAdoptions = [];
+        try {
+          localAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+        } catch {}
+
         const treePosts = allTrees.map(t => {
           const pId = t.id || t.treeId || `cloud-${Date.now()}`;
+          const matchingLocal = localAdoptions.find(l => (l.id === pId || l.treeId === pId || (l.tree_name && l.tree_name === t.tree_name)));
+          
+          const repMap = new Map();
+          (t.reports || []).forEach(r => repMap.set(r.id || `${r.date}-${r.activity}`, r));
+          if (matchingLocal && Array.isArray(matchingLocal.reports)) {
+            matchingLocal.reports.forEach(r => repMap.set(r.id || `${r.date}-${r.activity}`, r));
+          }
+
           return {
             id: pId,
             treeId: pId,
@@ -286,9 +326,9 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
             isLiked: Boolean(savedUserLikes[pId]),
             date: t.plantedDate || t.planted_date || 'RECENT',
             plantedDate: t.plantedDate || t.planted_date || 'RECENT',
-            wellness: t.wellness || 'Thriving & Lush Green',
-            lastCareInterval: t.lastCareInterval || '1-15 Days',
-            reports: Array.isArray(t.reports) ? t.reports : [],
+            wellness: matchingLocal?.wellness || t.wellness || 'Thriving & Lush Green',
+            lastCareInterval: matchingLocal?.lastCareInterval || t.lastCareInterval || '1-15 Days',
+            reports: Array.from(repMap.values()),
             timestamp: t.timestamp || (Date.now() - 1000 * 60 * 60 * 24)
           };
         });
@@ -335,26 +375,75 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   const getTreeForPost = (post) => {
     if (!post) return null;
     const targetId = post.treeId || post.id;
-    const found = treeDirectory.find(t => (t.id === targetId || t.treeId === targetId));
-    if (found) return found;
-    if (post.type === 'tree') {
-      return {
-        id: post.id,
-        tree_name: post.title,
-        treeName: post.title,
-        species: post.species || 'Indigenous Tree',
-        adopter_name: post.author,
-        guardianName: post.author,
-        location: post.location,
-        plantation_photo: post.photo,
-        photoUrl: post.photo,
-        plantedDate: post.plantedDate || post.date,
-        wellness: post.wellness || 'Thriving & Lush Green',
-        lastCareInterval: post.lastCareInterval || '1-15 Days',
-        reports: Array.isArray(post.reports) ? post.reports : []
-      };
+    const cleanTarget = (targetId || '').trim();
+
+    // 1. Gather all local trees from localStorage
+    let localTrees = [];
+    try {
+      const lAdoptions = JSON.parse(localStorage.getItem('taruvar_adoptions') || '[]');
+      const lPending = JSON.parse(localStorage.getItem('taruvar_pending_adoptions') || '[]');
+      localTrees = [...lAdoptions, ...lPending];
+    } catch {}
+
+    const allKnownTrees = [...localTrees, ...(treeDirectory || [])];
+
+    // Find tree matching by id, treeId, or tree title
+    const found = allKnownTrees.find(t => {
+      if (!t) return false;
+      const tId = (t.id || t.treeId || '').trim();
+      if (cleanTarget && tId && (tId === cleanTarget || tId.toLowerCase() === cleanTarget.toLowerCase())) return true;
+      if (post.treeId && tId && (tId === post.treeId.trim() || tId.toLowerCase() === post.treeId.trim().toLowerCase())) return true;
+      if (post.id && tId && (tId === post.id.trim() || tId.toLowerCase() === post.id.trim().toLowerCase())) return true;
+      const pTitle = (post.title || '').trim().toLowerCase();
+      const tName = (t.tree_name || t.treeName || '').trim().toLowerCase();
+      if (pTitle && tName && (pTitle === tName || tName.includes(pTitle) || pTitle.includes(tName))) return true;
+      return false;
+    });
+
+    const baseTree = found || (post.type === 'tree' ? {
+      id: post.treeId || post.id,
+      treeId: post.treeId || post.id,
+      tree_name: post.title,
+      treeName: post.title,
+      species: post.species || 'Indigenous Tree',
+      adopter_name: post.author,
+      guardianName: post.author,
+      location: post.location,
+      plantation_photo: post.photo,
+      photoUrl: post.photo,
+      plantedDate: post.plantedDate || post.date,
+      wellness: post.wellness || 'Thriving & Lush Green',
+      lastCareInterval: post.lastCareInterval || '1-15 Days',
+      reports: []
+    } : null);
+
+    if (!baseTree) return null;
+
+    // Merge reports from all sources (baseTree, post.reports, all matching local trees)
+    const reportsMap = new Map();
+    if (Array.isArray(baseTree.reports)) {
+      baseTree.reports.forEach(r => reportsMap.set(r.id || `${r.date}-${r.activity}`, r));
     }
-    return null;
+    if (Array.isArray(post.reports)) {
+      post.reports.forEach(r => reportsMap.set(r.id || `${r.date}-${r.activity}`, r));
+    }
+    allKnownTrees.forEach(t => {
+      const tId = (t.id || t.treeId || '').trim();
+      const bId = (baseTree.id || baseTree.treeId || '').trim();
+      const tName = (t.tree_name || t.treeName || '').trim().toLowerCase();
+      const bName = (baseTree.tree_name || baseTree.treeName || '').trim().toLowerCase();
+      if ((tId && bId && tId === bId) || (tName && bName && tName === bName)) {
+        if (Array.isArray(t.reports)) {
+          t.reports.forEach(r => reportsMap.set(r.id || `${r.date}-${r.activity}`, r));
+        }
+      }
+    });
+
+    return {
+      ...baseTree,
+      plantation_photo: baseTree.plantation_photo || baseTree.photoUrl || baseTree.photo || post.photo || '/logo.jpg',
+      reports: Array.from(reportsMap.values())
+    };
   };
 
   const getTreeMilestoneCount = (post) => {
@@ -368,7 +457,6 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
     const tree = getTreeForPost(post);
     if (tree) {
       setSelectedJourneyTree(tree);
-      setShowJourneyModal(true);
     } else {
       setSelectedJourneyTree({
         id: post.id || post.treeId || 'tree-journey',
@@ -378,14 +466,15 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
         adopter_name: post.author,
         guardianName: post.author,
         location: post.location,
-        plantation_photo: post.photo,
-        photoUrl: post.photo,
+        plantation_photo: post.photo || '/logo.jpg',
+        photoUrl: post.photo || '/logo.jpg',
         plantedDate: post.date,
         wellness: post.wellness || 'Thriving & Lush Green',
         reports: []
       });
-      setShowJourneyModal(true);
     }
+    setJourneyViewMode('timeline');
+    setShowJourneyModal(true);
   };
 
   // Filter & Stable Sort Pipeline (Sorting by static timestamp prevents posts from jumping when liked!)
@@ -448,12 +537,22 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
   };
 
   const handleDoubleTap = (postId) => {
+    setHeartAnim(postId);
+    setTimeout(() => setHeartAnim(null), 900);
     const isCurrentlyLiked = Boolean(userLikes[postId]);
     if (!isCurrentlyLiked) {
       handleToggleLike(postId);
+    }
+  };
+
+  const handleTouchTap = (postId) => {
+    const now = Date.now();
+    const last = lastTouchTapRef.current[postId] || 0;
+    if (now - last < 350) {
+      handleDoubleTap(postId);
+      lastTouchTapRef.current[postId] = 0;
     } else {
-      setHeartAnim(postId);
-      setTimeout(() => setHeartAnim(null), 900);
+      lastTouchTapRef.current[postId] = now;
     }
   };
 
@@ -705,6 +804,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
                 <div 
                   className="relative aspect-square sm:aspect-[4/3] w-full bg-gray-900 cursor-pointer overflow-hidden select-none group"
                   onDoubleClick={() => handleDoubleTap(post.id)}
+                  onTouchEnd={() => handleTouchTap(post.id)}
                 >
                   <img 
                     src={post.photo} 
@@ -713,24 +813,26 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
                     loading="lazy"
                   />
 
-                  {/* Animated Heart Overlay on Double Tap */}
+                  {/* Animated Heart Overlay on Double Tap (Instagram Pop) */}
                   {heartAnim === post.id && (
-                    <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none animate-ping">
-                      <Heart className="w-24 h-24 text-rose-500 fill-rose-500 drop-shadow-2xl" />
+                    <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+                      <div className="scale-125 animate-bounce transition-transform duration-300 drop-shadow-[0_10px_30px_rgba(244,63,94,0.85)]">
+                        <Heart className="w-24 h-24 text-rose-500 fill-rose-500" />
+                      </div>
                     </div>
                   )}
 
-                  {/* View Count & Category Watermark on Photo */}
+                  {/* View Count Watermark Pill on Photo */}
                   <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2">
-                    <span className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-xl border border-white/20 flex items-center gap-1 shadow-sm">
-                      <Eye className="w-3 h-3 text-taruvar-primary" />
+                    <span className="px-2.5 py-1 bg-black/65 backdrop-blur-md text-white text-[10px] font-bold rounded-xl border border-white/20 flex items-center gap-1 shadow-sm">
+                      <Eye className="w-3 h-3 text-emerald-400" />
                       <span>{post.views?.toLocaleString() || 120} views</span>
                     </span>
                   </div>
 
                   {/* Floating Category Tag */}
                   <div className="absolute top-3 right-3 z-10">
-                    <span className="px-2.5 py-1 bg-emerald-950/70 backdrop-blur-md text-emerald-300 text-[10px] font-extrabold rounded-lg border border-emerald-500/30">
+                    <span className="px-2.5 py-1 bg-emerald-950/75 backdrop-blur-md text-emerald-300 text-[10px] font-extrabold rounded-lg border border-emerald-500/30 shadow-sm">
                       {post.category}
                     </span>
                   </div>
@@ -749,7 +851,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
                         }`}
                         title={post.isLiked ? 'Unlike' : 'Like'}
                       >
-                        <Heart className={`w-6 h-6 ${post.isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
+                        <Heart className={`w-6 h-6 transition-all ${post.isLiked ? 'fill-rose-500 text-rose-500 scale-110' : ''}`} />
                       </button>
 
                       {/* Comment Button */}
@@ -804,16 +906,26 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
                     </div>
                   </div>
 
-                  {/* LIKES & VIEWS SUMMARY */}
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="font-black text-taruvar-dark">
-                      {post.likes.toLocaleString()} likes
-                    </span>
-                    <span className="text-taruvar-muted font-medium">•</span>
-                    <span className="text-taruvar-muted font-bold flex items-center gap-1">
+                  {/* LIKES & VIEWS SUMMARY (Instagram & Facebook Social Style) */}
+                  <div className="flex items-center justify-between gap-3 text-xs pt-0.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex -space-x-1.5 overflow-hidden shrink-0">
+                        <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] flex items-center justify-center font-bold ring-1.5 ring-white shadow-2xs">❤️</span>
+                        <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[9px] flex items-center justify-center font-bold ring-1.5 ring-white shadow-2xs">🌱</span>
+                      </div>
+                      <p className="font-bold text-taruvar-dark text-xs sm:text-[13px] leading-tight">
+                        {post.isLiked ? (
+                          <>Liked by <span className="font-extrabold">{currentUser?.user_metadata?.full_name || 'you'}</span>{post.likes > 1 ? <> and <span className="font-extrabold">{(post.likes - 1).toLocaleString()} others</span></> : ''}</>
+                        ) : (
+                          <><span className="font-extrabold">{post.likes.toLocaleString()}</span> likes</>
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-taruvar-muted bg-taruvar-bg px-2.5 py-0.5 rounded-full border border-taruvar-border shrink-0 shadow-2xs">
                       <Eye className="w-3 h-3 text-teal-600" />
                       <span>{post.views?.toLocaleString() || 120} views</span>
-                    </span>
+                    </div>
                   </div>
 
                   {/* CAPTION SECTION */}
@@ -1257,7 +1369,7 @@ export default function ExplorePage({ currentUser, onOpenPledge, showToast, onOp
             </div>
 
             {/* Scrollable Content (Timeline or Gallery) */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+            <div ref={journeyScrollRef} className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
               {journeyViewMode === 'timeline' ? (
                 <>
                   {/* Introduction Card */}
