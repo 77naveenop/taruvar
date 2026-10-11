@@ -45,6 +45,19 @@
     "timestamp": 1791309273688,
     "verified_months": 1,
     "verifiedMonths": 1,
-    "reports": []
+    "reports": [
+      {
+        "id": "rep-test-1",
+        "intervalDays": 1,
+        "activity": "Watering & Soil Nurturing",
+        "wellness": "Thriving & Lush Green",
+        "photo": null,
+        "notes": "Test report note",
+        "date": "9 Oct 2026",
+        "timestamp": 1791746022125
+      }
+    ],
+    "wellness": "Thriving & Lush Green",
+    "lastCareInterval": "1 Days"
   }
 ]
